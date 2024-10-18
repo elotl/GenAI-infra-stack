@@ -23,7 +23,7 @@ COPY pyproject.toml .
 
 RUN --mount=type=cache,target=/root/.cache/pip \
   pip3 install -v --no-cache-dir \
-  "openai" "langchain" "sentence-transformers" "faiss-cpu" "uvicorn[standard]" "fastapi" "boto3" && \
+  "openai" "langchain" "langchain_community" "langchain_huggingface" "unstructured" "sentence-transformers" "faiss-cpu" "uvicorn[standard]" "fastapi" "boto3" && \
   pip3 install --no-cache-dir -e .
 
 EXPOSE 8000

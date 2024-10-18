@@ -12,9 +12,14 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
   ca-certificates \
   ccache \
   curl \
+  libmagic1 \
+  file \
   libssl-dev ca-certificates make \
   git python3-pip && \
   rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies (including python-magic)
+RUN pip install python-magic
 
 WORKDIR /createvectordb
 
@@ -23,7 +28,7 @@ COPY pyproject.toml .
 
 RUN --mount=type=cache,target=/root/.cache/pip \
   pip3 install -v --no-cache-dir \
-  "langchain" "sentence-transformers" "faiss-cpu" "boto3" "lxml" "bs4" && \
+  "langchain" "langchain_community" "langchain_huggingface" "unstructured" "sentence-transformers" "faiss-cpu" "boto3" "lxml" "bs4" "python-magic" && \
   pip3 install --no-cache-dir -e .
 
 CMD ["python", "createvectordb.py"]

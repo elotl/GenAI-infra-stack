@@ -12,6 +12,10 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.text_splitter import CharacterTextSplitter
 
+EMBEDDING_CHUNK_SIZE_DEFAULT = 1000
+EMBEDDING_CHUNK_OVERLAP_DEFAULT = 100
+EMBEDDING_MODEL_NAME_DEFAULT = "sentence-transformers/all-MiniLM-L6-v2"
+
 def list_files_in_s3_folder(bucket_name, folder_name, s3_client):
     """
     List all files within a given folder (prefix) in an S3 bucket. Any folders within are ignored.
@@ -62,6 +66,14 @@ def download_files_from_s3(bucket_name, folder_name, local_dir):
         return 0    
     return len(file_names)
 
+def str_to_int(value, name):
+    try:
+        # Convert the environment variable (or default) to an integer
+        int_value = int(value)
+    except ValueError:
+        print(f"Error: Value {name} could not be converted to an integer value, please check.")
+        sys.exit(1)
+    return int_value
 
 if __name__ == "__main__":
 
@@ -69,11 +81,13 @@ if __name__ == "__main__":
     if vectordb_input_type is None:
         print("Please set environment variable VECTOR_DB_INPUT_TYPE")
         sys.exit(1)
+    print("Using Embedding input type: ", vectordb_input_type)
 
     vectordb_input_arg = os.environ.get('VECTOR_DB_INPUT_ARG')
     if vectordb_input_arg is None:
         print("Please set environment variable VECTOR_DB_INPUT_ARG")
         sys.exit(1)
+    print("Using Embedding input arg: ", vectordb_input_arg)
 
     # This is the bucket that will be used to store both input datasets for 
     # RAG as well as the Vector DB created from this dataset
@@ -81,6 +95,7 @@ if __name__ == "__main__":
     if vectordb_bucket is None:
         print("Please set environment variable VECTOR_DB_S3_BUCKET")
         sys.exit(1)
+    print("Using Vector DB bucket: ", vectordb_bucket)
 
     # This is the name of the Vector DB file that will be created by this script
     # and will be used by query_rag.py. It has to be unique for each dataset
@@ -89,7 +104,26 @@ if __name__ == "__main__":
     if vectordb_file is None:
         print("Please set environment variable VECTOR_DB_S3_FILE")
         sys.exit(1)
+    print("Using Vector DB file: ", vectordb_file)
 
+    # This is the chunk size that will be used by the embedding model
+    embedding_chunk_size = os.environ.get('EMBEDDING_CHUNK_SIZE')
+    if embedding_chunk_size == "" or embedding_chunk_size is None:  
+        embedding_chunk_size = EMBEDDING_CHUNK_SIZE_DEFAULT
+    else:
+        embedding_chunk_size = str_to_int(embedding_chunk_size, 'EMBEDDING_CHUNK_SIZE')
+    print("Using Embedding Chunk Size: ", embedding_chunk_size)
+
+    embedding_chunk_overlap = os.environ.get('EMBEDDING_CHUNK_OVERLAP')
+    if embedding_chunk_overlap == "" or embedding_chunk_overlap is None:  
+        embedding_chunk_overlap = EMBEDDING_CHUNK_OVERLAP_DEFAULT
+    else:
+        embedding_chunk_overlap = str_to_int(embedding_chunk_overlap, 'EMBEDDING_CHUNK_OVERLAP')
+    print("Using Embedding Chunk Overlap: ", embedding_chunk_overlap)
+    
+    embedding_model_name = os.environ.get('EMBEDDING_MODEL_NAME', EMBEDDING_MODEL_NAME_DEFAULT)
+    print("Using Embedding Model: ", embedding_model_name)
+    
     # Initialize vectorstore and create pickle representation
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -102,17 +136,20 @@ if __name__ == "__main__":
         print("Count of sitemap docs loaded:", len(docs))
 
         text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size = 1000,
-            chunk_overlap  = 100,
+            chunk_size = embedding_chunk_size,
+            chunk_overlap  = embedding_chunk_overlap,
             length_function = len,
         )
         texts = text_splitter.split_documents(docs)
 
-        vectorstore = FAISS.from_documents(texts, embedding=HuggingFaceEmbeddings())
-    elif vectordb_input_type == 'text-docs':
-        #Ref: https://python.langchain.com/docs/integrations/vectorstores/faiss
+        # default model name values has been deprecated since 0.2.16, so we choose a specific model
+        embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
 
-        # download text documents from the S3 bucket 
+        vectorstore = FAISS.from_documents(texts, embeddings)
+
+    elif vectordb_input_type == 'text-docs':
+        #######
+        # Download text documents from the S3 bucket 
 
         # This is a folder within the S3 bucket which will contain all the 
         # text documents that need to be used as the RAG dataset 
@@ -136,11 +173,11 @@ if __name__ == "__main__":
         print(f"Number of documents loaded via DirectoryLoader is {len(documents)}") 
 
         # TODO (improvement for later) Allow users to configure chunk size and overlap values
-        text_splitter = CharacterTextSplitter(chunk_size=2000, chunk_overlap=100)
+        text_splitter = CharacterTextSplitter(chunk_size=embedding_chunk_size, chunk_overlap=embedding_chunk_overlap)
         docs = text_splitter.split_documents(documents)
         
         # default model name values has been deprecated since 0.2.16, so we choose a specific model
-        embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+        embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
 
         vectorstore = FAISS.from_documents(docs, embeddings)
     else:

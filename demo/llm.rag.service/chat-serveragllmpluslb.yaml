@@ -13,10 +13,12 @@ spec:
     metadata:
       labels:
         model: serveragllm
+      annotations:
+        node.elotl.co/instance-type-regexp: "^t3.xlarge$"
     spec:
       containers:
         - name: serveragllm
-          image: elotl/serveragllm:v1.1
+          image: elotl/serveragllm:v1.2
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
@@ -35,6 +37,14 @@ spec:
             value: ${VECTOR_DB_S3_BUCKET}
           - name: VECTOR_DB_S3_FILE
             value: ${VECTOR_DB_S3_FILE}
+          - name: MODEL_ID
+            value: ${MODEL_ID}
+          - name: MAX_TOKENS
+            value: ${MAX_TOKENS}
+          - name: MODEL_TEMPERATURE
+            value: ${MODEL_TEMPERATURE}
+          - name: RELEVANT_DOCS
+            value: ${RELEVANT_DOCS}
 ---
 apiVersion: v1
 kind: Service

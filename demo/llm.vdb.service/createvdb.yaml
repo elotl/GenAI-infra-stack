@@ -4,6 +4,8 @@ metadata:
   name: createvectordb
   labels:
     app: modeldataingest
+  annotations:
+    node.elotl.co/instance-type-regexp: "^t3.xlarge$"
 spec:
   ttlSecondsAfterFinished: 120
   template:
@@ -11,7 +13,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: createvectordb
-        image: elotl/createvectordb:v1.1
+        image: elotl/createvectordb:v1.2
         imagePullPolicy: Always
         resources:
           requests:
@@ -30,3 +32,9 @@ spec:
             value: ${VECTOR_DB_S3_BUCKET}
           - name: VECTOR_DB_S3_FILE
             value: ${VECTOR_DB_S3_FILE}
+          - name: EMBEDDING_CHUNK_SIZE
+            value: ${EMBEDDING_CHUNK_SIZE}
+          - name: EMBEDDING_CHUNK_OVERLAP
+            value: ${EMBEDDING_CHUNK_OVERLAP}
+          - name: EMBEDDING_MODEL_NAME
+            value: ${EMBEDDING_MODEL_NAME}

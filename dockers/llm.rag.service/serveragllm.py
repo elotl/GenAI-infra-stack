@@ -14,7 +14,13 @@ from langchain_community.vectorstores import FAISS
 
 ########
 # Setup model name and query template parameters
-model = "mosaicml/mpt-7b-chat"
+MICROSOFT_MODEL_ID="microsoft/Phi-3-mini-4k-instruct"
+MOSAICML_MODEL_ID = "mosaicml/mpt-7b-chat"
+RELEVANT_DOCS_DEFAULT = 2
+MAX_TOKENS_DEFAULT = 64
+MODEL_TEMPERATURE_DEFAULT = 0.01
+MODEL_ID_DEFAULT = MOSAICML_MODEL_ID
+
 template = """Answer the question based only on the following context:
 {context}
 
@@ -22,14 +28,58 @@ Question: {question}
 """
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+def ensure_integer(value, name):
+    try:
+        # Convert the environment variable (or default) to an integer
+        int_value = int(value)
+    except ValueError:
+        print(f"Error: Value {name} could not be converted to an integer value, please check.")
+        sys.exit(1)
+    return int_value
+
+def str_to_float(value, name):
+    try:
+        # Convert the environment variable (or default) to an integer
+        float_value = float(value)
+    except ValueError:
+        print(f"Error: Value {name} could not be converted to an float value, please check.")
+        sys.exit(1)
+    return float_value
+
 ########
 # Fetch RAG context for question, form prompt from context and question, and call model
 def get_answer(question: Union[str, None]):
 
     print("Received question: ", question)
+
+    model_id = os.environ.get('MODEL_ID')
+    if model_id == "" or model_id is None:
+        model_id = MODEL_ID_DEFAULT
+    print("Using Model ID: ", model_id)
+
+    model_temperature = os.environ.get('MODEL_TEMPERATURE')
+    if model_temperature == "" or model_temperature is None:
+        model_temperature = MODEL_TEMPERATURE_DEFAULT
+    else:
+        model_temperature = str_to_float(model_temperature, 'MODEL_TEMPERATURE')
+    print("Using Model Temperature: ", model_temperature)
+
+    max_tokens = os.environ.get('MAX_TOKENS')
+    if max_tokens == "" or max_tokens is None:
+        max_tokens = MAX_TOKENS_DEFAULT
+    else:
+        max_tokens = str_to_int(max_tokens, 'MAX_TOKENS')
+    print("Using Max Tokens: ", max_tokens)
+
+    relevant_docs = os.environ.get('RELEVANT_DOCS')
+    if relevant_docs == "" or relevant_docs is None:  
+        relevant_docs = RELEVANT_DOCS_DEFAULT    
+    else:
+        relevant_docs = str_to_int(relevant_docs, 'RELEVANT_DOCS')
+    print("Using top-k search from Vector DB, k: ", relevant_docs)
+
     # retrieve docs relevant to the input question
     docs = retriever.invoke(input=question)
-    # default number of docs is 4; make this configurable later
     print ("Number of relevant documents retrieved and that will be used as context for query: ", len(docs))
 
     # concatenate relevant docs retrieved to be used as context 
@@ -40,7 +90,7 @@ def get_answer(question: Union[str, None]):
     
     print("Sending query to the LLM...")
     completions = client.chat.completions.create(
-        model=model,
+        model=model_id,
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
             {
@@ -48,8 +98,8 @@ def get_answer(question: Union[str, None]):
                 "content": promptstr,
             },
         ],
-        max_tokens=64,
-        temperature=0.01,
+        max_tokens=max_tokens,
+        temperature=model_temperature,
         stream=False,
     )
    
@@ -82,12 +132,21 @@ print ("Using vector DB s3 bucket: ", vectordb_bucket)
 if vectordb_bucket is None:
     print("Please set environment variable VECTOR_DB_S3_BUCKET")
     sys.exit(1)
+print("Using Vector DB S3 bucket: ", vectordb_bucket)
 
 vectordb_key = os.environ.get('VECTOR_DB_S3_FILE')
 print ("Using vector DB s3 file containing vector store: ", vectordb_key)
 if vectordb_key is None:
     print("Please set environment variable VECTOR_DB_S3_FILE")
     sys.exit(1)
+print("Using Vector DB S3 file: ", vectordb_key)
+
+relevant_docs = os.environ.get('RELEVANT_DOCS')
+if relevant_docs == "" or relevant_docs is None:  
+    relevant_docs = RELEVANT_DOCS_DEFAULT    
+else:
+    relevant_docs = str_to_int(relevant_docs, 'RELEVANT_DOCS')
+print("Using top-k search from Vector DB, k: ", relevant_docs)
 
 # Use s3 client to read in vector store
 s3_client = boto3.client('s3')
@@ -102,7 +161,10 @@ body = response['Body'].read()
 print("Loading Vector DB...\n")
 # needs prereq packages: sentence_transformers and faiss-cpu
 vectorstore = pickle.loads(body)
-retriever = vectorstore.as_retriever()
+
+# Retriever configuration parameters reference:
+# https://python.langchain.com/api_reference/community/vectorstores/langchain_community.vectorstores.faiss.FAISS.html#langchain_community.vectorstores.faiss.FAISS.as_retriever
+retriever = vectorstore.as_retriever(search_kwargs={"k": relevant_docs})
 print("Created Vector DB retriever successfully. \n")
 
 # Uncomment to run a local test

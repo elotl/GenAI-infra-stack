@@ -28,7 +28,7 @@ Question: {question}
 """
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-def ensure_integer(value, name):
+def str_to_int(value, name):
     try:
         # Convert the environment variable (or default) to an integer
         int_value = int(value)

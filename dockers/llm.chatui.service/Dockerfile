@@ -17,14 +17,16 @@ WORKDIR /simple_chat
 COPY simple_chat.py .
 COPY requirements.txt .
 
-# Use a virtual environment to isolate dependencies and reduce image size
-RUN python3 -m venv /opt/venv && \
-  . /opt/venv/bin/activate && \
-  pip3 install --upgrade pip && \
-  pip3 install --no-cache-dir -r requirements.txt
+# Create and activate virtual environment, install dependencies
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install dependencies in the virtual environment
+RUN pip3 install --upgrade pip && \
+    pip3 install --no-cache-dir -r requirements.txt
 
 # Expose the Gradio port
 EXPOSE 7860
 
-# Start the application
-CMD ["python", "simple_chat.py"]
+# Use the Python interpreter from the virtual environment
+CMD ["/opt/venv/bin/python", "simple_chat.py"]

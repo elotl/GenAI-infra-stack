@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: chat
-        image: elotl/llm-chat::latest
+        image: elotl/llm-chat:latest
         ports:
         - containerPort: 7860
         env:

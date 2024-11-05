@@ -17,16 +17,13 @@ WORKDIR /simple_chat
 COPY simple_chat.py .
 COPY requirements.txt .
 
-# Create and activate virtual environment, install dependencies
-RUN python3 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-# Install dependencies in the virtual environment
-RUN pip3 install --upgrade pip && \
-    pip3 install --no-cache-dir -r requirements.txt
+# Install dependencies
+RUN --mount=type=cache,target=/root/.cache/pip \
+  pip3 install --upgrade pip && \
+  pip3 install --no-cache-dir -r requirements.txt
 
 # Expose the Gradio port
 EXPOSE 7860
 
-# Use the Python interpreter from the virtual environment
-CMD ["/opt/venv/bin/python", "simple_chat.py"]
+# Start the application
+CMD ["python", "simple_chat.py"]

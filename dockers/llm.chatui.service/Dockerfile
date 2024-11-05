@@ -27,4 +27,4 @@ RUN python3 -m venv /opt/venv && \
 EXPOSE 7860
 
 # Start the application
-CMD ["python", "app.py"]
+CMD ["python", "simple_chat.py"]

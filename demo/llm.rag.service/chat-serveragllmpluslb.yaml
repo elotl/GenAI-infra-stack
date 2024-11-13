@@ -4,6 +4,7 @@ metadata:
   name: serveragllm-deployment
   labels:
     app: modelragllmserve
+    elotl-luna: "true"
 spec:
   replicas: 1
   selector:

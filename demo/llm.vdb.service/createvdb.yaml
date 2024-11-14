@@ -4,6 +4,7 @@ metadata:
   name: createvectordb
   labels:
     app: modeldataingest
+    elotl-luna: "true"
   annotations:
     node.elotl.co/instance-type-regexp: "^t3.xlarge$"
 spec:

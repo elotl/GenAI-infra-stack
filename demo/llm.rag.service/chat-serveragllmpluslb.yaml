@@ -4,7 +4,6 @@ metadata:
   name: serveragllm-deployment
   labels:
     app: modelragllmserve
-    elotl-luna: "true"
 spec:
   replicas: 1
   selector:
@@ -14,6 +13,7 @@ spec:
     metadata:
       labels:
         model: serveragllm
+        elotl-luna: "true"
       annotations:
         node.elotl.co/instance-type-regexp: "^t3.xlarge$"
     spec:
@@ -54,10 +54,10 @@ metadata:
   labels:
     app: modelragllmserve
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     model: serveragllm
   ports:
     - name: http
-      port: 80
+      port: 8000
       targetPort: 8000

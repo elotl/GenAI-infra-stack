@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simple-chat
+  namespace: ${MODEL_NAMESPACE}
+  labels:
+    app: simple-chat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: simple-chat
+  template:
+    metadata:
+      labels:
+        app: simple-chat
+    spec:
+      containers:
+      - name: chat
+        image: elotl/llm-chat:latest
+        ports:
+        - containerPort: 7860
+        env:
+        - name: RAG_LLM_QUERY_URL
+          value: "http://serveragllm-service.${MODEL_NAMESPACE}.svc.cluster.local:80"
+
+        - name: USE_CHATBOT_HISTORY
+          value: "false"
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: simple-chat-service
+  namespace: ${MODEL_NAMESPACE}
+spec:
+  selector:
+    app: simple-chat
+  ports:
+    - protocol: TCP
+      port: 7860
+      targetPort: 7860
+  type: LoadBalancer

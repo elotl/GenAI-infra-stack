@@ -1,3 +1,4 @@
+import json
 import os
 import pickle
 import sys
@@ -84,6 +85,20 @@ def str_to_int(value, name):
         )
         sys.exit(1)
     return int_value
+
+
+def load_jsonl_files_from_directory(directory):
+    data = []
+    # Loop through all files in the directory
+    for filename in os.listdir(directory):
+        if filename.endswith('.jsonl'):
+            file_path = os.path.join(directory, filename)
+            # Open and read each jsonl file
+            with open(file_path, 'r') as file:
+                for line in file:
+                    # Parse each JSON object in the file
+                    data.append(json.loads(line.strip()))
+    return data
 
 
 if __name__ == "__main__":
@@ -205,6 +220,29 @@ if __name__ == "__main__":
         embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
 
         vectorstore = FAISS.from_documents(docs, embeddings)
+
+    elif vectordb_input_type == "jira-embedding-json":
+        local_tmp_dir = "/tmp/" + vectordb_file
+
+        # create this temp dir if it does not already exist
+        if not os.path.exists(local_tmp_dir):
+            os.makedirs(local_tmp_dir)
+
+        # download text docs from S3 bucket + folder (vectordb_s3_input_dir/arg) into this tmp local directory
+        num_files = download_files_from_s3(
+            vectordb_bucket, vectordb_input_arg, local_tmp_dir
+        )
+        print(
+            f"Number of files downloaded is {num_files}, local tmp dir is {local_tmp_dir}"
+        )
+
+        data = load_jsonl_files_from_directory(local_tmp_dir)
+        texts = [doc["text"] for doc in data]
+        metadatas = [doc["metadata"] for doc in data]
+
+        embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
+        vectorstore = FAISS.from_texts(texts, embeddings, metadatas=metadatas)
+
     else:
         print("Unknown value for VECTOR_DB_INPUT_TYPE:", vectordb_input_type)
         sys.exit(1)

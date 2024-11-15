@@ -102,7 +102,7 @@ def get_answer(question: Union[str, None]):
         relevant_docs = str_to_int(relevant_docs, "RELEVANT_DOCS")
     print("Using top-k search from Vector DB, k: ", relevant_docs)
 
-    is_jira_mode = os.environ.get("IS_JIRA_MODE")
+    is_jira_mode = os.environ.get("IS_JIRA_MODE", "False") == "True"
 
     # retrieve docs relevant to the input question
     docs = retriever.invoke(input=question)

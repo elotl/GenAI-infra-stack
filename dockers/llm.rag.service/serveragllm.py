@@ -1,14 +1,11 @@
 import os
 import pickle
 import sys
-import time
-from typing import Union, List, Dict, Any
+from typing import Any, Dict, List, Union
 
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 from fastapi import FastAPI
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
 from openai import OpenAI
 
 ########

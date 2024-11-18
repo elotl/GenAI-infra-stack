@@ -186,7 +186,7 @@ def save_to_jsonl(data: List[Dict], output_file: str):
 @click.argument("input_file", type=click.Path(exists=True))
 @click.argument("config_file", type=click.Path(exists=True))
 @click.argument("output_file", type=click.Path())
-def process_data(input_file: str, config_file: str, output_file: str, preview: bool):
+def process_data(input_file: str, config_file: str, output_file: str):
     """
     Process data from INPUT_FILE using CONFIG_FILE and save to OUTPUT_FILE.
 

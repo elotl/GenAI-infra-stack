@@ -91,10 +91,10 @@ def load_jsonl_files_from_directory(directory):
     data = []
     # Loop through all files in the directory
     for filename in os.listdir(directory):
-        if filename.endswith('.jsonl'):
+        if filename.endswith(".jsonl"):
             file_path = os.path.join(directory, filename)
             # Open and read each jsonl file
-            with open(file_path, 'r') as file:
+            with open(file_path, "r") as file:
                 for line in file:
                     # Parse each JSON object in the file
                     data.append(json.loads(line.strip()))
@@ -149,9 +149,9 @@ if __name__ == "__main__":
         )
     print("Using Embedding Chunk Overlap: ", embedding_chunk_overlap)
 
-    embedding_model_name = os.environ.get(
-        "EMBEDDING_MODEL_NAME", EMBEDDING_MODEL_NAME_DEFAULT
-    )
+    embedding_model_name = os.environ.get("EMBEDDING_MODEL_NAME")
+    if embedding_model_name == "" or embedding_model_name is None:
+        embedding_model_name = EMBEDDING_MODEL_NAME_DEFAULT
     print("Using Embedding Model: ", embedding_model_name)
 
     # Initialize vectorstore and create pickle representation
@@ -237,8 +237,13 @@ if __name__ == "__main__":
         )
 
         data = load_jsonl_files_from_directory(local_tmp_dir)
+
+        print("-------> ", data)
         texts = [doc["text"] for doc in data]
         metadatas = [doc["metadata"] for doc in data]
+
+        print("texts -------> ", texts)
+        print("metadatas -------> ", metadatas)
 
         embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
         vectorstore = FAISS.from_texts(texts, embeddings, metadatas=metadatas)

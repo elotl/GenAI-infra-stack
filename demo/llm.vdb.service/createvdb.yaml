@@ -7,6 +7,8 @@ metadata:
     elotl-luna: "true"
   annotations:
     node.elotl.co/instance-type-regexp: "^t3.xlarge$"
+    # On GKE use:
+    # node.elotl.co/instance-type-regexp: "^n2-standard-4$"
 spec:
   ttlSecondsAfterFinished: 120
   template:
@@ -14,7 +16,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: createvectordb
-        image: elotl/createvectordb:v1.2
+        image: elotl/createvectordb:v1.2.1
         imagePullPolicy: Always
         resources:
           requests:

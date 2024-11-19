@@ -238,12 +238,8 @@ if __name__ == "__main__":
 
         data = load_jsonl_files_from_directory(local_tmp_dir)
 
-        print("-------> ", data)
         texts = [doc["text"] for doc in data]
         metadatas = [doc["metadata"] for doc in data]
-
-        print("texts -------> ", texts)
-        print("metadatas -------> ", metadatas)
 
         embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
         vectorstore = FAISS.from_texts(texts, embeddings, metadatas=metadatas)

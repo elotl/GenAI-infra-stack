@@ -16,10 +16,12 @@ spec:
         model: serveragllm
       annotations:
         node.elotl.co/instance-type-regexp: "^t3.xlarge$"
+        # On GKE use:
+        # node.elotl.co/instance-type-regexp: "^n2-standard-4$"
     spec:
       containers:
         - name: serveragllm
-          image: elotl/serveragllm:v1.2
+          image: elotl/serveragllm:v1.2.1
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
@@ -47,7 +49,7 @@ spec:
           - name: RELEVANT_DOCS
             value: ${RELEVANT_DOCS}
           - name: IS_JIRA_MODE
-            value: ${IS_JIRA_MODE}
+            value: "${IS_JIRA_MODE}"
 ---
 apiVersion: v1
 kind: Service
@@ -56,10 +58,10 @@ metadata:
   labels:
     app: modelragllmserve
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     model: serveragllm
   ports:
     - name: http
-      port: 80
+      port: 8000
       targetPort: 8000

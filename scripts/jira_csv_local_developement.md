@@ -8,6 +8,7 @@ uv venv
 source .venv/bin/activate
 uv pip install -r requrements.txt
 ```
+set jira_url in jira_config.ini
 
 ```shell
 uv run process_jira_tickets.py jira_elotl.csv jira_config.ini output_files
@@ -48,7 +49,6 @@ uv pip install -r requrements.txt
 ```
 
 ```shell
-export JIRA_BASE_URL="https://elotl.atlassian.net"
 export RAG_LLM_QUERY_URL="http://127.0.0.1:8000"
  
 uv run simple_chat.py

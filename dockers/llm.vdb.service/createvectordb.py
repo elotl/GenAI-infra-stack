@@ -12,6 +12,8 @@ from langchain_community.document_loaders.sitemap import SitemapLoader
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 
+from common import create_vectordb
+
 EMBEDDING_CHUNK_SIZE_DEFAULT = 1000
 EMBEDDING_CHUNK_OVERLAP_DEFAULT = 100
 EMBEDDING_MODEL_NAME_DEFAULT = "sentence-transformers/all-MiniLM-L6-v2"
@@ -85,20 +87,6 @@ def str_to_int(value, name):
         )
         sys.exit(1)
     return int_value
-
-
-def load_jsonl_files_from_directory(directory):
-    data = []
-    # Loop through all files in the directory
-    for filename in os.listdir(directory):
-        if filename.endswith(".jsonl"):
-            file_path = os.path.join(directory, filename)
-            # Open and read each jsonl file
-            with open(file_path, "r") as file:
-                for line in file:
-                    # Parse each JSON object in the file
-                    data.append(json.loads(line.strip()))
-    return data
 
 
 if __name__ == "__main__":
@@ -235,14 +223,7 @@ if __name__ == "__main__":
         print(
             f"Number of files downloaded is {num_files}, local tmp dir is {local_tmp_dir}"
         )
-
-        data = load_jsonl_files_from_directory(local_tmp_dir)
-
-        texts = [doc["text"] for doc in data]
-        metadatas = [doc["metadata"] for doc in data]
-
-        embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
-        vectorstore = FAISS.from_texts(texts, embeddings, metadatas=metadatas)
+        vectorstore = create_vectordb(local_tmp_dir, embedding_model_name)
 
     else:
         print("Unknown value for VECTOR_DB_INPUT_TYPE:", vectordb_input_type)

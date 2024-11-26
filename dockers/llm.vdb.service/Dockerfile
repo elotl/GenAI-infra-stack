@@ -23,7 +23,10 @@ RUN pip install python-magic
 
 WORKDIR /createvectordb
 
+COPY __init__.py .
 COPY createvectordb.py .
+COPY createvectordb_jira_csv_local.py .
+COPY common.py .
 COPY pyproject.toml .
 
 RUN --mount=type=cache,target=/root/.cache/pip \

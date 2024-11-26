@@ -15,9 +15,9 @@ spec:
       labels:
         model: serveragllm
       annotations:
-        node.elotl.co/instance-type-regexp: "^t3.xlarge$"
+        # node.elotl.co/instance-type-regexp: "^t3.xlarge$"
         # On GKE use:
-        # node.elotl.co/instance-type-regexp: "^n2-standard-4$"
+        node.elotl.co/instance-type-regexp: "^n2-standard-4$"
     spec:
       containers:
         - name: serveragllm

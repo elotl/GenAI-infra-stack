@@ -6,9 +6,9 @@ metadata:
     app: modeldataingest
     elotl-luna: "true"
   annotations:
-    node.elotl.co/instance-type-regexp: "^t3.xlarge$"
+    # node.elotl.co/instance-type-regexp: "^t3.xlarge$"
     # On GKE use:
-    # node.elotl.co/instance-type-regexp: "^n2-standard-4$"
+    node.elotl.co/instance-type-regexp: "^n2-standard-4$"
 spec:
   ttlSecondsAfterFinished: 120
   template:

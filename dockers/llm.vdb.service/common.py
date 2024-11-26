@@ -9,7 +9,7 @@ def load_jsonl_files_from_directory(directory):
     data = []
     # Loop through all files in the directory
     for filename in os.listdir(directory):
-        if filename.endswith(".jsonl"):
+        if filename.endswith(".jsonl") or filename.endswith(".json"):
             file_path = os.path.join(directory, filename)
             # Open and read each jsonl file
             with open(file_path, "r") as file:

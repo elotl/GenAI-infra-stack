@@ -54,6 +54,7 @@ def get_answer_with_settings(question, retriever, client, model_id, max_tokens, 
     answer = {
         "answer": completions.choices[0].message.content,
         "relevant_tickets": [r.metadata["key"] for r in docs],
+        "sources": [r.metadata["source"] for r in docs],
     }
     print("Received answer: ", answer)
     return answer

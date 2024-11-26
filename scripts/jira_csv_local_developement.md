@@ -17,7 +17,7 @@ uv run process_jira_tickets.py jira_elotl.csv jira_config.ini output_files
 Go to `GenAI-infra-stack/dockers/llm.vdb.service`
 
 ```shell
-uv run createvectordb_jira_csv_local.py ../../scripts pickled.obj
+uv run createvectordb_jira_csv_local.py ../../scripts/output_files pickled.obj
 ```
 
 ## Run rag app from local pickled.obj

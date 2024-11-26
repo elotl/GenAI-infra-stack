@@ -7,7 +7,6 @@ import requests
 
 # Environment variable setup
 RAG_LLM_QUERY_URL = os.getenv("RAG_LLM_QUERY_URL")
-JIRA_BASE_URL = os.getenv("JIRA_BASE_URL")
 
 if RAG_LLM_QUERY_URL is None:
     print(
@@ -15,14 +14,7 @@ if RAG_LLM_QUERY_URL is None:
     )
     sys.exit(1)
 
-if JIRA_BASE_URL is None:
-    print(
-        "Please set the environment variable, JIRA_BASE_URL (to the base URL of the JIRA instance)"
-    )
-    sys.exit(1)
-
 print("RAG query endpoint, RAG_LLM_QUERY_URL: ", RAG_LLM_QUERY_URL)
-print("JIRA base URL, JIRA_BASE_URL: ", JIRA_BASE_URL)
 
 USE_CHATBOT_HISTORY = os.getenv("USE_CHATBOT_HISTORY", "False") == "True"
 
@@ -30,11 +22,10 @@ print(f"Use history {USE_CHATBOT_HISTORY}")
 
 
 # Function to generate clickable links for JIRA tickets
-def generate_jira_links(answer_key, relevant_tickets):
+def generate_source_links(sources):
     links = []
-    for ticket_id in relevant_tickets:
-        ticket_url = f"{JIRA_BASE_URL}/browse/{ticket_id}"
-        links.append(f'<a href="{ticket_url}" target="_blank">{ticket_id}</a>')
+    for source in sources:
+        links.append(f'<a href="{source}" target="_blank">{source}</a>')
     return links
 
 
@@ -51,8 +42,8 @@ def get_api_response(user_message):
 
             result = result["answer"]
             answer = result.get("answer", "Could not fetch response.")
-            relevant_tickets = result.get("relevant_tickets", [])
-            links = generate_jira_links(answer, relevant_tickets)
+            sources = result.get("sources", [])
+            links = generate_source_links(sources)
             clickable_links = "<br>".join(links)
             return f"{answer}<br><br>Relevant Tickets:<br>{clickable_links}"
         else:

@@ -25,8 +25,6 @@ spec:
         env:
         - name: RAG_LLM_QUERY_URL
           value: "http://serveragllm-service.${MODEL_NAMESPACE}.svc.cluster.local:8000"
-        - name: JIRA_BASE_URL
-          value: "https://elotl.atlassian.net"
         - name: USE_CHATBOT_HISTORY
           value: "false"
         resources:

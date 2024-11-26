@@ -10,6 +10,7 @@
 # ]
 # ///
 
+import os
 import pickle
 import sys
 import uvicorn
@@ -132,22 +133,25 @@ MAX_TOKENS_DEFAULT = 64
 MODEL_TEMPERATURE_DEFAULT = 0.01
 
 
+file_path = os.getenv("FILE_PATH")
+if not file_path:
+    print("Please provide the pickeled vector store path")
+
+relevant_docs = os.getenv("RELEVANT_DOCS", RELEVANT_DOCS_DEFAULT)
+llm_server_url = os.getenv("LLM_SERVER_URL", "http://localhost:11434/v1")
+model_id = os.getenv("MODEL_ID", "llama2")
+max_tokens = int(os.getenv("MAX_TOKENS", MAX_TOKENS_DEFAULT))
+model_temperature = float(os.getenv("MODEL_TEMPERATURE", MODEL_TEMPERATURE_DEFAULT))
+
+app = setup(file_path, relevant_docs, llm_server_url, model_id, max_tokens, model_temperature)
+
+
 @click.command()
-@click.option("--file-path", required=True)
-@click.option("--relevant-docs", default=RELEVANT_DOCS_DEFAULT)
-@click.option("--llm-server-url", default="http://localhost:11434/v1")
-@click.option("--model-id", default="llama2")
-@click.option("--max-tokens", type=int, default=MAX_TOKENS_DEFAULT)
-@click.option("--model-temperature", type=float, default=MODEL_TEMPERATURE_DEFAULT)
 @click.option("--host", default="127.0.0.1", help="Host for the FastAPI server (default: 127.0.0.1)")
 @click.option("--port", type=int, default=8000, help="Port for the FastAPI server (default: 8000)")
-def run(file_path, relevant_docs, llm_server_url, model_id, max_tokens, model_temperature, host, port):
-    # Create the FastAPI app
-    app = setup(file_path, relevant_docs, llm_server_url, model_id, max_tokens, model_temperature)
-
-    breakpoint()
+def run(host, port):
     # Serve the app using Uvicorn
-    uvicorn.run(app, host=host, port=port, reload=True)
+    uvicorn.run("serverragllm_jira_cvs_local:app", host=host, port=port, reload=True)
 
 
 if __name__ == "__main__":

@@ -22,5 +22,7 @@ https://ollama.com/blog/openai-compatibility
 Go to `GenAI-infra-stack/dockers/llm.rag.service`
 
 ```shell
-uv run serverragllm_jira_cvs_local.py --file-path ../llm.vdb.service/pickled.obj
+export FILE_PATH="../llm.vdb.service/pickled.obj"
+
+uv run serverragllm_jira_cvs_local.py
 ```

@@ -10,7 +10,7 @@ uv pip install -r requrements.txt
 ```
 
 ```shell
-uv run process_jira_tickets.py jira_elotl.csv jira_config.ini output.jsonl
+uv run process_jira_tickets.py jira_elotl.csv jira_config.ini output_files
 ```
 
 ## Create vector store

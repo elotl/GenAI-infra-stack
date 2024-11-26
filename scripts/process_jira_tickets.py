@@ -1,3 +1,4 @@
+import os
 import json
 from configparser import ConfigParser
 from typing import Any, Dict, List
@@ -74,6 +75,8 @@ def process_row(
     list_fields: List[str],
     composite_text_fields: Dict[str, str],
     metadata_fields: Dict[str, str],
+    jira_url: str,
+    metadata_field: str,
 ) -> Dict[str, Any]:
     """Process a single row using the provided configuration."""
     # Extract prefixed fields
@@ -112,6 +115,9 @@ def process_row(
     # Extract metadata
     metadata = extract_metadata(row, metadata_fields)
 
+    # Add source
+    metadata["source"] = jira_url + metadata[metadata_field]
+
     return {"text": composite_text, "metadata": metadata}
 
 
@@ -122,6 +128,8 @@ def prepare_data_for_embedding(
     list_fields: List[str],
     composite_text_fields: Dict[str, str],
     metadata_fields: Dict[str, str],
+    jira_url: str,
+    metadata_field: str,
 ):
     """Prepare documents for embedding using the provided configuration."""
     documents = []
@@ -135,6 +143,8 @@ def prepare_data_for_embedding(
             list_fields=list_fields,
             composite_text_fields=composite_text_fields,
             metadata_fields=metadata_fields,
+            jira_url=jira_url,
+            metadata_field=metadata_field,
         )
         documents.append(processed_data)
 
@@ -171,22 +181,27 @@ def load_config(config_file):
         "list_fields": list_fields,
         "composite_text_fields": composite_text_fields,
         "metadata_fields": metadata_fields,
+        "jira_url": config["TicketUrl"]["jira_url"],
+        "metadata_field": config["TicketUrl"]["metadata_field"],
     }
 
 
-def save_to_jsonl(data: List[Dict], output_file: str):
-    """Save the processed data to a JSONL file."""
-    with open(output_file, "w", encoding="utf-8") as f:
-        for item in data:
+def save_to_json_files(data: List[Dict], output_dir: str):
+    """Save each dictionary in the list as a separate JSON file in the specified directory."""
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    for i, item in enumerate(data):
+        output_file = os.path.join(output_dir, f"item_{i}.json")
+        with open(output_file, "w", encoding="utf-8") as f:
             json.dump(item, f, ensure_ascii=False)
-            f.write("\n")
 
 
 @click.command()
 @click.argument("input_file", type=click.Path(exists=True))
 @click.argument("config_file", type=click.Path(exists=True))
-@click.argument("output_file", type=click.Path())
-def process_data(input_file: str, config_file: str, output_file: str):
+@click.argument("output_dir", type=click.Path())
+def process_data(input_file: str, config_file: str, output_dir: str):
     """
     Process data from INPUT_FILE using CONFIG_FILE and save to OUTPUT_FILE.
 
@@ -218,11 +233,13 @@ def process_data(input_file: str, config_file: str, output_file: str):
         list_fields=list_fields,
         composite_text_fields=composite_text_fields,
         metadata_fields=metadata_fields,
+        jira_url=config["jira_url"],
+        metadata_field=config["metadata_field"],
     )
 
     # Save to file
-    click.echo(f"Saving processed data to {output_file}")
-    save_to_jsonl(embedding_data, output_file)
+    click.echo(f"Saving processed data to {output_dir}")
+    save_to_json_files(embedding_data, output_dir)
     click.echo(f"Processed {len(embedding_data)} documents")
 
 

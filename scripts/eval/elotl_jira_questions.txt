@@ -1,0 +1,25 @@
+What is Luna?
+What is Nova?
+What was the description of the most recent security ticket in Luna?
+Was there a Luna to enable sending user-data to an instance at boot time?
+What was the description of the most recent DR ticket in Nova?
+What cloud providers does Luna work on?
+Can you describe any details about the addition of a promtail sidecar to Luna?
+What are recent updates to the Nova JIT feature?
+What are the two types of elephants in Africa?
+Was there a ticket in Luna to enable sending user-data to an instance at boot time?
+Was there any work done in Luna to enable sending user-data to an instance at boot time?
+Give me the description of a ticket in Luna that deals with sending user-data to an instance at boot time?
+Has the Nova JIT feature been implemented? 
+Can you tell me what the Nova JIT feature is? 
+Had a promtail sidecar been added to Luna?
+What was the most recent type of testing done in Luna?
+When was Nova's DR feature implemented?
+Was the last ticket related to Nova's DR feature?
+Which was the last ticket related to Nova's DR feature?
+Is there a ticket about promtail sidecars in Luna?
+Can you give me the description of the of a Luna ticket about promtail sidecars?
+Can you describe any details about the addition of a promtail sidecar to Luna? 
+What type of work has been done to test the scalability of Nova? 
+What type of cloud providers does Luna not work on?
+Are there any recent updates to the Nova JIT feature?

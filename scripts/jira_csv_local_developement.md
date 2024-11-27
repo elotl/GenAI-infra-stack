@@ -1,12 +1,16 @@
 # How to run the full process for jira csv locally
 
+## Make sure You have 
+- [UV installed](https://docs.astral.sh/uv/getting-started/installation/)
+- [Ollama cli installed](https://ollama.com/download)
+
 ## Prepare data
 
 Go to `GenAI-infra-stack/scripts` create venv and install deps
 ```shell
 uv venv
 source .venv/bin/activate
-uv pip install -r requrements.txt
+uv pip install -r requirements.txt
 ```
 set jira_url in jira_config.ini
 
@@ -45,7 +49,7 @@ Go to `GenAI-infra-stack/dockers/llm.chatui.service` create venv and install req
 ```shell
 uv venv
 source .venv/bin/activate
-uv pip install -r requrements.txt
+uv pip install -r requirements.txt
 ```
 
 ```shell

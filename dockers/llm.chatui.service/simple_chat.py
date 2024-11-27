@@ -55,13 +55,19 @@ def get_api_response(user_message):
 # Chatbot response functions
 def chatbot_response_no_hist(_chatbot, user_message):
     response_text = get_api_response(user_message)
-    return [[user_message, response_text]], ""
+    return [[user_message, response_text]], "", gr.update(value=1, visible=True), gr.update(visible=True), user_message, response_text
 
 
 def chatbot_response(history, user_message):
     response_text = get_api_response(user_message)
     history.append((user_message, response_text))
-    return history, ""
+    return history, "", gr.update(value=1, visible=True), gr.update(visible=True), user_message, response_text
+
+
+def submit_rating(rating, user_message, bot_response):
+    print(f"User rating: {rating}\nQuestion: {user_message}\nAnswer: {bot_response}")
+    # Hide the rating slider and submit button after submission
+    return gr.update(visible=False), gr.update(visible=False)
 
 
 # Gradio UI setup
@@ -69,8 +75,17 @@ with gr.Blocks() as app:
     with gr.Row():
         with gr.Column(scale=4):
             chatbot = gr.Chatbot()
+
+            # Rating slider and submit button initially hidden
+            rating_slider = gr.Slider(label="Rate the response", minimum=1, maximum=5, step=1, visible=False)
+            submit_rating_btn = gr.Button("Submit Rating", visible=False)
+
             msg = gr.Textbox(placeholder="Type here...", label="Message")
             send_button = gr.Button("Send")
+
+    # Hidden variables to hold user_message and bot_response for rating submission
+    user_message = gr.State()
+    bot_response = gr.State()
 
     if USE_CHATBOT_HISTORY:
         msg.submit(chatbot_response, inputs=[chatbot, msg], outputs=[chatbot, msg])
@@ -79,10 +94,17 @@ with gr.Blocks() as app:
         )
     else:
         msg.submit(
-            chatbot_response_no_hist, inputs=[chatbot, msg], outputs=[chatbot, msg]
+            chatbot_response_no_hist, inputs=[chatbot, msg], outputs=[chatbot, msg, rating_slider, submit_rating_btn, user_message, bot_response]
         )
         send_button.click(
-            chatbot_response_no_hist, inputs=[chatbot, msg], outputs=[chatbot, msg]
+            chatbot_response_no_hist, inputs=[chatbot, msg], outputs=[chatbot, msg, rating_slider, submit_rating_btn, user_message, bot_response]
         )
+
+    # Handle rating submission with the button
+    submit_rating_btn.click(
+        submit_rating,
+        inputs=[rating_slider, user_message, bot_response],
+        outputs=[rating_slider, submit_rating_btn],
+    )
 
 app.launch()

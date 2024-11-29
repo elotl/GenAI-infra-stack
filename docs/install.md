@@ -214,7 +214,7 @@ We will now setup some environment variables that are needed to enable us to cus
 
 If You decide to pass to vector db creation a file created using our process_jira_tickets.py script set the following to "True".
 ```sh
-    IS_JIRA_MODE (DEFAULT="False")
+    IS_JSON_MODE (DEFAULT="False")
 ```
 
 ### Sample RAG Dataset

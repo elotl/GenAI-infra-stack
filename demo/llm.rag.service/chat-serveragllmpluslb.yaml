@@ -46,8 +46,8 @@ spec:
             value: ${MODEL_TEMPERATURE}
           - name: RELEVANT_DOCS
             value: ${RELEVANT_DOCS}
-          - name: IS_JIRA_MODE
-            value: "${IS_JIRA_MODE}"
+          - name: IS_JSON_MODE
+            value: "${IS_JSON_MODE}"
 ---
 apiVersion: v1
 kind: Service

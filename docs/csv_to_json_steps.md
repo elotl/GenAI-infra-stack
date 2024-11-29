@@ -25,7 +25,7 @@ export VECTOR_DB_INPUT_ARG="json-format"
 ## Rag app
 Run rag service with this extra setting
 ```shell
-export IS_JIRA_MODE="True"
+export IS_JSON_MODE="True"
 ```
 
 ## Chat UI app

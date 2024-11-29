@@ -207,7 +207,7 @@ def process_data(input_file: str, config_file: str, output_dir: str):
 
     The input file should be a CSV file containing the data to process.
     The config file should be an INI file with the processing configuration.
-    The output file will be saved in JSONL format.
+    The output file will be saved in JSON format.
     """
     # Load configuration
     click.echo(f"Loading configuration from {config_file}")

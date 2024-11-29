@@ -223,7 +223,8 @@ if __name__ == "__main__":
         print(
             f"Number of files downloaded is {num_files}, local tmp dir is {local_tmp_dir}"
         )
-        vectorstore = create_vectordb(local_tmp_dir, embedding_model_name)
+        vectorstore = create_vectordb(
+            local_tmp_dir, embedding_model_name, embedding_chunk_size, embedding_chunk_overlap)
 
     else:
         print("Unknown value for VECTOR_DB_INPUT_TYPE:", vectordb_input_type)

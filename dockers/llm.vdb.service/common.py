@@ -55,13 +55,13 @@ def chunk_documents_with_metadata(data, chunk_size=1000, chunk_overlap=200):
     return all_chunks, all_metadatas
 
 
-def create_vectordb(local_tmp_dir: str, embedding_model_name: str):
+def create_vectordb(local_tmp_dir: str, embedding_model_name: str, chunk_size: int = 1000, chunk_overlap: int = 200):
     data = load_jsonl_files_from_directory(local_tmp_dir)
 
     # no chunking
     # texts, metadatas = get_documents_with_metadata(data)
     # with chunking texts
-    texts, metadatas = chunk_documents_with_metadata(data)
+    texts, metadatas = chunk_documents_with_metadata(data, chunk_size, chunk_overlap)
 
     embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
     vectorstore = FAISS.from_texts(texts, embeddings, metadatas=metadatas)

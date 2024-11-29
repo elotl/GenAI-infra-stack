@@ -212,6 +212,11 @@ We will now setup some environment variables that are needed to enable us to cus
     EMBEDDING_MODEL_NAME (DEFAULT=sentence-transformers/all-MiniLM-L6-v2)
 ```
 
+If You decide to pass to vector db creation a file created using our process_jira_tickets.py script set the following to "True".
+```sh
+    IS_JSON_MODE (DEFAULT="False")
+```
+
 ### Sample RAG Dataset
 As an example of a RAG dataset, you could use this subset of Wikipedia docs: [https://huggingface.co/datasets/rag-datasets/rag-mini-wikipedia](https://huggingface.co/datasets/rag-datasets/rag-mini-wikipedia)
 This dataset is accompanied with a number of Questions and Answers that can be used to validate RAG functionality.

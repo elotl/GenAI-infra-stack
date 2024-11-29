@@ -1,20 +1,18 @@
 import os
-import sys
-import boto3
 import pickle
-import time
+import sys
+from typing import Any, Dict, List, Union
 
-from typing import Union
+import boto3
+from botocore.exceptions import ClientError, NoCredentialsError
 from fastapi import FastAPI
-from botocore.exceptions import NoCredentialsError, ClientError
-
 from openai import OpenAI
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
+
+from common import get_answer_with_settings
 
 ########
 # Setup model name and query template parameters
-MICROSOFT_MODEL_ID="microsoft/Phi-3-mini-4k-instruct"
+MICROSOFT_MODEL_ID = "microsoft/Phi-3-mini-4k-instruct"
 MOSAICML_MODEL_ID = "mosaicml/mpt-7b-chat"
 RELEVANT_DOCS_DEFAULT = 2
 MAX_TOKENS_DEFAULT = 64
@@ -28,23 +26,30 @@ Question: {question}
 """
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+
 def str_to_int(value, name):
     try:
         # Convert the environment variable (or default) to an integer
         int_value = int(value)
     except ValueError:
-        print(f"Error: Value {name} could not be converted to an integer value, please check.")
+        print(
+            f"Error: Value {name} could not be converted to an integer value, please check."
+        )
         sys.exit(1)
     return int_value
+
 
 def str_to_float(value, name):
     try:
         # Convert the environment variable (or default) to an integer
         float_value = float(value)
     except ValueError:
-        print(f"Error: Value {name} could not be converted to an float value, please check.")
+        print(
+            f"Error: Value {name} could not be converted to an float value, please check."
+        )
         sys.exit(1)
     return float_value
+
 
 ########
 # Fetch RAG context for question, form prompt from context and question, and call model
@@ -52,73 +57,93 @@ def get_answer(question: Union[str, None]):
 
     print("Received question: ", question)
 
-    model_id = os.environ.get('MODEL_ID')
+    model_id = os.environ.get("MODEL_ID")
     if model_id == "" or model_id is None:
         model_id = MODEL_ID_DEFAULT
     print("Using Model ID: ", model_id)
 
-    model_temperature = os.environ.get('MODEL_TEMPERATURE')
+    model_temperature = os.environ.get("MODEL_TEMPERATURE")
     if model_temperature == "" or model_temperature is None:
         model_temperature = MODEL_TEMPERATURE_DEFAULT
     else:
-        model_temperature = str_to_float(model_temperature, 'MODEL_TEMPERATURE')
+        model_temperature = str_to_float(model_temperature, "MODEL_TEMPERATURE")
     print("Using Model Temperature: ", model_temperature)
 
-    max_tokens = os.environ.get('MAX_TOKENS')
+    max_tokens = os.environ.get("MAX_TOKENS")
     if max_tokens == "" or max_tokens is None:
         max_tokens = MAX_TOKENS_DEFAULT
     else:
-        max_tokens = str_to_int(max_tokens, 'MAX_TOKENS')
+        max_tokens = str_to_int(max_tokens, "MAX_TOKENS")
     print("Using Max Tokens: ", max_tokens)
 
-    relevant_docs = os.environ.get('RELEVANT_DOCS')
-    if relevant_docs == "" or relevant_docs is None:  
-        relevant_docs = RELEVANT_DOCS_DEFAULT    
+    relevant_docs = os.environ.get("RELEVANT_DOCS")
+    if relevant_docs == "" or relevant_docs is None:
+        relevant_docs = RELEVANT_DOCS_DEFAULT
     else:
-        relevant_docs = str_to_int(relevant_docs, 'RELEVANT_DOCS')
+        relevant_docs = str_to_int(relevant_docs, "RELEVANT_DOCS")
     print("Using top-k search from Vector DB, k: ", relevant_docs)
+
+    is_json_mode = os.environ.get("IS_JSON_MODE", "False") == "True"
 
     # retrieve docs relevant to the input question
     docs = retriever.invoke(input=question)
-    print ("Number of relevant documents retrieved and that will be used as context for query: ", len(docs))
-
-    # concatenate relevant docs retrieved to be used as context 
-    allcontext = ""
-    for i in range(len(docs)):
-        allcontext += docs[i].page_content
-    promptstr = template.format(context=allcontext, question=question)
-    
-    print("Sending query to the LLM...")
-    completions = client.chat.completions.create(
-        model=model_id,
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {
-                "role": "user",
-                "content": promptstr,
-            },
-        ],
-        max_tokens=max_tokens,
-        temperature=model_temperature,
-        stream=False,
+    print(
+        "Number of relevant documents retrieved and that will be used as context for query: ",
+        len(docs),
     )
-   
-    answer = completions.choices[0].message.content
-    print("Received answer: ", answer)
-    return answer
+
+    if is_json_mode:
+        return get_answer_with_settings(
+            question,
+            retriever,
+            client,
+            model_id,
+            max_tokens,
+            model_temperature,
+        )
+    else:
+        print("Sending query to the LLM...")
+        # concatenate relevant docs retrieved to be used as context
+        allcontext = ""
+        for i in range(len(docs)):
+            allcontext += docs[i].page_content
+        promptstr = template.format(context=allcontext, question=question)
+
+        completions = client.chat.completions.create(
+            model=model_id,
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {
+                    "role": "user",
+                    "content": promptstr,
+                },
+            ],
+            max_tokens=max_tokens,
+            temperature=model_temperature,
+            stream=False,
+        )
+
+        answer = completions.choices[0].message.content
+        print("Received answer: ", answer)
+        return answer
 
 
 ########
 # Get connection to LLM server
-model_llm_server_url = os.environ.get('MODEL_LLM_SERVER_URL')
+model_llm_server_url = os.environ.get("MODEL_LLM_SERVER_URL")
 if model_llm_server_url is None:
-    model_llm_server_url = "http://llm-model-serve-serve-svc.default.svc.cluster.local:8000"
-    print("Setting environment variable MODEL_LLM_SERVER_URL to default value: ", model_llm_server_url )
-llm_server_url = model_llm_server_url + '/v1'
+    model_llm_server_url = (
+        "http://llm-model-serve-serve-svc.default.svc.cluster.local:8000"
+    )
+    print(
+        "Setting environment variable MODEL_LLM_SERVER_URL to default value: ",
+        model_llm_server_url,
+    )
+llm_server_url = model_llm_server_url + "/v1"
 
 print("Creating an OpenAI client to the hosted model at URL: ", llm_server_url)
 try:
-    client = OpenAI(base_url=llm_server_url, api_key='na')
+    client = OpenAI(base_url=llm_server_url, api_key="na")
 except Exception as e:
     print("Error creating client:", e)
     sys.exit(1)
@@ -127,36 +152,38 @@ except Exception as e:
 # Load vectorstore and get retriever for it
 
 # get env vars needed to access Vector DB
-vectordb_bucket = os.environ.get('VECTOR_DB_S3_BUCKET')
-print ("Using vector DB s3 bucket: ", vectordb_bucket)
+vectordb_bucket = os.environ.get("VECTOR_DB_S3_BUCKET")
+print("Using vector DB s3 bucket: ", vectordb_bucket)
 if vectordb_bucket is None:
     print("Please set environment variable VECTOR_DB_S3_BUCKET")
     sys.exit(1)
 print("Using Vector DB S3 bucket: ", vectordb_bucket)
 
-vectordb_key = os.environ.get('VECTOR_DB_S3_FILE')
-print ("Using vector DB s3 file containing vector store: ", vectordb_key)
+vectordb_key = os.environ.get("VECTOR_DB_S3_FILE")
+print("Using vector DB s3 file containing vector store: ", vectordb_key)
 if vectordb_key is None:
     print("Please set environment variable VECTOR_DB_S3_FILE")
     sys.exit(1)
 print("Using Vector DB S3 file: ", vectordb_key)
 
-relevant_docs = os.environ.get('RELEVANT_DOCS')
-if relevant_docs == "" or relevant_docs is None:  
-    relevant_docs = RELEVANT_DOCS_DEFAULT    
+relevant_docs = os.environ.get("RELEVANT_DOCS")
+if relevant_docs == "" or relevant_docs is None:
+    relevant_docs = RELEVANT_DOCS_DEFAULT
 else:
-    relevant_docs = str_to_int(relevant_docs, 'RELEVANT_DOCS')
+    relevant_docs = str_to_int(relevant_docs, "RELEVANT_DOCS")
 print("Using top-k search from Vector DB, k: ", relevant_docs)
 
 # Use s3 client to read in vector store
-s3_client = boto3.client('s3')
+s3_client = boto3.client("s3")
 response = None
 try:
     response = s3_client.get_object(Bucket=vectordb_bucket, Key=vectordb_key)
 except ClientError as e:
-    print(f"Error accessing object, {vectordb_key} in bucket, {vectordb_bucket}, err: {e}")
+    print(
+        f"Error accessing object, {vectordb_key} in bucket, {vectordb_bucket}, err: {e}"
+    )
     sys.exit(1)
-body = response['Body'].read()
+body = response["Body"].read()
 
 print("Loading Vector DB...\n")
 # needs prereq packages: sentence_transformers and faiss-cpu
@@ -174,6 +201,8 @@ print("Created Vector DB retriever successfully. \n")
 ########
 # Start API service to answer questions
 app = FastAPI()
+
+
 @app.get("/answer/{question}")
 def read_item(question: Union[str, None] = None):
     print(f"Received question: {question}")

@@ -5,6 +5,7 @@ metadata:
   namespace: ${MODEL_NAMESPACE}
   labels:
     app: simple-chat
+    elotl-luna: "true"
 spec:
   replicas: 1
   selector:
@@ -17,13 +18,13 @@ spec:
     spec:
       containers:
       - name: chat
-        image: elotl/llm-chat:latest
+        image: elotl/llm-chat:v1.2.1a
+        imagePullPolicy: Always
         ports:
         - containerPort: 7860
         env:
         - name: RAG_LLM_QUERY_URL
-          value: "http://serveragllm-service.${MODEL_NAMESPACE}.svc.cluster.local:80"
-
+          value: "http://serveragllm-service.${MODEL_NAMESPACE}.svc.cluster.local:8000"
         - name: USE_CHATBOT_HISTORY
           value: "false"
         resources:

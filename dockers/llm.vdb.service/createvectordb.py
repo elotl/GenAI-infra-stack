@@ -1,21 +1,20 @@
-import json
 import os
 import pickle
 import sys
 
 import boto3
-from botocore.exceptions import ClientError, NoCredentialsError
-from langchain.text_splitter import (CharacterTextSplitter,
-                                     RecursiveCharacterTextSplitter)
+from botocore.exceptions import ClientError
+from langchain.text_splitter import (
+    CharacterTextSplitter,
+    RecursiveCharacterTextSplitter,
+)
 from langchain_community.document_loaders import DirectoryLoader
 from langchain_community.document_loaders.sitemap import SitemapLoader
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 
-from common import create_vectordb
+from common import create_vectordb, EMBEDDING_CHUNK_SIZE_DEFAULT, EMBEDDING_CHUNK_OVERLAP_DEFAULT
 
-EMBEDDING_CHUNK_SIZE_DEFAULT = 1000
-EMBEDDING_CHUNK_OVERLAP_DEFAULT = 100
 EMBEDDING_MODEL_NAME_DEFAULT = "sentence-transformers/all-MiniLM-L6-v2"
 
 
@@ -224,7 +223,11 @@ if __name__ == "__main__":
             f"Number of files downloaded is {num_files}, local tmp dir is {local_tmp_dir}"
         )
         vectorstore = create_vectordb(
-            local_tmp_dir, embedding_model_name, embedding_chunk_size, embedding_chunk_overlap)
+            local_tmp_dir,
+            embedding_model_name,
+            embedding_chunk_size,
+            embedding_chunk_overlap,
+        )
 
     else:
         print("Unknown value for VECTOR_DB_INPUT_TYPE:", vectordb_input_type)

@@ -19,7 +19,7 @@ upload these files instead of the wiki docs
 ## Vector store creation
 Run vector store creation with 
 ```shell
-export VECTOR_DB_INPUT_ARG="jira-embedding-json"
+export VECTOR_DB_INPUT_ARG="json-format"
 ```
 
 ## Rag app

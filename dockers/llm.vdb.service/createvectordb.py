@@ -208,7 +208,7 @@ if __name__ == "__main__":
 
         vectorstore = FAISS.from_documents(docs, embeddings)
 
-    elif vectordb_input_type == "jira-embedding-json":
+    elif vectordb_input_type == "json-format":
         local_tmp_dir = "/tmp/" + vectordb_file
 
         # create this temp dir if it does not already exist

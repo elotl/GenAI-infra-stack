@@ -1,4 +1,4 @@
-# LLM Chat in a Box POC, v0.1.4, 10/22/24
+# LLM Chat in a Box POC, v0.1.5, 12/04/24
 
 [K8s](https://kubernetes.io/) + [Luna](https://docs.elotl.co/luna/intro/) + [KubeRay](https://docs.ray.io/en/master/cluster/kubernetes/getting-started.html) + [RayService](https://docs.ray.io/en/master/cluster/kubernetes/getting-started/rayservice-quick-start.html) + [vLLM](https://docs.vllm.ai/en/stable/) + Open Source LLM + [RayAutoscaler](https://docs.ray.io/en/latest/cluster/kubernetes/user-guides/configuring-autoscaling.html) + [Retrieval Augmented Generation using FAISS](https://python.langchain.com/docs/integrations/vectorstores/faiss/)  
 
@@ -9,12 +9,12 @@ This POC is intended to allow you to easily deploy and use a working state-of-th
 
 Run w/Luna on K8s w/L4 (EKS,GKE) & A10 (AKS) w/GPU quota + specified Nvidia GPU drivers
 
-* Luna-1.2.4, EKS, us-west-2, K8s v1.30.2, w/K8s Nvidia daemonset from
-[https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.13.0/nvidia-device-plugin.yml](https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.13.0/nvidia-device-plugin.yml
+* Luna-1.2.8, EKS, us-west-2, K8s v1.30.2, w/K8s Nvidia daemonset from
+[https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.17.0/deployments/static/nvidia-device-plugin.yml](https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.17.0/deployments/static/nvidia-device-plugin.yml
 )
-* Luna-1.2.4, GKE, us-central1, K8s v1.29.7, w/GCP Nvidia daemonset from
+* Luna-1.2.8, GKE, us-central1, K8s v1.29.7, w/GCP Nvidia daemonset from
 [https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml](https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml)
-* Luna-1.2.5pre, AKS, east-us, K8s v1.30.3, w/K8s Nvidia gpu-operator from
+* Luna-1.2.8, AKS, east-us, K8s v1.30.3, w/K8s Nvidia gpu-operator from
 ```sh
 helm repo add nvidia https://helm.ngc.nvidia.com/nvidia && helm repo update
 helm install --wait --generate-name -n gpu-operator --create-namespace nvidia/gpu-operator
@@ -26,8 +26,26 @@ helm install --wait --generate-name -n gpu-operator --create-namespace nvidia/gp
 
 On existing cloud K8s cluster, install Luna as per cloud K8s in the [Luna docs](https://docs.elotl.co/luna/intro/).
 [Download Free trial here](https://www.elotl.co/luna-free-trial.html).
-For EKS: need to specify larger EBS size w/Luna aws.blockDeviceMapping option
-Download block_device_mapping.json and when deploying Luna, include --additional-helm-values “--set-file aws.blockDeviceMappings=<path>/block_device_mapping.json”
+
+For EKS: need to specify larger EBS size w/Luna aws.blockDeviceMapping option.
+* Download [block_device_mapping.json](https://github.com/elotl/GenAI-infra-stack/blob/main/demo/llm.gpu.service/block_device_mapping.json)
+and when deploying Luna, include --additional-helm-values “--set-file aws.blockDeviceMappings=<path>/block_device_mapping.json”
+* Alternatively on EKS, Luna can be configured to use Bottlerocket with a snapshot volume to prepopulate the nodes it allocates with the ray-ml image, which avoids image download time.
+Run [get-user-data.sh](https://github.com/elotl/GenAI-infra-stack/blob/main/demo/llm.gpu.service/get-user-data.sh) with your cluster name and region to produce user-data.toml.
+Download [block_device_mapping_bottlerocket.json](https://github.com/elotl/GenAI-infra-stack/blob/main/demo/llm.gpu.service/block_device_mapping_bottlerocket.json),
+which references the snapshot snap-0985a24f61f601b34 in us-west-2, built using the instructions
+in https://github.com/aws-samples/bottlerocket-images-cache?tab=readme-ov-file#build-ebs-snapshot-with-cached-container-image.
+When deploying Luna, include --additional-helm-values set to
+```
+--set aws.isBottlerocketImage=true
+--set aws.imageSsmQueryGeneric=/aws/service/bottlerocket/aws-k8s-%s/x86_64/latest/image_id
+--set aws.imageSsmQueryGenericArm=/aws/service/bottlerocket/aws-k8s-%s/arm64/latest/image_id
+--set aws.imageSsmQueryGpu=/aws/service/bottlerocket/aws-k8s-%s-nvidia/x86_64/latest/image_id
+--set-file aws.blockDeviceMappings=<path>/block_device_mapping_bottlerocket.json
+--set-file aws.userData=<path>/user-data.toml
+```
+and change the images used by the Ray LLM head and workers in the yaml used in the ray-service installation step below
+from rayproject/ray-ml:2.33.0.914af0-py311 to public.ecr.aws/anyscale/ray-ml:2.33.0-py311.
 
 ### Install KubeRay Operator to manage Ray on Cloud K8s Cluster
 ```sh

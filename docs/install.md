@@ -110,7 +110,7 @@ kubectl apply -f ray-service.llm.Phi-3-mini-4k-instruct.autoscale.yaml
 
 ## Model Serve
 
-### Run Port-forward for Model Endpoint
+### Run Port-forward for Model Endpoint (in the background)
 ```sh
 kubectl port-forward svc/llm-model-serve-serve-svc 8000:8000
 ```
@@ -321,15 +321,21 @@ Please note the IP listed in the EXTERNAL-IP column shown in the output of the `
 
 
 ## Query the LLM with RAG
-You can use the CURL command or Postman to access the RAG+LLM service endpoint and ask questions about your RAG dataset.
+You can use the provided demo/scripts/rag_query.py script with port forwarding to query the RAG+LLM service endpoint and ask questions about your RAG dataset.
+
+### Run Port-forward for Model Endpoint (in the background)
+```sh
+nohup kubectl port-forward svc/serveragllm-service 8000:8000 &
+```
+
+Use the script to query the RAG+LLM service
 
 ```sh
-curl -X GET "http://<some-external-IP>/answer/what%20are%20the%20two%20types%20of%20elephants%20in%20Africa?"
-
-{
-"question":"what are the two types of elephants in Africa",
-"answer":"The two types of elephants in Africa are the savanna elephant and the forest elephant."
-}  
+python rag_query.py
+```
+```
+Type your query here: What are the two types of elephants in Africa?
+Answer: The two types of elephants in Africa are the African bush elephant (Loxodonta africana) and the African forest elephant (Loxodonta cyclotis).
 ```
 
 # Uninstallation

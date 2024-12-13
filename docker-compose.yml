@@ -1,4 +1,5 @@
 # Compose a postgres database together with the extension pgvector
+# source: https://github.com/johannesocean/pgvector-demo/blob/main/docker-compose.yml
 services:
   db:
     hostname: db

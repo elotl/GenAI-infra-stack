@@ -5,6 +5,7 @@
 #     "langchain",
 #     "langchain-community",
 #     "langchain-huggingface",
+#     "langchain_postgres",
 #     "pgvector",
 #     "psycopg2-binary",
 # ]

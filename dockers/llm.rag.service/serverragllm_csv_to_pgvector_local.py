@@ -13,7 +13,6 @@
 # ///
 
 import os
-import pickle
 import sys
 import uvicorn
 
@@ -37,7 +36,7 @@ def setup(
     app = FastAPI()
 
     # TODO: move to imports
-    from langchain.vectorstores.pgvector import PGVector
+    from langchain_postgres import PGVector
     from langchain_huggingface import HuggingFaceEmbeddings
 
     # TODO: pass through settings or params
@@ -48,9 +47,10 @@ def setup(
     embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
 
     vectorstore = PGVector(
-        connection_string=connection_string,
+        embeddings=embeddings,
         collection_name=collection_name,
-        embedding_function=embeddings
+        connection=connection_string,
+        use_jsonb=True,
     )
 
     retriever = vectorstore.as_retriever(search_kwargs={"k": relevant_docs})

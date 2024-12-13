@@ -100,7 +100,7 @@ def create_vectordb_pgvector(
     embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
 
     # TODO: move to imports
-    from langchain.vectorstores.pgvector import PGVector
+    from langchain_postgres import PGVector
     from langchain_core.documents import Document
 
     # adapt data
@@ -116,5 +116,5 @@ def create_vectordb_pgvector(
         embedding=embeddings,
         documents=documents,
         collection_name=collection_name,
-        connection_string=connection_string,
+        connection=connection_string,
     )

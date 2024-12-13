@@ -1,5 +1,6 @@
 import json
 import os
+from typing import List
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
@@ -79,3 +80,41 @@ def create_vectordb(
     print("Convert to FAISS vectorstore")
     vectorstore = FAISS.from_texts(texts, embeddings, metadatas=metadatas)
     return vectorstore
+
+
+def create_vectordb_pgvector(
+    local_tmp_dir: str,
+    embedding_model_name: str,
+    connection_string: str,
+    collection_name: str,
+    chunk_size: int = EMBEDDING_CHUNK_SIZE_DEFAULT,
+    chunk_overlap: int = EMBEDDING_CHUNK_OVERLAP_DEFAULT,
+):
+    data = load_jsonl_files_from_directory(local_tmp_dir)
+
+    # no chunking
+    # texts, metadatas = get_documents_with_metadata(data)
+    # with chunking texts
+    texts, metadatas = chunk_documents_with_metadata(data, chunk_size, chunk_overlap)
+
+    embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
+
+    # TODO: move to imports
+    from langchain.vectorstores.pgvector import PGVector
+    from langchain_core.documents import Document
+
+    # adapt data
+    documents: List[Document] = []
+    for txt, met in zip(texts, metadatas):
+        document = Document(
+            page_content=txt,
+            metadata=met
+        )
+        documents.append(document)
+
+    return PGVector.from_documents(
+        embedding=embeddings,
+        documents=documents,
+        collection_name=collection_name,
+        connection_string=connection_string,
+    )

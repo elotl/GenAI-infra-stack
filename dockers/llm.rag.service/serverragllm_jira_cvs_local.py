@@ -10,23 +10,29 @@
 # ]
 # ///
 
+import json
 import os
 import pickle
 import sys
 import uvicorn
+import click
 
+from fastapi import FastAPI
 from functools import partial
 from typing import Union
 
-import click
-from fastapi import FastAPI
 from openai import OpenAI
+#from langchain_openai import OpenAI
 
+from openinference.instrumentation.langchain import LangChainInstrumentor
 from common import get_answer_with_settings
 
+import phoenix as px
+from phoenix.otel import register
+from phoenix.session.evaluation import get_qa_with_reference, get_retrieved_documents
 
 def setup(
-        file_path: str,
+        vectore_store_path: str,
         relevant_docs: int,
         llm_server_url:str,
         model_id: str,
@@ -36,7 +42,7 @@ def setup(
     app = FastAPI()
 
     # Load the object from the pickle file
-    with open(file_path, "rb") as file:
+    with open(vectore_store_path, "rb") as file:
         print("Loading Vector DB...\n")
         vectorstore = pickle.load(file)
 
@@ -61,6 +67,18 @@ def setup(
         model_temperature=model_temperature,
     )
 
+    print("Setting up Phoenix (LLM ops tool) tracer \n")
+    tracer_provider = register(
+        project_name="default",
+        endpoint="http://localhost:6006/v1/traces",
+    )
+
+    LangChainInstrumentor(tracer_provider=tracer_provider).instrument(skip_dep_check=True)
+
+    print("Setting up Phoenix's configuration: \n")
+    queries_df = get_qa_with_reference(px.Client())
+    retrieved_documents_df = get_retrieved_documents(px.Client()) 
+
     @app.get("/answer/{question}")
     def read_item(question: Union[str, None] = None):
         print(f"Received question: {question}")
@@ -69,26 +87,30 @@ def setup(
 
     return app
 
-
+print("Setting up configuration for RAG LLM")
 MICROSOFT_MODEL_ID = "microsoft/Phi-3-mini-4k-instruct"
 MOSAICML_MODEL_ID = "mosaicml/mpt-7b-chat"
 RELEVANT_DOCS_DEFAULT = 2
 MAX_TOKENS_DEFAULT = 64
 MODEL_TEMPERATURE_DEFAULT = 0.01
 
+vectore_store_path = os.getenv("VECTOR_STORE_PATH")
+if not vectore_store_path:
+    print("Please provide the pickled vector store path via env var, VECTORE_STORE_PATH")
 
-file_path = os.getenv("FILE_PATH")
-if not file_path:
-    print("Please provide the pickeled vector store path")
-
-relevant_docs = os.getenv("RELEVANT_DOCS", RELEVANT_DOCS_DEFAULT)
+relevant_docs = int(os.getenv("RELEVANT_DOCS", RELEVANT_DOCS_DEFAULT))
 llm_server_url = os.getenv("LLM_SERVER_URL", "http://localhost:11434/v1")
 model_id = os.getenv("MODEL_ID", "llama2")
 max_tokens = int(os.getenv("MAX_TOKENS", MAX_TOKENS_DEFAULT))
 model_temperature = float(os.getenv("MODEL_TEMPERATURE", MODEL_TEMPERATURE_DEFAULT))
 
-app = setup(file_path, relevant_docs, llm_server_url, model_id, max_tokens, model_temperature)
+# Uncomment the following 2 lines if you would like to bring
+# up a local Phoenix app
+#print("Starting LLM Ops tool, Phoenix locally")
+#session = px.launch_app()
 
+print("Setting up Fast API app \n")
+app = setup(vectore_store_path, relevant_docs, llm_server_url, model_id, max_tokens, model_temperature)
 
 @click.command()
 @click.option("--host", default="127.0.0.1", help="Host for the FastAPI server (default: 127.0.0.1)")
@@ -96,7 +118,6 @@ app = setup(file_path, relevant_docs, llm_server_url, model_id, max_tokens, mode
 def run(host, port):
     # Serve the app using Uvicorn
     uvicorn.run("serverragllm_jira_cvs_local:app", host=host, port=port, reload=True)
-
 
 if __name__ == "__main__":
     run()

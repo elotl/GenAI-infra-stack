@@ -10,8 +10,12 @@ import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 from fastapi import FastAPI
 from openai import OpenAI
-
 from common import get_answer_with_settings, get_sql_answer
+
+import phoenix as px
+from phoenix.otel import register
+from phoenix.session.evaluation import get_qa_with_reference, get_retrieved_documents
+from openinference.instrumentation.langchain import LangChainInstrumentor
 
 ########
 # Setup model name and query template parameters
@@ -266,6 +270,20 @@ vectorstore = pickle.loads(body)
 # https://python.langchain.com/api_reference/community/vectorstores/langchain_community.vectorstores.faiss.FAISS.html#langchain_community.vectorstores.faiss.FAISS.as_retriever
 retriever = vectorstore.as_retriever(search_kwargs={"k": relevant_docs})
 logger.info("Created Vector DB retriever successfully.")
+
+# Setup Phoenix
+phoenix_svc_url = "http://phoenix-svc.phoenix.svc.cluster.local:6006"
+
+print("Setting up Phoenix (LLM ops tool) tracer \n")
+tracer_provider = register(
+    project_name="default",
+    endpoint="http://localhost:6006/v1/traces",
+)
+LangChainInstrumentor(tracer_provider=tracer_provider).instrument(skip_dep_check=True)
+
+print("Setting up Phoenix's configuration: \n")
+queries_df = get_qa_with_reference(px.Client(endpoint=phoenix_svc_url))
+retrieved_documents_df = get_retrieved_documents(px.Client(endpoint=phoenix_svc_url)) 
 
 # Uncomment to run a local test
 # logger.info("Testing with a sample question:")

@@ -118,3 +118,37 @@ def create_vectordb_pgvector(
         collection_name=collection_name,
         connection=connection_string,
     )
+
+
+def create_vectordb_local_weaviate(
+    local_tmp_dir: str,
+    embedding_model_name: str,
+    chunk_size: int = EMBEDDING_CHUNK_SIZE_DEFAULT,
+    chunk_overlap: int = EMBEDDING_CHUNK_OVERLAP_DEFAULT,
+):
+    data = load_jsonl_files_from_directory(local_tmp_dir)
+
+    # no chunking
+    # texts, metadatas = get_documents_with_metadata(data)
+    # with chunking texts
+    texts, metadatas = chunk_documents_with_metadata(data, chunk_size, chunk_overlap)
+
+    embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
+
+    # TODO: move to imports
+    import weaviate
+    from langchain_weaviate.vectorstores import WeaviateVectorStore
+    from langchain_core.documents import Document
+
+    # adapt data
+    documents: List[Document] = []
+    for txt, met in zip(texts, metadatas):
+        document = Document(
+            page_content=txt,
+            metadata=met
+        )
+        documents.append(document)
+
+    # TODO: enable connecting to other weaviate than local
+    weaviate_client = weaviate.connect_to_local()
+    return WeaviateVectorStore.from_documents(documents, embeddings, client=weaviate_client, index_name="my_custom_index")

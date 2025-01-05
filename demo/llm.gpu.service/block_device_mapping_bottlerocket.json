@@ -15,7 +15,7 @@
       "VolumeSize": 80,
       "VolumeType": "gp3",
       "Encrypted": false,
-      "SnapshotId": "snap-04c562fdb7a3af82a"
+      "SnapshotId": "snap-09946d545033d96f7"
     }
   }
 ]

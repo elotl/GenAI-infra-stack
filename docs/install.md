@@ -27,7 +27,9 @@ helm install --wait --generate-name -n gpu-operator --create-namespace nvidia/gp
 On existing cloud K8s cluster, install Luna as per cloud K8s in the [Luna docs](https://docs.elotl.co/luna/intro/).
 [Download Free trial here](https://www.elotl.co/luna-free-trial.html).
 
-Please see the following two sections for EKS and GKE cloud-specific information.
+Please note that running the POC on EKS requires
+Luna to be configured to allocate a larger EBS size than the default; this configuration is described in the EKS section below.
+And the EKS and GKE sections below provide instructions to optionally reduce node startup time on those platforms.
 
 #### EKS
 
@@ -63,7 +65,7 @@ When deploying Luna, include --additional-helm-values set to:
 ```
 Change the images used by the Ray LLM head and workers in the yaml used in the ray-service installation step below
 from rayproject/ray-ml:2.33.0.914af0-py311 to 689494258501.dkr.ecr.us-west-2.amazonaws.com/qa-in-a-box:ray-ml-2.33.0-py311-vllm-0.5.4-hfxfr,
-remove the line `pip: ["vllm==0.5.4"]`, and add the following lines below the ray-head and ray-worker image lines:
+remove the line `pip: ["vllm==0.5.4"]`, and add the following lines below the ray-head and ray-worker image lines to speed up model download:
 ```
 env:
   - name: HF_HUB_ENABLE_HF_TRANSFER
@@ -81,7 +83,8 @@ set gcp.nodeServiceAccount=<CLUSTER_NAME>-elotl@<PROJECT_ID>.iam.gserviceaccount
 ```
 Change the images used by the Ray LLM head and workers in the yaml used in the ray-service installation step below
 from rayproject/ray-ml:2.33.0.914af0-py311 to gcr.io/elotl-dev/rayproject/ray-ml:2.33.0.914af0-py311-vllm-0.5.4-hfxfr,
-remove the line `pip: ["vllm==0.5.4"]`, and add the following lines below the ray-head and ray-worker image lines:
+remove the line `pip: ["vllm==0.5.4"]`, and add the following lines below the ray-head and ray-worker image lines
+to speed up model download:
 ```
 env:
   - name: HF_HUB_ENABLE_HF_TRANSFER
@@ -102,7 +105,8 @@ helm install kuberay-operator kuberay/kuberay-operator --version 1.1.0-rc.0
 You can choose to install the RayService w/vLLM + Open Source Model Serve Stack either without or with the Ray Autoscaler, as described in the 2 subsections for each of the two models below.  If you install it w/o the Ray Autoscaler, the model serve stack will come up more quickly, but will have a fixed number of workers, configured as 1.  If you install it with the Ray Autoscaler, the model serve stack will start with 0 workers, will scale to 1 worker as the RayService is activated, and will scale to more workers as needed to handle the query load, configured w/a max of 4.
 
 The instructions below describe installing a MosaicML model and a Microsoft model.
-Note that the Microsoft model is of a more recent vintage and loads faster.
+Note that the Microsoft model is of a more recent vintage and loads faster; hence,
+that may be the better choice of the two.
 
 ### [MosaicML Open Source Model](https://huggingface.co/mosaicml/mpt-7b-chat)
 Install RayService w/vLLM + MosaicML OS Model w/o Ray Autoscaler

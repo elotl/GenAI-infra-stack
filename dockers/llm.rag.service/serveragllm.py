@@ -272,12 +272,12 @@ retriever = vectorstore.as_retriever(search_kwargs={"k": relevant_docs})
 logger.info("Created Vector DB retriever successfully.")
 
 # Setup Phoenix
-phoenix_svc_url = "http://phoenix-svc.phoenix.svc.cluster.local:6006"
+phoenix_svc_url = "http://phoenix.phoenix.svc.cluster.local:6006"
 
 print("Setting up Phoenix (LLM ops tool) tracer \n")
 tracer_provider = register(
     project_name="default",
-    endpoint="http://localhost:6006/v1/traces",
+    endpoint=phoenix_svc_url,
 )
 LangChainInstrumentor(tracer_provider=tracer_provider).instrument(skip_dep_check=True)
 

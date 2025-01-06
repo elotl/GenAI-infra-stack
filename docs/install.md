@@ -1,4 +1,4 @@
-# LLM Chat in a Box POC, v0.1.5, 12/04/24
+# LLM Chat in a Box POC, v0.1.5, 01/06/25
 
 [K8s](https://kubernetes.io/) + [Luna](https://docs.elotl.co/luna/intro/) + [KubeRay](https://docs.ray.io/en/master/cluster/kubernetes/getting-started.html) + [RayService](https://docs.ray.io/en/master/cluster/kubernetes/getting-started/rayservice-quick-start.html) + [vLLM](https://docs.vllm.ai/en/stable/) + Open Source LLM + [RayAutoscaler](https://docs.ray.io/en/latest/cluster/kubernetes/user-guides/configuring-autoscaling.html) + [Retrieval Augmented Generation using FAISS](https://python.langchain.com/docs/integrations/vectorstores/faiss/)  
 
@@ -73,6 +73,7 @@ env:
   - name: HF_HUB_DISABLE_PROGRESS_BARS
     value: "1"
 ```
+An example of this for the ```microsoft/Phi-3-mini-4k-instruct``` model is [here](https://github.com/elotl/skyray/blob/main/luna-llm-serve/ray-service.llm.Phi-3-mini-4k-instruct.fastereks.yaml)
 
 #### GKE
 
@@ -89,9 +90,8 @@ to speed up model download:
 env:
   - name: HF_HUB_ENABLE_HF_TRANSFER
     value: "1"
-  - name: HF_HUB_DISABLE_PROGRESS_BARS
-    value: "1"
 ```
+An example of this for the ```microsoft/Phi-3-mini-4k-instruct``` model is [here](https://github.com/elotl/skyray/blob/main/luna-llm-serve/ray-service.llm.Phi-3-mini-4k-instruct.fastergke.yaml)
 
 ### Install KubeRay Operator to manage Ray on Cloud K8s Cluster
 ```sh

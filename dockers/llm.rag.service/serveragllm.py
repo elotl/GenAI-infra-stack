@@ -8,6 +8,7 @@ from botocore.exceptions import ClientError, NoCredentialsError
 from fastapi import FastAPI
 from openai import OpenAI
 from common import get_answer_with_settings
+from common import setup_rag_llm_config
 
 import phoenix as px
 from phoenix.otel import register
@@ -23,12 +24,12 @@ MAX_TOKENS_DEFAULT = 64
 MODEL_TEMPERATURE_DEFAULT = 0.01
 MODEL_ID_DEFAULT = MOSAICML_MODEL_ID
 
-template = """Answer the question based only on the following context:
-{context}
-
-Question: {question}
-"""
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
+#template = """Answer the question based only on the following context:
+#{context}
+#
+#Question: {question}
+#"""
+#os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 def str_to_int(value, name):
@@ -60,6 +61,9 @@ def str_to_float(value, name):
 def get_answer(question: Union[str, None]):
 
     print("Received question: ", question)
+
+    # setup RAG LLM parameters
+    # common.setup_rag_llm_config()
 
     model_id = os.environ.get("MODEL_ID")
     if model_id == "" or model_id is None:
@@ -104,32 +108,19 @@ def get_answer(question: Union[str, None]):
             model_id,
             max_tokens,
             model_temperature,
+            True,
         )
     else:
-        print("Sending query to the LLM...")
-        # concatenate relevant docs retrieved to be used as context
-        allcontext = ""
-        for i in range(len(docs)):
-            allcontext += docs[i].page_content
-        promptstr = template.format(context=allcontext, question=question)
-
-        completions = client.chat.completions.create(
-            model=model_id,
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {
-                    "role": "user",
-                    "content": promptstr,
-                },
-            ],
-            max_tokens=max_tokens,
-            temperature=model_temperature,
-            stream=False,
+        return get_answer_with_settings(
+            question,
+            retriever,
+            client,
+            model_id,
+            max_tokens,
+            model_temperature,
+            False,
         )
-
-        answer = completions.choices[0].message.content
-        print("Received answer: ", answer)
-        return answer
+########
 
 
 ########

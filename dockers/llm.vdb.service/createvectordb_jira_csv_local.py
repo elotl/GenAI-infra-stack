@@ -17,13 +17,14 @@ from common import create_vectordb
 
 
 @click.command()
+@click.argument("is_json", type=bool)
 @click.argument("local_tmp_dir", type=click.Path(exists=True))
 @click.argument("output_file", type=click.Path())
 @click.argument(
     "embedding_model_name", default="sentence-transformers/all-MiniLM-L6-v2"
 )
-def run(local_tmp_dir: str, output_file: str, embedding_model_name: str):
-    vectorstore = create_vectordb(local_tmp_dir, embedding_model_name)
+def run(is_json: bool, local_tmp_dir: str, output_file: str, embedding_model_name: str):
+    vectorstore = create_vectordb(is_json, local_tmp_dir, embedding_model_name)
 
     pickle_byte_obj = pickle.dumps(vectorstore)
 

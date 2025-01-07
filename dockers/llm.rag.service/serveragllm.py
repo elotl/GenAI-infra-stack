@@ -8,7 +8,6 @@ from botocore.exceptions import ClientError, NoCredentialsError
 from fastapi import FastAPI
 from openai import OpenAI
 from common import get_answer_with_settings
-from common import setup_rag_llm_config
 
 import phoenix as px
 from phoenix.otel import register

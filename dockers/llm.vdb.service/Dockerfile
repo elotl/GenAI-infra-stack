@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile-upstream:master
 # Adapted from: https://github.com/pytorch/pytorch/blob/master/Dockerfile
-FROM python:3.11-slim as base-container
+FROM python:3.11-slim AS base-container
 
 # Automatically set by buildx
 ARG TARGETPLATFORM

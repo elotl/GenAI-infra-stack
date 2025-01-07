@@ -11,6 +11,7 @@ from botocore.exceptions import ClientError, NoCredentialsError
 from fastapi import FastAPI
 from openai import OpenAI
 from common import get_answer_with_settings, get_sql_answer
+from common import setup_rag_llm_config
 
 import phoenix as px
 from phoenix.otel import register
@@ -38,12 +39,12 @@ SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Forma
                 7. Provide a clear, direct and factual answer.
                 """
 
-template = """Answer the question based only on the following context:
-{context}
-
-Question: {question}
-"""
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
+#template = """Answer the question based only on the following context:
+#{context}
+#
+#Question: {question}
+#"""
+#os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 class SearchType(Enum):
@@ -80,6 +81,9 @@ def str_to_float(value, name):
 def get_answer(question: Union[str, None]):
 
     logger.info(f"In get_answer, received question: {question}")
+
+    # setup RAG LLM parameters
+    # common.setup_rag_llm_config()
 
     model_id = os.environ.get("MODEL_ID")
     if model_id == "" or model_id is None:
@@ -206,8 +210,15 @@ def get_answer(question: Union[str, None]):
 
         answer = completions.choices[0].message.content
         logger.info(f"Received answer (from non JSON processing): {answer}")
-        return answer
-
+        return get_answer_with_settings(
+            question,
+            retriever,
+            client,
+            model_id,
+            max_tokens,
+            model_temperature,
+            True, # or false?
+        )
 
 # Get connection to LLM server
 model_llm_server_url = os.environ.get("MODEL_LLM_SERVER_URL")

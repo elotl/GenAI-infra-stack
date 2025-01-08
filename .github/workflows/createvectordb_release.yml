@@ -50,4 +50,4 @@ jobs:
     - name: Make and push image
       run: |
         TAG=$(git describe --tags --match "createvectordb-v*" --abbrev=0)
-        ./dockers/llm.vdb.service elotl/createvectordb $TAG
+        ./dockers/llm.vdb.service/makeDocker.sh elotl/createvectordb $TAG

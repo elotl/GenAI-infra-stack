@@ -50,4 +50,4 @@ jobs:
     - name: Make and push image
       run: |
         TAG=$(git describe --tags --match "llm-chat-v*" --abbrev=0)
-        ./dockers/llm.chatui.service elotl/llm-chat $TAG
+        ./dockers/llm.chatui.service/makeDocker.sh elotl/llm-chat $TAG

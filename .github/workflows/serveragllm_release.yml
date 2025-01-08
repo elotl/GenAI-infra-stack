@@ -50,4 +50,4 @@ jobs:
     - name: Make and push image
       run: |
         TAG=$(git describe --tags --match "serveragllm-v*" --abbrev=0)
-        ./dockers/llm.rag.service elotl/serveragllm $TAG
+        ./dockers/llm.rag.service/makeDocker.sh elotl/serveragllm $TAG

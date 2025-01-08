@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile-upstream:master
+# syntax=docker/dockerfile:1
 # Adapted from: https://github.com/pytorch/pytorch/blob/master/Dockerfile
 FROM python:3.11-slim as base-container
 

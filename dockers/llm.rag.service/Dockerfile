@@ -20,8 +20,7 @@ WORKDIR /serveragllm
 
 COPY __init__.py .
 COPY serveragllm.py .
-# TODO: uncomment when multiple mains issue solved
-# COPY serverragllm_jira_cvs_local.py . 
+COPY serverragllm_jira_cvs_local.py .
 COPY common.py .
 COPY pyproject.toml .
 

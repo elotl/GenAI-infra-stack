@@ -55,27 +55,25 @@ jobs:
           echo "Actor: ${{ github.actor }}"
           echo "Actor Permission: ${{ github.actor_permission }}"
           echo "Repository Owner: ${{ github.repository_owner }}"
-      
-      - name: Log tag
+
+     - name: Set tag
+        id: set-tag
         run: |
           TAG=$(git describe --tags --match "v*" --abbrev=0)
           echo "TAG=$TAG" >> $GITHUB_ENV
+
+      - name: Log tag
+        run: |
           echo "Tag: ${{ env.TAG }}"
 
       - name: Build and push image - createvectordb
         run: |
-          TAG=$(git describe --tags --match "v*" --abbrev=0)
-          echo "TAG=$TAG" >> $GITHUB_ENV
-          ./dockers/llm.vdb.service/makeDocker.sh elotl/createvectordb $env.TAG
+          ./dockers/llm.vdb.service/makeDocker.sh elotl/createvectordb ${{ env.TAG }}
 
       - name: Build and push image - llm-chat
         run: |
-          TAG=$(git describe --tags --match "v*" --abbrev=0)
-          echo "TAG=$TAG" >> $GITHUB_ENV
-          ./dockers/llm.chatui.service/makeDocker.sh elotl/llm-chat $env.TAG
+          ./dockers/llm.chatui.service/makeDocker.sh elotl/llm-chat ${{ env.TAG }}
 
       - name: Build and push image - serveragllm
         run: |
-          TAG=$(git describe --tags --match "v*" --abbrev=0)
-          echo "TAG=$TAG" >> $GITHUB_ENV
-          ./dockers/llm.rag.service/makeDocker.sh elotl/serveragllm $env.TAG
+          ./dockers/llm.rag.service/makeDocker.sh elotl/serveragllm ${{ env.TAG }}

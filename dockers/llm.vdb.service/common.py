@@ -8,20 +8,22 @@ from langchain_huggingface import HuggingFaceEmbeddings
 EMBEDDING_CHUNK_SIZE_DEFAULT = 1000
 EMBEDDING_CHUNK_OVERLAP_DEFAULT = 100
 
-
 def load_jsonl_files_from_directory(directory):
     data = []
-    # Loop through all files in the directory
     for filename in os.listdir(directory):
-        if filename.endswith(".jsonl") or filename.endswith(".json"):
-            file_path = os.path.join(directory, filename)
-            # Open and read each jsonl file
-            with open(file_path, "r") as file:
-                for line in file:
-                    # Parse each JSON object in the file
-                    data.append(json.loads(line.strip()))
+        print("Processing file, ", filename, "..." )
+        if filename.endswith('.json'):
+            with open(os.path.join(directory, filename)) as f:
+                try:
+                    # Try reading as JSONL first
+                    for line in f:
+                        if line.strip():  # Skip empty lines
+                            data.append(json.loads(line.strip()))
+                except json.JSONDecodeError:
+                    # If that fails, try reading as regular JSON
+                    f.seek(0)  # Go back to start of file
+                    data.append(json.load(f))
     return data
-
 
 def get_documents_with_metadata(data):
     texts = [doc["text"] for doc in data]
@@ -42,6 +44,7 @@ def chunk_documents_with_metadata(data, chunk_size=1000, chunk_overlap=200):
     all_metadatas = []
 
     for doc in data:
+        print("Chunking doc with key, ", doc["metadata"]["key"])
         chunks = text_splitter.split_text(doc["text"])
 
         doc_metadatas = [doc["metadata"].copy() for _ in chunks]
@@ -63,13 +66,16 @@ def create_vectordb(
     chunk_size: int = EMBEDDING_CHUNK_SIZE_DEFAULT,
     chunk_overlap: int = EMBEDDING_CHUNK_OVERLAP_DEFAULT,
 ):
+    print("Load JSON files")
     data = load_jsonl_files_from_directory(local_tmp_dir)
 
     # no chunking
     # texts, metadatas = get_documents_with_metadata(data)
     # with chunking texts
+    print("Start chunking documents")
     texts, metadatas = chunk_documents_with_metadata(data, chunk_size, chunk_overlap)
 
     embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
+    print("Convert to FAISS vectorstore")
     vectorstore = FAISS.from_texts(texts, embeddings, metadatas=metadatas)
     return vectorstore

@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Adapted from: https://github.com/pytorch/pytorch/blob/master/Dockerfile
-FROM python:3.11-slim as base-container
+FROM python:3.11-slim AS base-container
 
 # Automatically set by buildx
 ARG TARGETPLATFORM
@@ -18,16 +18,33 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
 
 WORKDIR /serveragllm
 
+# Upgrade pip
+RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel
+
+# Install dependencies in separate layers
+RUN pip3 install --no-cache-dir \
+    "openai" \
+    "langchain" \
+    "langchain_community" \
+    "langchain_huggingface"
+
+RUN pip3 install --no-cache-dir \
+    "unstructured" \
+    "sentence-transformers" \
+    "faiss-cpu"
+
+RUN pip3 install --no-cache-dir \
+    "fastapi" \
+    "boto3"
+
+RUN pip3 install --no-cache-dir \
+    "uvicorn[standard]"
+
 COPY __init__.py .
 COPY serveragllm.py .
 COPY serverragllm_jira_cvs_local.py .
 COPY common.py .
 COPY pyproject.toml .
-
-RUN --mount=type=cache,target=/root/.cache/pip \
-  pip3 install -v --no-cache-dir \
-  "openai" "langchain" "langchain_community" "langchain_huggingface" "unstructured" "sentence-transformers" "faiss-cpu" "uvicorn[standard]" "fastapi" "boto3" && \
-  pip3 install --no-cache-dir -e .
 
 EXPOSE 8000
 

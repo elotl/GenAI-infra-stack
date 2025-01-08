@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: simple-chat
-  namespace: ${MODEL_NAMESPACE}
   labels:
     app: simple-chat
     elotl-luna: "true"
@@ -18,13 +17,13 @@ spec:
     spec:
       containers:
       - name: chat
-        image: elotl/llm-chat:v1.2.1a
+        image: elotl/llm-chat:v1.2.2
         imagePullPolicy: Always
         ports:
         - containerPort: 7860
         env:
         - name: RAG_LLM_QUERY_URL
-          value: "http://serveragllm-service.${MODEL_NAMESPACE}.svc.cluster.local:8000"
+          value: "http://serveragllm-service.default.svc.cluster.local:8000"
         - name: USE_CHATBOT_HISTORY
           value: "false"
         resources:
@@ -39,7 +38,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: simple-chat-service
-  namespace: ${MODEL_NAMESPACE}
 spec:
   selector:
     app: simple-chat

@@ -15,11 +15,11 @@ spec:
         model: serveragllm
         elotl-luna: "true"
       annotations:
-        node.elotl.co/instance-type-regexp: "^(t3\.xlarge|n2-standard-4)$"
+        node.elotl.co/instance-type-regexp: "^(t3.xlarge|n2-standard-4)$"
     spec:
       containers:
         - name: serveragllm
-          image: elotl/serveragllm:v1.2.1
+          image: elotl/serveragllm:v1.2.2
           imagePullPolicy: Always
           ports:
             - containerPort: 8000

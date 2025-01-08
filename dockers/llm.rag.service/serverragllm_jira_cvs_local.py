@@ -81,7 +81,7 @@ file_path = os.getenv("FILE_PATH")
 if not file_path:
     print("Please provide the pickeled vector store path")
 
-relevant_docs = os.getenv("RELEVANT_DOCS", RELEVANT_DOCS_DEFAULT)
+relevant_docs = int(os.getenv("RELEVANT_DOCS", RELEVANT_DOCS_DEFAULT))
 llm_server_url = os.getenv("LLM_SERVER_URL", "http://localhost:11434/v1")
 model_id = os.getenv("MODEL_ID", "llama2")
 max_tokens = int(os.getenv("MAX_TOKENS", MAX_TOKENS_DEFAULT))

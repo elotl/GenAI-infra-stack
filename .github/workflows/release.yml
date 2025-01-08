@@ -57,10 +57,9 @@ jobs:
           echo "Repository Owner: ${{ github.repository_owner }}"
 
      - name: Set tag
-        id: set-tag
-        run: |
-          TAG=$(git describe --tags --match "v*" --abbrev=0)
-          echo "TAG=$TAG" >> $GITHUB_ENV
+      run: |
+        TAG=$(git describe --tags --match "v*" --abbrev=0)
+        echo "TAG=$TAG" >> $GITHUB_ENV
 
       - name: Log tag
         run: |

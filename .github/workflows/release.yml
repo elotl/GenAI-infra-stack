@@ -1,0 +1,66 @@
+name: Build and Release Images
+
+on:
+  push:
+    tags:
+      - v*
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: 'Tags'
+    if: >
+      github.actor_permission == 'admin' ||
+      github.actor_permission == 'maintain' ||
+      github.repository_owner == github.actor
+
+env:
+  AWS_REGION: "us-east-1"
+
+jobs:
+  release-images:
+    runs-on: ubuntu-latest
+    if: >
+      github.actor_permission == 'admin' ||
+      github.actor_permission == 'maintain' ||
+      github.repository_owner == github.actor
+    steps:
+      - name: Remove software and language runtimes we're not using
+        run: |
+          sudo rm -rf /usr/share/swift
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/share/powershell
+          sudo rm -rf /usr/local/share/chromium
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/local/lib/node_modules
+          sudo rm -rf /usr/local/julia*
+          sudo rm -rf /opt/google/chrome
+          df . -h
+
+      - name: Check out repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
+
+      - name: Fetch all tags
+        run: git fetch origin +refs/tags/*:refs/tags/*
+
+      - name: Set up Docker
+        uses: ./.github/actions/setup-docker
+        with:
+          docker-username: ${{ secrets.DOCKER_USERNAME }}
+          docker-password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push image - createvectordb
+        run: |
+          TAG=$(git describe --tags --match "v*" --abbrev=0)
+          ./dockers/llm.vdb.service/makeDocker.sh elotl/createvectordb $TAG
+
+      - name: Build and push image - llm-chat
+        run: |
+          TAG=$(git describe --tags --match "v*" --abbrev=0)
+          ./dockers/llm.chatui.service/makeDocker.sh elotl/llm-chat $TAG
+
+      - name: Build and push image - serveragllm
+        run: |
+          TAG=$(git describe --tags --match "v*" --abbrev=0)
+          ./dockers/llm.rag.service/makeDocker.sh elotl/serveragllm $TAG

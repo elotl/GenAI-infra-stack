@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile-upstream:master
+# syntax=docker/dockerfile:1
 FROM python:3.11-slim AS base-container
 
 # Automatically set by buildx

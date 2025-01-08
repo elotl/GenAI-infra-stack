@@ -1,4 +1,4 @@
-# LLM Chat in a Box POC, v0.1.5, 01/06/25
+# LLM Chat in a Box POC, v0.1.6, 01/08/25
 
 [K8s](https://kubernetes.io/) + [Luna](https://docs.elotl.co/luna/intro/) + [KubeRay](https://docs.ray.io/en/master/cluster/kubernetes/getting-started.html) + [RayService](https://docs.ray.io/en/master/cluster/kubernetes/getting-started/rayservice-quick-start.html) + [vLLM](https://docs.vllm.ai/en/stable/) + Open Source LLM + [RayAutoscaler](https://docs.ray.io/en/latest/cluster/kubernetes/user-guides/configuring-autoscaling.html) + [Retrieval Augmented Generation using FAISS](https://python.langchain.com/docs/integrations/vectorstores/faiss/)  
 
@@ -12,9 +12,9 @@ Run w/Luna on K8s w/L4 (EKS,GKE) & A10 (AKS) w/GPU quota + specified Nvidia GPU 
 * Luna-1.2.8, EKS, us-west-2, K8s v1.30.2, w/K8s Nvidia daemonset from
 [https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.17.0/deployments/static/nvidia-device-plugin.yml](https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.17.0/deployments/static/nvidia-device-plugin.yml
 )
-* Luna-1.2.8, GKE, us-central1, K8s v1.29.7, w/GCP Nvidia daemonset from
+* Luna-1.2.9, GKE, us-central1, K8s v1.30.5, w/GCP Nvidia daemonset from
 [https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml](https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml)
-* Luna-1.2.8, AKS, east-us, K8s v1.30.3, w/K8s Nvidia gpu-operator from
+* Luna-1.2.10, AKS, east-us, K8s v1.31.2, w/K8s Nvidia gpu-operator from
 ```sh
 helm repo add nvidia https://helm.ngc.nvidia.com/nvidia && helm repo update
 helm install --wait --generate-name -n gpu-operator --create-namespace nvidia/gpu-operator
@@ -29,7 +29,7 @@ On existing cloud K8s cluster, install Luna as per cloud K8s in the [Luna docs](
 
 Please note that running the POC on EKS requires
 Luna to be configured to allocate a larger EBS size than the default; this configuration is described in the EKS section below.
-And the EKS and GKE sections below provide instructions to optionally reduce node startup time on those platforms.
+And the EKS, GKE, and AKS sections below provide instructions to optionally reduce node startup time on those platforms.
 
 #### EKS
 
@@ -40,7 +40,7 @@ to use conventional node images (default) or Bottlerocket node images.  Bottlero
 
 To specify a larger EBS size for an EKS cluster on which Luna is configured to use conventional node images (default),
 download [block_device_mapping.json](https://github.com/elotl/GenAI-infra-stack/blob/main/demo/llm.gpu.service/block_device_mapping.json)
-and when deploying Luna, include --additional-helm-values set to:
+and when deploying Luna, include ```--additional-helm-values``` set to:
 ```
 --set-file aws.blockDeviceMappings=<path>/block_device_mapping.json
 ```
@@ -53,8 +53,8 @@ Luna allocates with the ray-ml image avoids the ray-ml image download time.
 Run [get-user-data.sh](https://github.com/elotl/GenAI-infra-stack/blob/main/demo/llm.gpu.service/get-user-data.sh) with your cluster name and region to produce user-data.toml.
 Download [block_device_mapping_bottlerocket.json](https://github.com/elotl/GenAI-infra-stack/blob/main/demo/llm.gpu.service/block_device_mapping_bottlerocket.json),
 which references the snapshot snap-09946d545033d96f7 in us-west-2, built using the instructions
-in https://github.com/aws-samples/bottlerocket-images-cache?tab=readme-ov-file#build-ebs-snapshot-with-cached-container-image.
-When deploying Luna, include --additional-helm-values set to:
+in https://github.com/aws-samples/bottlerocket-images-cache?tab=readme-ov-file#build-ebs-snapshot-with-cached-container-image;
+replace with your image name.  When deploying Luna, include ```--additional-helm-values``` set to:
 ```
 --set aws.isBottlerocketImage=true
 --set aws.imageSsmQueryGeneric=/aws/service/bottlerocket/aws-k8s-%s/x86_64/latest/image_id
@@ -64,7 +64,8 @@ When deploying Luna, include --additional-helm-values set to:
 --set-file aws.userData=<path>/user-data.toml
 ```
 Change the images used by the Ray LLM head and workers in the yaml used in the ray-service installation step below
-from rayproject/ray-ml:2.33.0.914af0-py311 to 689494258501.dkr.ecr.us-west-2.amazonaws.com/qa-in-a-box:ray-ml-2.33.0-py311-vllm-0.5.4-hfxfr,
+from rayproject/ray-ml:2.33.0.914af0-py311 to your image (in our case, it is
+689494258501.dkr.ecr.us-west-2.amazonaws.com/qa-in-a-box:ray-ml-2.33.0-py311-vllm-0.5.4-hfxfr),
 remove the line `pip: ["vllm==0.5.4"]`, and add the following lines below the ray-head and ray-worker image lines to speed up model download:
 ```
 env:
@@ -78,12 +79,13 @@ An example of this for the ```microsoft/Phi-3-mini-4k-instruct``` model is [here
 #### GKE
 
 For GKE, you can improve the ray-ml image load time by using Image Streaming from the Artifact Registry.  To do so, enable the "Image streaming" feature
-on your cluster and when deploying Luna, set gcp.nodeServiceAccount to the Luna service account that includes the `artifactregistry.reader` role:
+on your cluster.  When deploying Luna, set gcp.nodeServiceAccount to the Luna service account that includes the `artifactregistry.reader` role via
+inclusion in ```--additional-helm-values``` as:
 ```
-set gcp.nodeServiceAccount=<CLUSTER_NAME>-elotl@<PROJECT_ID>.iam.gserviceaccount.com
+--set gcp.nodeServiceAccount=<CLUSTER_NAME>-elotl@<PROJECT_ID>.iam.gserviceaccount.com
 ```
 Change the images used by the Ray LLM head and workers in the yaml used in the ray-service installation step below
-from rayproject/ray-ml:2.33.0.914af0-py311 to gcr.io/elotl-dev/rayproject/ray-ml:2.33.0.914af0-py311-vllm-0.5.4-hfxfr,
+from rayproject/ray-ml:2.33.0.914af0-py311 to your image (in our case, it is gcr.io/elotl-dev/rayproject/ray-ml:2.33.0.914af0-py311-vllm-0.5.4-hfxfr),
 remove the line `pip: ["vllm==0.5.4"]`, and add the following lines below the ray-head and ray-worker image lines
 to speed up model download:
 ```
@@ -92,6 +94,26 @@ env:
     value: "1"
 ```
 An example of this for the ```microsoft/Phi-3-mini-4k-instruct``` model is [here](https://github.com/elotl/skyray/blob/main/luna-llm-serve/ray-service.llm.Phi-3-mini-4k-instruct.fastergke.yaml)
+
+#### AKS
+
+For AKS, you can improve the ray-ml image load time by using the Artifact Streaming on AKS preview feature on your cluster.  To do so,
+follow the instructions [here](https://learn.microsoft.com/en-us/azure/aks/artifact-streaming) to register the ArtifactStreamingPreview
+feature in your subscription and to enable Artifact Streaming on your ACR image(s).  When deploying Luna, set ```azure.enableArtifactStreaming``` to true
+in your ```--additional-helm-values``` parameter.
+
+Change the images used by the Ray LLM head and workers in the yaml used in the ray-service installation step below
+from rayproject/ray-ml:2.33.0.914af0-py311 to your image (in our case, it is elotleastus.azurecr.io/rayproject/ray-ml:2.33.0.914af0-py311-vllm-0.5.4-hfxfr),
+remove the line `pip: ["vllm==0.5.4"]`, and add the following lines below the ray-head and ray-worker image lines
+to speed up model download:
+```
+env:
+  - name: HF_HUB_ENABLE_HF_TRANSFER
+    value: "1"
+  - name: HF_HUB_DISABLE_PROGRESS_BARS
+    value: "1"
+```
+An example of this for the ```microsoft/Phi-3-mini-4k-instruct``` model is [here](https://github.com/elotl/skyray/blob/main/luna-llm-serve/ray-service.llm.Phi-3-mini-4k-instruct.fasteraks.yaml)
 
 ### Install KubeRay Operator to manage Ray on Cloud K8s Cluster
 ```sh

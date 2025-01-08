@@ -8,5 +8,9 @@ CREATE_VECTOR_DB_TAG=$2
 
 echo ""
 echo "Building docker for vectordb creation"
-docker buildx build --platform=linux/amd64 --load -f ./Dockerfile -t ${CREATE_VECTOR_DB_REPO}:${CREATE_VECTOR_DB_TAG} .
+docker buildx build --platform=linux/amd64 --load \
+  -f "${SCRIPT_DIR}/Dockerfile" \
+  -t ${CREATE_VECTOR_DB_REPO}:${CREATE_VECTOR_DB_TAG} \
+  "${SCRIPT_DIR}"
+
 docker push ${CREATE_VECTOR_DB_REPO}:${CREATE_VECTOR_DB_TAG}

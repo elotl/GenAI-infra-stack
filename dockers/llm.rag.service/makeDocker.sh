@@ -7,7 +7,7 @@ SERVE_RAG_LLM_REPO=$1
 SERVE_RAG_LLM_TAG=$2
 
 # Get the directory where the script is located
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]:-$0}" )" &> /dev/null && pwd )"
 
 echo ""
 echo "Building docker for rag+llm service"

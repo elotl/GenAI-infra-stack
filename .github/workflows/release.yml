@@ -8,10 +8,10 @@ on:
     inputs:
       tags:
         description: 'Tags'
-    # if: >
-    #   github.actor_permission == 'admin' ||
-    #   github.actor_permission == 'maintain' ||
-    #   github.repository_owner == github.actor
+    if: >
+      github.actor_permission == 'admin' ||
+      github.actor_permission == 'maintain' ||
+      github.repository_owner == github.actor
 
 env:
   AWS_REGION: "us-east-1"
@@ -19,10 +19,10 @@ env:
 jobs:
   release-images:
     runs-on: ubuntu-latest
-    # if: >
-    #   github.actor_permission == 'admin' ||
-    #   github.actor_permission == 'maintain' ||
-    #   github.repository_owner == github.actor
+    if: >
+      github.actor_permission == 'admin' ||
+      github.actor_permission == 'maintain' ||
+      github.repository_owner == github.actor
     steps:
       - name: Remove software and language runtimes we're not using
         run: |
@@ -50,20 +50,10 @@ jobs:
           docker-username: ${{ secrets.DOCKER_USERNAME }}
           docker-password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Log actor and permissions
-        run: |
-          echo "Actor: ${{ github.actor }}"
-          echo "Actor Permission: ${{ github.actor_permission }}"
-          echo "Repository Owner: ${{ github.repository_owner }}"
-
       - name: Set tag
         run: |
           TAG=$(git describe --tags --match "v*" --abbrev=0)
           echo "TAG=$TAG" >> $GITHUB_ENV
-
-      - name: Log tag
-        run: |
-          echo "Tag: ${{ env.TAG }}"
 
       - name: Build and push image - createvectordb
         run: |

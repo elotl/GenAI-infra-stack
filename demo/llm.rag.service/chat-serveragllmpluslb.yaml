@@ -15,7 +15,7 @@ spec:
         model: serveragllm
         elotl-luna: "true"
       annotations:
-        node.elotl.co/instance-type-regexp: "^(t3\.xlarge|n2-standard-4)$"
+        node.elotl.co/instance-type-regexp: "^(t3.xlarge|n2-standard-4)$"
     spec:
       containers:
         - name: serveragllm

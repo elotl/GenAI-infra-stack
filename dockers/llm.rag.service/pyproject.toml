@@ -3,3 +3,6 @@ name = "ragllm"  # Required
 version = "1.0.0"  # Required
 description = "Web service question/answer RAG-enhanced LLM model"
 requires-python = ">=3.8"
+
+[tool.setuptools]
+py-modules = ["common", "createvectordb", "createvectordb_jira_csv_local"]

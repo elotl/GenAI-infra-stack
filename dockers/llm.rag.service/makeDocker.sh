@@ -16,4 +16,4 @@ docker buildx build --platform=linux/amd64 --load \
   -t ${SERVE_RAG_LLM_REPO}:${SERVE_RAG_LLM_TAG} \
   "${SCRIPT_DIR}"
 
-# docker push ${SERVE_RAG_LLM_REPO}:${SERVE_RAG_LLM_TAG}
+docker push ${SERVE_RAG_LLM_REPO}:${SERVE_RAG_LLM_TAG}

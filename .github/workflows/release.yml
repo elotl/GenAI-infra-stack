@@ -50,6 +50,17 @@ jobs:
           docker-username: ${{ secrets.DOCKER_USERNAME }}
           docker-password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Log actor and permissions
+        run: |
+          echo "Actor: ${{ github.actor }}"
+          echo "Actor Permission: ${{ github.actor_permission }}"
+          echo "Repository Owner: ${{ github.repository_owner }}"
+      
+      - name: Log tag
+        run: |
+          TAG=$(git describe --tags --match "v*" --abbrev=0)
+          echo "Tag: ${{ TAG }}"
+
       - name: Build and push image - createvectordb
         run: |
           TAG=$(git describe --tags --match "v*" --abbrev=0)

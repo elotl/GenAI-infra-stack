@@ -3,3 +3,6 @@ name = "createvectordb"  # Required
 version = "1.0.0"  # Required
 description = "Create FAISS vectordb, serialize and upload to S3"
 requires-python = ">=3.8"
+
+[tool.setuptools]
+py-modules = ["common", "createvectordb", "createvectordb_jira_csv_local"]

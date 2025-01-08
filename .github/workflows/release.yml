@@ -56,10 +56,10 @@ jobs:
           echo "Actor Permission: ${{ github.actor_permission }}"
           echo "Repository Owner: ${{ github.repository_owner }}"
 
-     - name: Set tag
-      run: |
-        TAG=$(git describe --tags --match "v*" --abbrev=0)
-        echo "TAG=$TAG" >> $GITHUB_ENV
+      - name: Set tag
+        run: |
+          TAG=$(git describe --tags --match "v*" --abbrev=0)
+          echo "TAG=$TAG" >> $GITHUB_ENV
 
       - name: Log tag
         run: |

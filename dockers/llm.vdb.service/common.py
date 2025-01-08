@@ -25,22 +25,6 @@ def load_jsonl_files_from_directory(directory):
                     data.append(json.load(f))
     return data
 
-'''
-def load_jsonl_files_from_directory(directory):
-    data = []
-    # Loop through all files in the directory
-    for filename in os.listdir(directory):
-        print("Processing file, ", filename )
-        if filename.endswith(".jsonl") or filename.endswith(".json"):
-            file_path = os.path.join(directory, filename)
-            # Open and read each jsonl file
-            with open(file_path, "r") as file:
-                for line in file:
-                    # Parse each JSON object in the file
-                    data.append(json.loads(line.strip()))
-    return data
-'''
-
 def get_documents_with_metadata(data):
     texts = [doc["text"] for doc in data]
     metadatas = [doc["metadata"] for doc in data]

@@ -20,12 +20,11 @@ def format_context(results: List[Dict[str, Any]]) -> str:
 
 
 def get_answer_with_settings(question, retriever, client, model_id, max_tokens, model_temperature):
-    SYSTEM_PROMPT = """You are a specialized Jira ticket assistant. Format your responses following these rules:
-                1. Start with the most relevant ticket references
-                2. Provide a clear, direct answer
+    SYSTEM_PROMPT = """You are a specialized support ticket assistant. Format your responses following these rules:
+                1. Answer the provided question only using the provided context.
+                2. Provide a clear, direct and factual answer
                 3. Include relevant technical details when present
-                4. Mention related tickets if they provide additional context
-                5. If the information is outdated, mention when it was last updated
+                4. If the information is outdated, mention when it was last updated
                 """
 
     docs = retriever.invoke(input=question)

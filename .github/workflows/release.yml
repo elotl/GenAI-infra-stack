@@ -11,10 +11,28 @@ on:
 env:
   AWS_REGION: "us-east-1"
 
+permissions:
+  contents: read
+  pull-requests: read
+  repository-projects: read
+
 jobs:
   release-images:
     runs-on: ubuntu-latest
     steps:
+      - name: Check permissions using GitHub CLI
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          permission=$(gh api repos/${{ github.repository }}/collaborators/${{ github.actor }}/permission --jq '.permission')
+          if [ "$permission" = "admin" ]; then
+            echo "Has admin access"
+            # Your workflow steps here
+          else
+            echo "Permission denied"
+            exit 1
+          fi
+          
       - name: Remove software and language runtimes we're not using
         run: |
           sudo rm -rf /usr/share/swift

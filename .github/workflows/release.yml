@@ -8,21 +8,12 @@ on:
     inputs:
       tags:
         description: 'Tags'
-    if: >
-      github.actor_permission == 'admin' ||
-      github.actor_permission == 'maintain' ||
-      github.repository_owner == github.actor
-
 env:
   AWS_REGION: "us-east-1"
 
 jobs:
   release-images:
     runs-on: ubuntu-latest
-    if: >
-      github.actor_permission == 'admin' ||
-      github.actor_permission == 'maintain' ||
-      github.repository_owner == github.actor
     steps:
       - name: Remove software and language runtimes we're not using
         run: |

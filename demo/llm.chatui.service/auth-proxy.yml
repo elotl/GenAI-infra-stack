@@ -1,0 +1,93 @@
+# nginx-auth-proxy-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-auth-proxy-config
+data:
+  nginx.conf: |
+    events {
+      worker_connections 1024;
+    }
+    http {
+      server {
+        listen 80;
+        
+        location / {
+          auth_basic "Restricted Access";
+          auth_basic_user_file /etc/nginx/auth/.htpasswd;
+          
+          proxy_pass http://simple-chat-service.default.svc.cluster.local:7860;  # Points to our simple chat service
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+        }
+      }
+    }
+
+---
+# auth-secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: auth-proxy-credentials
+type: Opaque
+data:
+  # Generated using: htpasswd -c .htpasswd username
+  # Then base64 encode the file content
+  # htpasswd -c .htpasswd your_chosen_username
+  # cat .htpasswd | base64
+  # myuser:elotl
+
+  .htpasswd: bXl1c2VyOiRhcHIxJG9mMmRwcm92JC5BTTZiU0xLZzR4aDNzVS82S0s2ejEK
+
+---
+# auth-proxy-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-proxy
+spec:
+  replicas: 2  # For high availability
+  selector:
+    matchLabels:
+      app: auth-proxy
+  template:
+    metadata:
+      labels:
+        app: auth-proxy
+    spec:
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: nginx-auth-proxy-config
+      - name: auth-volume
+        secret:
+          secretName: auth-proxy-credentials
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+        - name: auth-volume
+          mountPath: /etc/nginx/auth
+          readOnly: true
+
+---
+# auth-proxy-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-proxy-service
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: auth-proxy

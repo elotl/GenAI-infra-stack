@@ -6,6 +6,7 @@ import gradio as gr
 import requests
 
 import logging
+from logging.handlers import TimedRotatingFileHandler
 
 # When running locally: export CHATUI_LOGS_PATH=logs/chatui.log
 log_file_path = os.getenv("CHATUI_LOGS_PATH") or "/app/logs/chatui.log"
@@ -14,7 +15,8 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler(log_file_path),  # Log to file
+         # Log to file, rotate every 1H and store last 24 files == 24H data
+        TimedRotatingFileHandler(log_file_path, when='h', interval=1, backupCount=24), 
         logging.StreamHandler()             # Also log to console
     ]
 )

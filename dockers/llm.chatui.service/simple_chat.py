@@ -5,20 +5,34 @@ import urllib
 import gradio as gr
 import requests
 
+import logging
+
+# When running locally: export CHATUI_LOGS_PATH=logs/chatui.log
+log_file_path = os.getenv("CHATUI_LOGS_PATH") or "/app/logs/chatui.log"
+os.makedirs(os.path.dirname(log_file_path), exist_ok=True)  # Ensure log directory exists
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler(log_file_path),  # Log to file
+        logging.StreamHandler()             # Also log to console
+    ]
+)
+
 # Environment variable setup
 RAG_LLM_QUERY_URL = os.getenv("RAG_LLM_QUERY_URL")
 
 if RAG_LLM_QUERY_URL is None:
-    print(
+    logging.error(
         "Please set the environment variable, RAG_LLM_QUERY_URL (to the IP of the RAG + LLM endpoint)"
     )
     sys.exit(1)
 
-print("RAG query endpoint, RAG_LLM_QUERY_URL: ", RAG_LLM_QUERY_URL)
+logging.info(f"RAG query endpoint, RAG_LLM_QUERY_URL: {RAG_LLM_QUERY_URL}")
 
 USE_CHATBOT_HISTORY = os.getenv("USE_CHATBOT_HISTORY", "False") == "True"
 
-print(f"Use history {USE_CHATBOT_HISTORY}")
+logging.info(f"Use history {USE_CHATBOT_HISTORY}")
 
 
 # Function to generate clickable links for JIRA tickets
@@ -65,7 +79,7 @@ def chatbot_response(history, user_message):
 
 
 def submit_rating(rating, user_message, bot_response):
-    print(f"User rating: {rating}\nQuestion: {user_message}\nAnswer: {bot_response}")
+    logging.info(f"User rating: {rating}\nQuestion: {user_message}\nAnswer: {bot_response}")
     # Hide the rating slider and submit button after submission
     return gr.update(visible=False), gr.update(visible=False)
 

@@ -59,7 +59,7 @@ def get_api_response(user_message):
             sources = result.get("sources", [])
             links = generate_source_links(sources)
             clickable_links = "<br>".join(links)
-            return f"{answer}<br><br>Relevant Tickets:<br>{clickable_links}"
+            return f"{answer}<br><br>Relevant Tickets:<br>{clickable_links}", result.get("context", "")
         else:
             return "API Error: Unable to fetch response."
     except requests.RequestException:
@@ -68,18 +68,18 @@ def get_api_response(user_message):
 
 # Chatbot response functions
 def chatbot_response_no_hist(_chatbot, user_message):
-    response_text = get_api_response(user_message)
-    return [[user_message, response_text]], "", gr.update(value=1, visible=True), gr.update(visible=True), user_message, response_text
+    response_text, response_context = get_api_response(user_message)
+    return [[user_message, response_text]], "", gr.update(value=1, visible=True), gr.update(visible=True), user_message, response_text, response_context
 
 
 def chatbot_response(history, user_message):
-    response_text = get_api_response(user_message)
+    response_text, response_context = get_api_response(user_message)
     history.append((user_message, response_text))
-    return history, "", gr.update(value=1, visible=True), gr.update(visible=True), user_message, response_text
+    return history, "", gr.update(value=1, visible=True), gr.update(visible=True), user_message, response_text, response_context
 
 
-def submit_rating(rating, user_message, bot_response):
-    logging.info(f"User rating: {rating}\nQuestion: {user_message}\nAnswer: {bot_response}")
+def submit_rating(rating, user_message, bot_response, response_context):
+    logging.info(f"User rating: {rating}\nQuestion: {user_message}\nAnswer: {bot_response}\nContext: {response_context}")
     # Hide the rating slider and submit button after submission
     return gr.update(visible=False), gr.update(visible=False)
 
@@ -100,6 +100,7 @@ with gr.Blocks() as app:
     # Hidden variables to hold user_message and bot_response for rating submission
     user_message = gr.State()
     bot_response = gr.State()
+    response_context = gr.State()
 
     if USE_CHATBOT_HISTORY:
         msg.submit(chatbot_response, inputs=[chatbot, msg], outputs=[chatbot, msg])
@@ -108,16 +109,16 @@ with gr.Blocks() as app:
         )
     else:
         msg.submit(
-            chatbot_response_no_hist, inputs=[chatbot, msg], outputs=[chatbot, msg, rating_slider, submit_rating_btn, user_message, bot_response]
+            chatbot_response_no_hist, inputs=[chatbot, msg], outputs=[chatbot, msg, rating_slider, submit_rating_btn, user_message, bot_response, response_context]
         )
         send_button.click(
-            chatbot_response_no_hist, inputs=[chatbot, msg], outputs=[chatbot, msg, rating_slider, submit_rating_btn, user_message, bot_response]
+            chatbot_response_no_hist, inputs=[chatbot, msg], outputs=[chatbot, msg, rating_slider, submit_rating_btn, user_message, bot_response, response_context]
         )
 
     # Handle rating submission with the button
     submit_rating_btn.click(
         submit_rating,
-        inputs=[rating_slider, user_message, bot_response],
+        inputs=[rating_slider, user_message, bot_response, response_context],
         outputs=[rating_slider, submit_rating_btn],
     )
 

@@ -39,7 +39,7 @@ to use conventional node images (default) or Bottlerocket node images.  Bottlero
 ##### Conventional Node Images
 
 To specify a larger EBS size for an EKS cluster on which Luna is configured to use conventional node images (default),
-download [block_device_mapping.json](https://github.com/elotl/GenAI-infra-stack/blob/main/demo/llm.gpu.service/block_device_mapping.json)
+download [block_device_mapping.json](https://raw.githubusercontent.com/elotl/GenAI-infra-stack/refs/heads/main/demo/llm.gpu.service/block_device_mapping.json)
 and when deploying Luna, include ```--additional-helm-values``` set to:
 ```
 --set-file aws.blockDeviceMappings=<path>/block_device_mapping.json

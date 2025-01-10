@@ -410,7 +410,7 @@ Type your query here: What are the two types of elephants in Africa?
 Answer: The two types of elephants in Africa are the African bush elephant (Loxodonta africana) and the African forest elephant (Loxodonta cyclotis).
 ```
 
-# Uninstallation
+# Uninstall
 
 ## 1. Uninstall Model Serve Stack
 

@@ -57,6 +57,7 @@ def chunk_documents_with_metadata(data, chunk_size=1000, chunk_overlap=200):
         all_chunks.extend(chunks)
         all_metadatas.extend(doc_metadatas)
 
+    print("Number of chunks created: ", len(all_chunks))
     return all_chunks, all_metadatas
 
 

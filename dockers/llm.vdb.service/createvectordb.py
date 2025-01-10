@@ -17,32 +17,54 @@ from common import create_vectordb, EMBEDDING_CHUNK_SIZE_DEFAULT, EMBEDDING_CHUN
 
 EMBEDDING_MODEL_NAME_DEFAULT = "sentence-transformers/all-MiniLM-L6-v2"
 
-
-def list_files_in_s3_folder(bucket_name, folder_name, s3_client):
+def list_files_in_s3_folder(bucket_name: str, folder_name: str, s3_client) -> list[str]:
     """
     List all files within a given folder (prefix) in an S3 bucket. Any folders within are ignored.
+    Handles pagination to retrieve all files.
+    
+    Args:
+        bucket_name (str): Name of the S3 bucket
+        folder_name (str): Folder prefix to list files from
+        s3_client: Boto3 S3 client instance
+    
+    Returns:
+        List[str]: List of file keys in the specified folder
     """
     try:
-        # List all objects in the specified folder
-        response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=folder_name)
-
-        if "Contents" not in response:
-            print(f"No files found in folder {folder_name} in bucket {bucket_name}")
-            return []
-
         file_names = []
-        for content in response["Contents"]:
-            # ignoring any folders within the top-level folder
-            if not content["Key"].endswith("/"):
-                file_names.append(content["Key"])
+        paginator = s3_client.get_paginator('list_objects_v2')
+        
+        # Create a PageIterator from the Paginator
+        page_iterator = paginator.paginate(
+            Bucket=bucket_name,
+            Prefix=folder_name
+        )
+        
+        count = 0
+        print(f"Starting to list files in {bucket_name}/{folder_name}")
+        
+        # Iterate through each page
+        for page in page_iterator:
+            if "Contents" not in page:
+                print(f"No files found in folder {folder_name} in bucket {bucket_name}")
+                return []
+                
+            for content in page["Contents"]:
+                # ignoring any folders within the top-level folder
+                if not content["Key"].endswith("/"):
+                    file_names.append(content["Key"])
+                    count += 1
+                    if count % 1000 == 0:
+                        print(f"Processed {count} files...")
+        
+        print(f"Total number of files found: {count}")
         return file_names
-
+        
     except ClientError as e:
         print(
             f"Error listing files in the S3 bucket, {bucket_name}, folder, {folder_name}, err: {e}"
         )
         return []
-
 
 def download_files_from_s3(bucket_name, folder_name, local_dir):
     """

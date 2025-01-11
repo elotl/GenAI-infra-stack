@@ -414,10 +414,10 @@ Answer: The two types of elephants in Africa are the African bush elephant (Loxo
 
 ### Generate and setup a password for your Chat UI
 
-Run the tool locally htpasswd locally.
+Run the tool `htpasswd` locally to generate credentials needed for authentication
 
 ```sh
-htpasswd -c .htpasswd your_chosen_username
+htpasswd -c .htpasswd <your_chosen_username>
 ```
 
 Convert the encrypted password to base64 encoding to be used in a K8s secret:

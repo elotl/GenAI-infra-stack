@@ -393,7 +393,7 @@ Please note the IP listed in the EXTERNAL-IP column shown in the output of the `
 
 
 ## Query the LLM with RAG
-You can use the provided demo/scripts/rag_query.py script with port forwarding to query the RAG+LLM service endpoint and ask questions about your RAG dataset.
+You can use the provided scripts/query/rag_query.py script with port forwarding to query the RAG+LLM service endpoint and ask questions about your RAG dataset.
 
 ### Run Port-forward for Model Endpoint (in the background)
 ```sh
@@ -408,6 +408,64 @@ python rag_query.py
 ```
 Type your query here: What are the two types of elephants in Africa?
 Answer: The two types of elephants in Africa are the African bush elephant (Loxodonta africana) and the African forest elephant (Loxodonta cyclotis).
+```
+
+## Query the LLM with RAG using a Chat UI
+
+### Generate and setup a password for your Chat UI
+
+Run the tool locally htpasswd locally.
+
+```sh
+htpasswd -c .htpasswd your_chosen_username
+```
+
+Convert the encrypted password to base64 encoding to be used in a K8s secret:
+
+```sh
+cat .htpasswd | base64
+```
+
+Paste the output of the prior command inside the Secret in this manifest: `demo/llm.chatui.service/auth-proxy.yml`
+
+```sh
+---
+# auth-proxy.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: auth-proxy-credentials
+type: Opaque
+data:
+  # Generated using: htpasswd -c .htpasswd username
+  # Then base64 encode the file content
+  # htpasswd -c .htpasswd your_chosen_username
+  # cat .htpasswd | base64
+  # myuser:elotl
+
+  .htpasswd: <add base64 encoding of contents of .htpasswd here>
+---
+```
+
+
+### Install the authentication proxy for the Chat UI 
+
+```sh
+kubectl apply -f demo/llm.chatui.service/auth-proxy.yml
+```
+
+### Install Chat UI app 
+
+```sh
+kubectl apply -f demo/llm.chatui.service/simple-chat.yaml
+```
+
+Wait for an external IP to be associated with the `auth-proxy-service`. You can now access this external IP type from a browser. You will be asked to enter a username and password before viewing your Chat UI.
+
+```sh
+% kubectl get svc auth-proxy-service
+NAME                 TYPE           CLUSTER-IP       EXTERNAL-IP                   PORT(S)        AGE
+auth-proxy-service   LoadBalancer   10.100.230.224   <USE_EXTERNAL_IP_FROM_HERE>   80:32497/TCP   85m
 ```
 
 # Uninstall

@@ -18,6 +18,12 @@ RELEVANT_DOCS_DEFAULT = 2
 MAX_TOKENS_DEFAULT = 64
 MODEL_TEMPERATURE_DEFAULT = 0.01
 MODEL_ID_DEFAULT = MOSAICML_MODEL_ID
+SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Format your responses following these rules:
+                1. Answer the provided question only using the provided context.
+                2. Provide a clear, direct and factual answer
+                3. Include relevant technical details when present
+                4. If the information is outdated, mention when it was last updated
+                """
 
 template = """Answer the question based only on the following context:
 {context}
@@ -85,6 +91,11 @@ def get_answer(question: Union[str, None]):
 
     is_json_mode = os.environ.get("IS_JSON_MODE", "False") == "True"
 
+    system_prompt = os.environ.get("SYSTEM_PROMPT")
+    if system_prompt  == "" or system_prompt is None:
+        system_prompt  = SYSTEM_PROMPT_DEFAULT
+    print("Using System Prompt: ", system_prompt)
+
     # retrieve docs relevant to the input question
     docs = retriever.invoke(input=question)
     print(
@@ -100,6 +111,7 @@ def get_answer(question: Union[str, None]):
             model_id,
             max_tokens,
             model_temperature,
+            system_prompt,
         )
     else:
         print("Sending query to the LLM...")

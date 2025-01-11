@@ -124,4 +124,4 @@ with gr.Blocks() as app:
         outputs=[rating_slider, submit_rating_btn],
     )
 
-app.launch()
+app.launch(server_name="0.0.0.0")

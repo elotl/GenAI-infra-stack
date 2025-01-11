@@ -13,7 +13,7 @@
 * [Creation of the Vector Store](docs/install.md#creation-of-the-vector-store)
 * [Install the RAG & LLM querying service](docs/install.md#setup-rag-llm-service)
 * [Send a question to your LLM](docs/install.md#query-the-llm-with-rag)
-* [Uninstall](docs/install.md#uninstallation)
+* [Uninstall](docs/install.md#uninstall)
 
 Jump to complete install doc available [here](docs/install.md).
 

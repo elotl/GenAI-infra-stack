@@ -39,7 +39,7 @@ data:
   # cat .htpasswd | base64
   # myuser:elotl
 
-  .htpasswd: bXl1c2VyOiRhcHIxJG9mMmRwcm92JC5BTTZiU0xLZzR4aDNzVS82S0s2ejEK
+  .htpasswd: ZWxvdGw6JGFwcjEkRmtKeUFMWjMkYjd5WXdBdmhHbmtTSjN2QTdCOXlGMAo=
 
 ---
 # auth-proxy-deployment.yaml

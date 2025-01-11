@@ -15,8 +15,8 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-         # Log to file, rotate every 1H and store last 24 files == 24H data
-        TimedRotatingFileHandler(log_file_path, when='h', interval=1, backupCount=24), 
+         # Log to file, rotate every 1H and store files from last 24 hrs * 7 days files == 168H data
+        TimedRotatingFileHandler(log_file_path, when='h', interval=1, backupCount=168),
         logging.StreamHandler()             # Also log to console
     ]
 )
@@ -124,4 +124,4 @@ with gr.Blocks() as app:
         outputs=[rating_slider, submit_rating_btn],
     )
 
-app.launch()
+app.launch(server_name="0.0.0.0")

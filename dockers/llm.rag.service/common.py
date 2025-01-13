@@ -19,7 +19,7 @@ def format_context(results: List[Dict[str, Any]]) -> str:
     return "\n\n".join(context_parts)
 
 
-def get_answer_with_settings(question, retriever, client, model_id, max_tokens, model_temperature):
+def get_answer_with_settings(question, retriever, client, model_id, max_tokens, model_temperature, system_prompt):
     SYSTEM_PROMPT = """You are a specialized support ticket assistant. Format your responses following these rules:
                 1. Answer the provided question only using the provided context.
                 2. Provide a clear, direct and factual answer
@@ -39,7 +39,7 @@ def get_answer_with_settings(question, retriever, client, model_id, max_tokens, 
     completions = client.chat.completions.create(
         model=model_id,
         messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": system_prompt},
             {
                 "role": "user",
                 "content": f"Context:\n{context}\n\nQuestion: {question}",

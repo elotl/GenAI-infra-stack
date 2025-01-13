@@ -1,3 +1,5 @@
+# AI Generated script
+
 import os
 import json
 from configparser import ConfigParser
@@ -11,35 +13,6 @@ def clean_text(text: Any) -> str:
         return ""
     return str(text).strip().replace("\n", " ").replace("\r", " ")
 
-def get_nested_value(data: Dict[str, Any], field_path: str) -> Any:
-    """Extract value from nested dictionary using dot notation.
-    
-    Args:
-        data: Dictionary containing the data
-        field_path: Path to the field using dot notation (e.g., "submitter.name")
-    
-    Returns:
-        The value at the specified path or None if not found
-    """
-    current = data
-    parts = field_path.split('.')
-    
-    for part in parts:
-        if isinstance(current, dict):
-            current = current.get(part)
-        elif isinstance(current, list) and current:
-            # If it's a list, try to get the first item's attribute
-            if isinstance(current[0], dict):
-                current = current[0].get(part)
-            else:
-                return None
-        else:
-            return None
-        
-        if current is None:
-            return None
-            
-    return current
 
 def parse_list(value: Any) -> List[str]:
     """Convert a field value to a list of strings."""
@@ -48,18 +21,9 @@ def parse_list(value: Any) -> List[str]:
     if isinstance(value, str):
         return [item.strip() for item in value.split(",") if item.strip()]
     if isinstance(value, (list, tuple)):
-        # Handle cases where list items might be dictionaries
-        processed_items = []
-        for item in value:
-            if isinstance(item, dict):
-                # Extract name or id from dictionary
-                item_str = item.get('name', item.get('id', ''))
-                if item_str:
-                    processed_items.append(str(item_str))
-            elif item:
-                processed_items.append(str(item))
-        return processed_items
+        return [str(item) for item in value if item]
     return [str(value)]
+
 
 def extract_field_values(
     data: Dict[str, Any], 
@@ -73,24 +37,6 @@ def extract_field_values(
         if key in data and data[key] and matcher(key)
     ]
 
-def extract_comments_text(comments: List[Dict[str, Any]]) -> str:
-    """Extract readable text from comments array."""
-    if not comments:
-        return ""
-    
-    comment_texts = []
-    for comment in comments:
-        if comment.get("public", True):  # Only include public comments
-            author_name = ""
-            if comment.get("author_id"):
-                # You might want to add author mapping here
-                author_name = f"Comment {comment['id']}"
-            
-            body = comment.get("body", "").strip()
-            if body:
-                comment_texts.append(f"{author_name}: {body}")
-    
-    return "\n".join(comment_texts)
 
 def process_item(
     data: Dict[str, Any],
@@ -101,50 +47,19 @@ def process_item(
     # Extract data using different matching criteria
     result_text = []
     
-    # First process title and description
-    priority_fields = ['Title', 'Description']
-    for field in priority_fields:
-        if field in config["composite_text_fields"]:
-            column = config["composite_text_fields"][field]
-            value = get_nested_value(data, column) if '.' in column else data.get(column)
-            if value:
-                result_text.append(f"{field.lower()}: {clean_text(value)}")
-    
-    # Then process other composite text fields
-    for field, column in config["composite_text_fields"].items():
-        if field not in priority_fields:  # Skip title and description as they're already processed
-            value = get_nested_value(data, column) if '.' in column else data.get(column)
-            if value:
-                result_text.append(f"{field.lower()}: {clean_text(value)}")
-    
-    # Process comments last
-    if "comments" in data and isinstance(data["comments"], list):
-        comments_text = extract_comments_text(data["comments"])
-        if comments_text:
-            result_text.append(f"comments: {comments_text}")
-    
     # Process composite text fields
     for field, column in config["composite_text_fields"].items():
-        value = get_nested_value(data, column) if '.' in column else data.get(column)
-        if value:
-            result_text.append(f"{field.lower()}: {clean_text(value)}")
+        if column in data and data[column]:
+            result_text.append(f"{field.lower()}: {clean_text(data[column])}")
     
     # Process prefix fields
     for target_field, prefix in config["prefix_fields"].items():
-        if '.' in prefix:
-            # Handle nested prefix fields
-            parent, child = prefix.split('.', 1)
-            if parent in data and isinstance(data[parent], list):
-                values = [item.get(child, '') for item in data[parent] if item.get(child)]
-                if values:
-                    result_text.append(f"{target_field.lower()}: {' '.join(map(clean_text, values))}")
-        else:
-            values = extract_field_values(
-                data, keys, 
-                lambda k: k.startswith(prefix)
-            )
-            if values:
-                result_text.append(f"{target_field.lower()}: {' '.join(values)}")
+        values = extract_field_values(
+            data, keys, 
+            lambda k: k.startswith(prefix)
+        )
+        if values:
+            result_text.append(f"{target_field.lower()}: {' '.join(values)}")
     
     # Process substring fields
     for target_field, substring in config["substring_fields"].items():
@@ -163,18 +78,10 @@ def process_item(
                 result_text.append(f"{field.lower()}: {', '.join(values)}")
     
     # Build metadata
-    metadata = {}
-    for field, column in config["metadata_fields"].items():
-        if '.' in column:
-            # Handle nested fields
-            parent, child = column.split('.', 1)
-            if parent in data and isinstance(data[parent], dict):
-                value = data[parent].get(child, "")
-            else:
-                value = ""
-        else:
-            value = data.get(column, "")
-        metadata[field.lower()] = clean_text(value)
+    metadata = {
+        field.lower(): clean_text(data.get(column, ""))
+        for field, column in config["metadata_fields"].items()
+    }
     
     # Add source URL
     metadata_field = config["metadata_field"]
@@ -184,6 +91,7 @@ def process_item(
         "text": "\n".join(result_text),
         "metadata": metadata
     }
+
 
 def prepare_documents(
     data: Union[Dict[str, Any], List[Dict[str, Any]]],
@@ -198,6 +106,7 @@ def prepare_documents(
     
     # Process each item
     return [process_item(item, keys, config) for item in items]
+
 
 def load_config(config_file: str) -> Dict[str, Any]:
     """Load and parse configuration from INI file."""
@@ -218,6 +127,7 @@ def load_config(config_file: str) -> Dict[str, Any]:
         "metadata_field": config.get("TicketUrl", "metadata_field", fallback=""),
     }
 
+
 def save_documents(documents: List[Dict], output_dir: str) -> None:
     """Save documents as individual JSON files."""
     os.makedirs(output_dir, exist_ok=True)
@@ -226,6 +136,7 @@ def save_documents(documents: List[Dict], output_dir: str) -> None:
         output_file = os.path.join(output_dir, f"item_{i}.json")
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(doc, f, ensure_ascii=False, indent=2)
+
 
 @click.command()
 @click.argument("input_file", type=click.Path(exists=True))
@@ -270,6 +181,7 @@ def main(input_file: str, config_file: str, output_dir: str) -> None:
     # Save results
     click.echo(f"Saving {len(documents)} documents to {output_dir}")
     save_documents(documents, output_dir)
+
 
 if __name__ == "__main__":
     main()

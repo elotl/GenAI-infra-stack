@@ -96,7 +96,7 @@ with gr.Blocks() as app:
             rating_slider = gr.Slider(label="Rate the response", minimum=1, maximum=5, step=1, visible=False)
             submit_rating_btn = gr.Button("Submit Rating", visible=False)
 
-            msg = gr.Textbox(placeholder="Type here...", label="Message")
+            msg = gr.Textbox(placeholder="Type here...", label="Question")
             send_button = gr.Button("Send")
 
     # Hidden variables to hold user_message and bot_response for rating submission

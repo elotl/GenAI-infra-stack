@@ -36,24 +36,26 @@ USE_CHATBOT_HISTORY = os.getenv("USE_CHATBOT_HISTORY", "False") == "True"
 
 logging.info(f"Use history {USE_CHATBOT_HISTORY}")
 
-def clean_answer(text: str, str_to_remove: str) -> str:
+def clean_answer(text: str, chatml_end_token: str) -> str:
     """
-    Remove specified string from the text and clean up the answer.
-    
+    Remove all content after and including the specified token from the text.
     Args:
         text (str): The input text to clean
-        str_to_remove (str): The string to remove from the text
-        
+        chatml_end_token (str): The token after which all content should be removed
     Returns:
-        str: Cleaned text with specified string removed and whitespace stripped
+        str: Cleaned text with all content after and including the token removed
     """
-    if not text or not str_to_remove:  # Handle empty inputs
+    if not text:  # Handle empty text
         return ""
-    # Remove specified string
-    text = text.replace(str_to_remove, "")
-    ## Remove context if present
-    #if "Answer:" in text:
-    #    text = text.split("Answer:", 1)[1]
+
+    if not chatml_end_token:  # Handle empty end tokens
+        return text
+
+    # Split text at the token and take only the content before it
+    if chatml_end_token in text:
+        text = text.split(chatml_end_token, 1)[0]
+        logging.Info('Cleaned text before chatml_end_token:', text)
+
     return text.strip()
 
 # Function to generate clickable links for JIRA tickets
@@ -76,12 +78,12 @@ def get_api_response(user_message):
                 return "Could not fetch response."
 
             result = result["answer"]
-            #answer = result.get("answer", "Could not fetch response.")
             answer = clean_answer(result.get("answer", "Could not fetch response."), "<|im_end|>")
             sources = result.get("sources", [])
             links = generate_source_links(sources)
             clickable_links = "<br>".join(links)
-            logging.info(f"Question: {user_message}\nAnswer: {bot_response}\nUser rating: {rating}\nContext: {response_context}")
+            context = result.get("context", "")
+            logging.info(f"Question: {question}\nAnswer: {answer}\nContext: {context}")
     
             return f"{answer}<br><br>Relevant Tickets:<br>{clickable_links}", result.get("context", "")
         else:

@@ -118,16 +118,16 @@ def process_item(
                 result_text.append(f"{field.lower()}: {clean_text(value)}")
     
     # Process comments last
-    if "comments" in data and isinstance(data["comments"], list):
-        comments_text = extract_comments_text(data["comments"])
-        if comments_text:
-            result_text.append(f"comments: {comments_text}")
+    # if "comments" in data and isinstance(data["comments"], list):
+    #    comments_text = extract_comments_text(data["comments"])
+    #    if comments_text:
+    #        result_text.append(f"comments: {comments_text}")
     
     # Process composite text fields
-    for field, column in config["composite_text_fields"].items():
-        value = get_nested_value(data, column) if '.' in column else data.get(column)
-        if value:
-            result_text.append(f"{field.lower()}: {clean_text(value)}")
+    #for field, column in config["composite_text_fields"].items():
+    #    value = get_nested_value(data, column) if '.' in column else data.get(column)
+    #    if value:
+    #        result_text.append(f"{field.lower()}: {clean_text(value)}")
     
     # Process prefix fields
     for target_field, prefix in config["prefix_fields"].items():
@@ -177,8 +177,8 @@ def process_item(
         metadata[field.lower()] = clean_text(value)
     
     # Add source URL
-    metadata_field = config["metadata_field"]
-    metadata["source"] = config["zendesk_url"] + metadata[metadata_field] + ".json"
+    metadata_unique_id = config["metadata_unique_id"]
+    metadata["source"] = config["zendesk_url"] + metadata[metadata_unique_id] + ".json"
     
     return {
         "text": "\n".join(result_text),
@@ -215,7 +215,7 @@ def load_config(config_file: str) -> Dict[str, Any]:
         "composite_text_fields": dict(config["CompositeTextFields"]) if "CompositeTextFields" in config else {},
         "metadata_fields": dict(config["MetadataFields"]) if "MetadataFields" in config else {},
         "zendesk_url": config.get("TicketUrl", "zendesk_url", fallback=""),
-        "metadata_field": config.get("TicketUrl", "metadata_field", fallback=""),
+        "metadata_unique_id": config.get("TicketUrl", "metadata_unique_id", fallback=""),
     }
 
 def save_documents(documents: List[Dict], output_dir: str) -> None:

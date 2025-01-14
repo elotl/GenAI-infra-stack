@@ -207,8 +207,8 @@ retriever = vectorstore.as_retriever(search_kwargs={"k": relevant_docs})
 print("Created Vector DB retriever successfully. \n")
 
 # Uncomment to run a local test
-# print("Testing with a sample question:")
-# get_answer("who are you?")
+#print("Testing with a sample question:")
+#get_answer("What's a recent SSH issue customers had?")
 
 ########
 # Start API service to answer questions

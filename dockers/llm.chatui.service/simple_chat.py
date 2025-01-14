@@ -54,7 +54,7 @@ def clean_answer(text: str, chatml_end_token: str) -> str:
     # Split text at the token and take only the content before it
     if chatml_end_token in text:
         text = text.split(chatml_end_token, 1)[0]
-        logging.Info('Cleaned text before chatml_end_token:', text)
+        logging.info('Cleaned text before chatml_end_token:', text)
 
     return text.strip()
 

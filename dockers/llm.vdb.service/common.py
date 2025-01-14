@@ -44,7 +44,7 @@ def chunk_documents_with_metadata(data, chunk_size=1000, chunk_overlap=200):
     all_metadatas = []
 
     for doc in data:
-        print("Chunking doc with key, ", doc["metadata"]["key"])
+        print("Chunking doc with key/ticket ID, ", doc["metadata"]["ticket"])
         chunks = text_splitter.split_text(doc["text"])
 
         doc_metadatas = [doc["metadata"].copy() for _ in chunks]

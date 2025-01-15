@@ -18,6 +18,15 @@ RELEVANT_DOCS_DEFAULT = 2
 MAX_TOKENS_DEFAULT = 64
 MODEL_TEMPERATURE_DEFAULT = 0.01
 MODEL_ID_DEFAULT = MOSAICML_MODEL_ID
+SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Format your responses following these rules:
+                1. Answer the provided question only using the provided context.
+                2. Provide a clear, direct and factual answer
+                3. Include relevant technical details when present or provide a summary of the comments in the ticket.
+                4. If the information is outdated, mention when it was last updated
+                5. Include the submitter, assignee and collaborator for a ticket when this info is available.
+                6. If the question cannot be answered with the given context, please say so and do not attempt to provide an answer.
+                7. Do not create new questions related to the given question, instead answer only the provided question.
+                """
 
 template = """Answer the question based only on the following context:
 {context}
@@ -55,7 +64,7 @@ def str_to_float(value, name):
 # Fetch RAG context for question, form prompt from context and question, and call model
 def get_answer(question: Union[str, None]):
 
-    print("Received question: ", question)
+    print("In get_answer, received question: ", question)
 
     model_id = os.environ.get("MODEL_ID")
     if model_id == "" or model_id is None:
@@ -84,6 +93,12 @@ def get_answer(question: Union[str, None]):
     print("Using top-k search from Vector DB, k: ", relevant_docs)
 
     is_json_mode = os.environ.get("IS_JSON_MODE", "False") == "True"
+    print("Using is_json_mode: ", is_json_mode)
+
+    system_prompt = os.environ.get("SYSTEM_PROMPT")
+    if system_prompt  == "" or system_prompt is None:
+        system_prompt  = SYSTEM_PROMPT_DEFAULT
+    print("Using System Prompt: ", system_prompt)
 
     # retrieve docs relevant to the input question
     docs = retriever.invoke(input=question)
@@ -93,6 +108,7 @@ def get_answer(question: Union[str, None]):
     )
 
     if is_json_mode:
+        print("Sending query to the LLM (JSON mode)...")
         return get_answer_with_settings(
             question,
             retriever,
@@ -100,9 +116,10 @@ def get_answer(question: Union[str, None]):
             model_id,
             max_tokens,
             model_temperature,
+            system_prompt,
         )
     else:
-        print("Sending query to the LLM...")
+        print("Sending query to the LLM (non JSON mode)...")
         # concatenate relevant docs retrieved to be used as context
         allcontext = ""
         for i in range(len(docs)):
@@ -124,7 +141,7 @@ def get_answer(question: Union[str, None]):
         )
 
         answer = completions.choices[0].message.content
-        print("Received answer: ", answer)
+        print("Received answer (from non JSON processing): ", answer)
         return answer
 
 
@@ -153,14 +170,12 @@ except Exception as e:
 
 # get env vars needed to access Vector DB
 vectordb_bucket = os.environ.get("VECTOR_DB_S3_BUCKET")
-print("Using vector DB s3 bucket: ", vectordb_bucket)
 if vectordb_bucket is None:
     print("Please set environment variable VECTOR_DB_S3_BUCKET")
     sys.exit(1)
 print("Using Vector DB S3 bucket: ", vectordb_bucket)
 
 vectordb_key = os.environ.get("VECTOR_DB_S3_FILE")
-print("Using vector DB s3 file containing vector store: ", vectordb_key)
 if vectordb_key is None:
     print("Please set environment variable VECTOR_DB_S3_FILE")
     sys.exit(1)
@@ -195,8 +210,8 @@ retriever = vectorstore.as_retriever(search_kwargs={"k": relevant_docs})
 print("Created Vector DB retriever successfully. \n")
 
 # Uncomment to run a local test
-# print("Testing with a sample question:")
-# get_answer("who are you?")
+#print("Testing with a sample question:")
+#get_answer("What's a recent SSH issue customers had?")
 
 ########
 # Start API service to answer questions
@@ -207,4 +222,5 @@ app = FastAPI()
 def read_item(question: Union[str, None] = None):
     print(f"Received question: {question}")
     answer = get_answer(question)
+    print(f"Received answer: {answer}")
     return {"question": question, "answer": answer}

@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: chat
-        image: elotl/llm-chat:v1.2.5
+        image: elotl/llm-chat:v1.3.4
         imagePullPolicy: Always
         ports:
         - containerPort: 7860

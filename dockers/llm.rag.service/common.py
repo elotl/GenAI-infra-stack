@@ -35,7 +35,7 @@ def get_answer_with_settings(question, retriever, client, model_id, max_tokens, 
 
     context = format_context(docs)
 
-    print("Sending query to the LLM...")
+    print("Calling chat completions for JSON model...")
     completions = client.chat.completions.create(
         model=model_id,
         messages=[

@@ -18,15 +18,16 @@ RELEVANT_DOCS_DEFAULT = 2
 MAX_TOKENS_DEFAULT = 64
 MODEL_TEMPERATURE_DEFAULT = 0.01
 MODEL_ID_DEFAULT = MOSAICML_MODEL_ID
+
 SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Format your responses following these rules:
                 1. Answer the provided question only using the provided context.
-                2. Provide a clear, direct and factual answer
+                2. Do not add the provided context to the generated answer.
                 3. Include relevant technical details when present or provide a summary of the comments in the ticket.
-                4. If the information is outdated, mention when it was last updated
-                5. Include the submitter, assignee and collaborator for a ticket when this info is available.
-                6. If the question cannot be answered with the given context, please say so and do not attempt to provide an answer.
-                7. Do not create new questions related to the given question, instead answer only the provided question.
-                """
+                4. Include the submitter, assignee and collaborator for a ticket when this info is available.
+                5. If the question cannot be answered with the given context, please say so and do not attempt to provide an answer.
+                6. Do not create new questions related to the given question, instead answer only the provided question.
+                7. Provide a clear, direct and factual answer.
+                """ 
 
 template = """Answer the question based only on the following context:
 {context}

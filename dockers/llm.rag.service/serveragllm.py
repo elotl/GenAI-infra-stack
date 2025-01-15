@@ -8,6 +8,9 @@ from botocore.exceptions import ClientError, NoCredentialsError
 from fastapi import FastAPI
 from openai import OpenAI
 
+import logging
+from logging.handlers import TimedRotatingFileHandler
+
 from common import get_answer_with_settings
 
 ########
@@ -65,51 +68,51 @@ def str_to_float(value, name):
 # Fetch RAG context for question, form prompt from context and question, and call model
 def get_answer(question: Union[str, None]):
 
-    print("In get_answer, received question: ", question)
+    logging.info("In get_answer, received question: ", question)
 
     model_id = os.environ.get("MODEL_ID")
     if model_id == "" or model_id is None:
         model_id = MODEL_ID_DEFAULT
-    print("Using Model ID: ", model_id)
+    logging.info("Using Model ID: ", model_id)
 
     model_temperature = os.environ.get("MODEL_TEMPERATURE")
     if model_temperature == "" or model_temperature is None:
         model_temperature = MODEL_TEMPERATURE_DEFAULT
     else:
         model_temperature = str_to_float(model_temperature, "MODEL_TEMPERATURE")
-    print("Using Model Temperature: ", model_temperature)
+    logging.info("Using Model Temperature: ", model_temperature)
 
     max_tokens = os.environ.get("MAX_TOKENS")
     if max_tokens == "" or max_tokens is None:
         max_tokens = MAX_TOKENS_DEFAULT
     else:
         max_tokens = str_to_int(max_tokens, "MAX_TOKENS")
-    print("Using Max Tokens: ", max_tokens)
+    logging.info("Using Max Tokens: ", max_tokens)
 
     relevant_docs = os.environ.get("RELEVANT_DOCS")
     if relevant_docs == "" or relevant_docs is None:
         relevant_docs = RELEVANT_DOCS_DEFAULT
     else:
         relevant_docs = str_to_int(relevant_docs, "RELEVANT_DOCS")
-    print("Using top-k search from Vector DB, k: ", relevant_docs)
+    logging.info("Using top-k search from Vector DB, k: ", relevant_docs)
 
     is_json_mode = os.environ.get("IS_JSON_MODE", "False") == "True"
-    print("Using is_json_mode: ", is_json_mode)
+    logging.info("Using is_json_mode: ", is_json_mode)
 
     system_prompt = os.environ.get("SYSTEM_PROMPT")
     if system_prompt  == "" or system_prompt is None:
         system_prompt  = SYSTEM_PROMPT_DEFAULT
-    print("Using System Prompt: ", system_prompt)
+    logging.info("Using System Prompt: ", system_prompt)
 
     # retrieve docs relevant to the input question
     docs = retriever.invoke(input=question)
-    print(
+    logging.info(
         "Number of relevant documents retrieved and that will be used as context for query: ",
         len(docs),
     )
 
     if is_json_mode:
-        print("Sending query to the LLM (JSON mode)...")
+        logging.info("Sending query to the LLM (JSON mode)...")
         return get_answer_with_settings(
             question,
             retriever,
@@ -120,7 +123,7 @@ def get_answer(question: Union[str, None]):
             system_prompt,
         )
     else:
-        print("Sending query to the LLM (non JSON mode)...")
+        logging.info("Sending query to the LLM (non JSON mode)...")
         # concatenate relevant docs retrieved to be used as context
         allcontext = ""
         for i in range(len(docs)):
@@ -201,17 +204,30 @@ except ClientError as e:
     sys.exit(1)
 body = response["Body"].read()
 
-print("Loading Vector DB...\n")
+# When running locally: export RAGLLM_LOGS_PATH=logs/ragllm.log
+log_file_path = os.getenv("RAGLLM_LOGS_PATH") or "/app/logs/ragllm.log"
+os.makedirs(os.path.dirname(log_file_path), exist_ok=True)  # Ensure log directory exists
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+         # Log to file, rotate every 1H and store files from last 24 hrs * 7 days files == 168H data
+        TimedRotatingFileHandler(log_file_path, when='h', interval=1, backupCount=168),
+        logging.StreamHandler()             # Also log to console
+    ]
+)
+
+logging.info("Loading Vector DB...\n")
 # needs prereq packages: sentence_transformers and faiss-cpu
 vectorstore = pickle.loads(body)
 
 # Retriever configuration parameters reference:
 # https://python.langchain.com/api_reference/community/vectorstores/langchain_community.vectorstores.faiss.FAISS.html#langchain_community.vectorstores.faiss.FAISS.as_retriever
 retriever = vectorstore.as_retriever(search_kwargs={"k": relevant_docs})
-print("Created Vector DB retriever successfully. \n")
+logging.info("Created Vector DB retriever successfully. \n")
 
 # Uncomment to run a local test
-#print("Testing with a sample question:")
+#logging.info("Testing with a sample question:")
 #get_answer("What's a recent SSH issue customers had?")
 
 ########
@@ -221,7 +237,7 @@ app = FastAPI()
 
 @app.get("/answer/{question}")
 def read_item(question: Union[str, None] = None):
-    print(f"Received question: {question}")
+    logging.info(f"Received question: {question}")
     answer = get_answer(question)
-    print(f"Received answer: {answer}")
+    logging.info(f"Received answer: {answer}")
     return {"question": question, "answer": answer}

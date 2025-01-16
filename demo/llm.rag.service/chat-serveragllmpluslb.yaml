@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: serveragllm
-          image: elotl/serveragllm:v1.3.6
+          image: elotl/serveragllm:v1.3.7
           imagePullPolicy: Always
           ports:
             - containerPort: 8000

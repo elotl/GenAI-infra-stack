@@ -45,7 +45,7 @@ def str_to_int(value, name):
         # Convert the environment variable (or default) to an integer
         int_value = int(value)
     except ValueError:
-        print(
+        logging.error(
             f"Error: Value {name} could not be converted to an integer value, please check."
         )
         sys.exit(1)
@@ -57,7 +57,7 @@ def str_to_float(value, name):
         # Convert the environment variable (or default) to an integer
         float_value = float(value)
     except ValueError:
-        print(
+        logging.error(
             f"Error: Value {name} could not be converted to an float value, please check."
         )
         sys.exit(1)
@@ -169,10 +169,8 @@ if model_llm_server_url is None:
     model_llm_server_url = (
         "http://llm-model-serve-serve-svc.default.svc.cluster.local:8000"
     )
-    print(
-        "Setting environment variable MODEL_LLM_SERVER_URL to default value: ",
-        model_llm_server_url,
-    )
+    logging.info(
+        f"Setting environment variable MODEL_LLM_SERVER_URL to default value: {model_llm_server_url}")
 llm_server_url = model_llm_server_url + "/v1"
 
 logging.info(f"Creating an OpenAI client to the hosted model at URL: {llm_server_url}")
@@ -188,13 +186,13 @@ except Exception as e:
 # get env vars needed to access Vector DB
 vectordb_bucket = os.environ.get("VECTOR_DB_S3_BUCKET")
 if vectordb_bucket is None:
-    print("Please set environment variable VECTOR_DB_S3_BUCKET")
+    logging.error("Please set environment variable VECTOR_DB_S3_BUCKET")
     sys.exit(1)
 logging.info(f"Using Vector DB S3 bucket: {vectordb_bucket}")
 
 vectordb_key = os.environ.get("VECTOR_DB_S3_FILE")
 if vectordb_key is None:
-    print("Please set environment variable VECTOR_DB_S3_FILE")
+    logging.error("Please set environment variable VECTOR_DB_S3_FILE")
     sys.exit(1)
 logging.info(f"Using Vector DB S3 file: {vectordb_key}")
 
@@ -203,7 +201,7 @@ if relevant_docs == "" or relevant_docs is None:
     relevant_docs = RELEVANT_DOCS_DEFAULT
 else:
     relevant_docs = str_to_int(relevant_docs, "RELEVANT_DOCS")
-logging.info(f"Using top-k search from Vector DB, {relevant_docs}}")
+logging.info(f"Using top-k search from Vector DB, {relevant_docs}")
 
 # Use s3 client to read in vector store
 s3_client = boto3.client("s3")
@@ -211,7 +209,7 @@ response = None
 try:
     response = s3_client.get_object(Bucket=vectordb_bucket, Key=vectordb_key)
 except ClientError as e:
-    print(
+    logging.error(
         f"Error accessing object, {vectordb_key} in bucket, {vectordb_bucket}, err: {e}"
     )
     sys.exit(1)

@@ -10,6 +10,7 @@
 # ]
 # ///
 
+import asyncio
 import os
 import pickle
 import sys
@@ -21,9 +22,9 @@ from typing import Union
 
 import click
 from fastapi import FastAPI
-from openai import OpenAI
+from openai import AsyncOpenAI
 
-from common import get_answer_with_settings
+from common import async_get_answer_with_settings
 
 
 def setup(
@@ -46,17 +47,17 @@ def setup(
     retriever = vectorstore.as_retriever(search_kwargs={"k": relevant_docs})
     print("Created Vector DB retriever successfully. \n")
 
-    print("Creating an OpenAI client to the hosted model at URL: ", llm_server_url)
+    print("Creating an AsyncOpenAI client to the hosted model at URL: ", llm_server_url)
     try:
-        client = OpenAI(base_url=llm_server_url, api_key="na")
+        client = AsyncOpenAI(base_url=llm_server_url, api_key="na")
     except Exception as e:
         print("Error creating client:", e)
         sys.exit(1)
 
     
 
-    get_answer = partial(
-        get_answer_with_settings,
+    async_get_answer = partial(
+        async_get_answer_with_settings,
         retriever=retriever,
         client=client,
         model_id=model_id,
@@ -65,10 +66,10 @@ def setup(
     )
 
     @app.get("/answer/{question}")
-    def read_item(question: Union[str, None] = None):
+    async def read_item(question: Union[str, None] = None):
         print(f"Received question: {question}")
         start_time = time.time()
-        answer = get_answer(question)
+        answer = await async_get_answer(question)
         print("--- Get answer: %s seconds ---" % (time.time() - start_time))
         return {"question": question, "answer": answer}
 

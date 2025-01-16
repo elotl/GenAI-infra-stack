@@ -14,6 +14,7 @@ import os
 import pickle
 import sys
 import uvicorn
+import time
 
 from functools import partial
 from typing import Union
@@ -52,6 +53,8 @@ def setup(
         print("Error creating client:", e)
         sys.exit(1)
 
+    
+
     get_answer = partial(
         get_answer_with_settings,
         retriever=retriever,
@@ -64,7 +67,9 @@ def setup(
     @app.get("/answer/{question}")
     def read_item(question: Union[str, None] = None):
         print(f"Received question: {question}")
+        start_time = time.time()
         answer = get_answer(question)
+        print("--- Get answer: %s seconds ---" % (time.time() - start_time))
         return {"question": question, "answer": answer}
 
     return app

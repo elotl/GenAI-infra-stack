@@ -1,3 +1,5 @@
+import time
+
 from typing import Any, Dict, List
 
 
@@ -19,15 +21,20 @@ def format_context(results: List[Dict[str, Any]]) -> str:
     return "\n\n".join(context_parts)
 
 
-def get_answer_with_settings(question, retriever, client, model_id, max_tokens, model_temperature, system_prompt):
+def get_answer_with_settings(question, retriever, client, model_id, max_tokens, model_temperature, system_prompt=""):
     SYSTEM_PROMPT = """You are a specialized support ticket assistant. Format your responses following these rules:
                 1. Answer the provided question only using the provided context.
                 2. Provide a clear, direct and factual answer
                 3. Include relevant technical details when present
                 4. If the information is outdated, mention when it was last updated
                 """
+    
+    if system_prompt == "":
+        system_prompt = SYSTEM_PROMPT
 
+    start_time = time.time()
     docs = retriever.invoke(input=question)
+    print("--- Retrieve docs: %s seconds ---" % (time.time() - start_time))
     print(
         "Number of relevant documents retrieved and that will be used as context for query: ",
         len(docs),
@@ -36,6 +43,7 @@ def get_answer_with_settings(question, retriever, client, model_id, max_tokens, 
     context = format_context(docs)
 
     print("Calling chat completions for JSON model...")
+    start_time = time.time()
     completions = client.chat.completions.create(
         model=model_id,
         messages=[
@@ -49,6 +57,7 @@ def get_answer_with_settings(question, retriever, client, model_id, max_tokens, 
         temperature=model_temperature,
         stream=False,
     )
+    print("--- Completions: %s seconds ---" % (time.time() - start_time))
 
     answer = {
         "answer": completions.choices[0].message.content,

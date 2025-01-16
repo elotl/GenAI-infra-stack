@@ -1,5 +1,6 @@
 from typing import Any, Dict, List
 
+import logging
 
 def format_context(results: List[Dict[str, Any]]) -> str:
     """Format search results into context for the LLM"""
@@ -40,7 +41,7 @@ def remove_context_from_answer(generated_answer: str):
 
 def get_answer_with_settings(question, retriever, client, model_id, max_tokens, model_temperature, system_prompt):
     docs = retriever.invoke(input=question)
-    print(
+    logging.info(
         "Number of relevant documents retrieved and that will be used as context for query: ",
         len(docs),
     )
@@ -72,5 +73,5 @@ def get_answer_with_settings(question, retriever, client, model_id, max_tokens, 
         "sources": [r.metadata["source"] for r in docs],
         "context": context,  # TODO: if this is big consider logging context here and sending some reference id to UI
     }
-    print("Received answer: ", answer)
+    logging.info("Received answer: ", answer)
     return answer

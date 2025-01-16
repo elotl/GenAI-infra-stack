@@ -68,48 +68,46 @@ def str_to_float(value, name):
 # Fetch RAG context for question, form prompt from context and question, and call model
 def get_answer(question: Union[str, None]):
 
-    logging.info("In get_answer, received question: ", question)
+    logging.info(f"In get_answer, received question: {question}")
 
     model_id = os.environ.get("MODEL_ID")
     if model_id == "" or model_id is None:
         model_id = MODEL_ID_DEFAULT
-    logging.info("Using Model ID: ", model_id)
+    logging.info(f"Using Model ID: {model_id}")
 
     model_temperature = os.environ.get("MODEL_TEMPERATURE")
     if model_temperature == "" or model_temperature is None:
         model_temperature = MODEL_TEMPERATURE_DEFAULT
     else:
         model_temperature = str_to_float(model_temperature, "MODEL_TEMPERATURE")
-    logging.info("Using Model Temperature: ", model_temperature)
+    logging.info(f"Using Model Temperature: {model_temperature}")
 
     max_tokens = os.environ.get("MAX_TOKENS")
     if max_tokens == "" or max_tokens is None:
         max_tokens = MAX_TOKENS_DEFAULT
     else:
         max_tokens = str_to_int(max_tokens, "MAX_TOKENS")
-    logging.info("Using Max Tokens: ", max_tokens)
+    logging.info(f"Using Max Tokens: {max_tokens}")
 
     relevant_docs = os.environ.get("RELEVANT_DOCS")
     if relevant_docs == "" or relevant_docs is None:
         relevant_docs = RELEVANT_DOCS_DEFAULT
     else:
         relevant_docs = str_to_int(relevant_docs, "RELEVANT_DOCS")
-    logging.info("Using top-k search from Vector DB, k: ", relevant_docs)
+    logging.info(f"Using top-k search from Vector DB, k: {relevant_docs}")
 
     is_json_mode = os.environ.get("IS_JSON_MODE", "False") == "True"
-    logging.info("Using is_json_mode: ", is_json_mode)
+    logging.info(f"Using is_json_mode: {is_json_mode}")
 
     system_prompt = os.environ.get("SYSTEM_PROMPT")
     if system_prompt  == "" or system_prompt is None:
         system_prompt  = SYSTEM_PROMPT_DEFAULT
-    logging.info("Using System Prompt: ", system_prompt)
+    logging.info(f"Using System Prompt: {system_prompt}")
 
     # retrieve docs relevant to the input question
     docs = retriever.invoke(input=question)
-    logging.info(
-        "Number of relevant documents retrieved and that will be used as context for query: ",
-        len(docs),
-    )
+    num_of_docs = len(docs)
+    logging.info(f"Number of relevant documents retrieved and that will be used as context for query: {num_of_docs}")
 
     if is_json_mode:
         logging.info("Sending query to the LLM (JSON mode)...")
@@ -145,64 +143,11 @@ def get_answer(question: Union[str, None]):
         )
 
         answer = completions.choices[0].message.content
-        print("Received answer (from non JSON processing): ", answer)
+        logging.info(f"Received answer (from non JSON processing): {answer}")
         return answer
 
-
 ########
-# Get connection to LLM server
-model_llm_server_url = os.environ.get("MODEL_LLM_SERVER_URL")
-if model_llm_server_url is None:
-    model_llm_server_url = (
-        "http://llm-model-serve-serve-svc.default.svc.cluster.local:8000"
-    )
-    print(
-        "Setting environment variable MODEL_LLM_SERVER_URL to default value: ",
-        model_llm_server_url,
-    )
-llm_server_url = model_llm_server_url + "/v1"
-
-print("Creating an OpenAI client to the hosted model at URL: ", llm_server_url)
-try:
-    client = OpenAI(base_url=llm_server_url, api_key="na")
-except Exception as e:
-    print("Error creating client:", e)
-    sys.exit(1)
-
-########
-# Load vectorstore and get retriever for it
-
-# get env vars needed to access Vector DB
-vectordb_bucket = os.environ.get("VECTOR_DB_S3_BUCKET")
-if vectordb_bucket is None:
-    print("Please set environment variable VECTOR_DB_S3_BUCKET")
-    sys.exit(1)
-print("Using Vector DB S3 bucket: ", vectordb_bucket)
-
-vectordb_key = os.environ.get("VECTOR_DB_S3_FILE")
-if vectordb_key is None:
-    print("Please set environment variable VECTOR_DB_S3_FILE")
-    sys.exit(1)
-print("Using Vector DB S3 file: ", vectordb_key)
-
-relevant_docs = os.environ.get("RELEVANT_DOCS")
-if relevant_docs == "" or relevant_docs is None:
-    relevant_docs = RELEVANT_DOCS_DEFAULT
-else:
-    relevant_docs = str_to_int(relevant_docs, "RELEVANT_DOCS")
-print("Using top-k search from Vector DB, k: ", relevant_docs)
-
-# Use s3 client to read in vector store
-s3_client = boto3.client("s3")
-response = None
-try:
-    response = s3_client.get_object(Bucket=vectordb_bucket, Key=vectordb_key)
-except ClientError as e:
-    print(
-        f"Error accessing object, {vectordb_key} in bucket, {vectordb_bucket}, err: {e}"
-    )
-    sys.exit(1)
-body = response["Body"].read()
+# Setup logging
 
 # When running locally: export RAGLLM_LOGS_PATH=logs/ragllm.log
 log_file_path = os.getenv("RAGLLM_LOGS_PATH") or "/app/logs/ragllm.log"
@@ -217,14 +162,69 @@ logging.basicConfig(
     ]
 )
 
-logging.info("Loading Vector DB...\n")
+########
+# Get connection to LLM server
+model_llm_server_url = os.environ.get("MODEL_LLM_SERVER_URL")
+if model_llm_server_url is None:
+    model_llm_server_url = (
+        "http://llm-model-serve-serve-svc.default.svc.cluster.local:8000"
+    )
+    print(
+        "Setting environment variable MODEL_LLM_SERVER_URL to default value: ",
+        model_llm_server_url,
+    )
+llm_server_url = model_llm_server_url + "/v1"
+
+logging.info(f"Creating an OpenAI client to the hosted model at URL: {llm_server_url}")
+try:
+    client = OpenAI(base_url=llm_server_url, api_key="na")
+except Exception as e:
+    logging.error(f"Error creating client to self-hosted LLM: {e}")
+    sys.exit(1)
+
+########
+# Load vectorstore and get retriever for it
+
+# get env vars needed to access Vector DB
+vectordb_bucket = os.environ.get("VECTOR_DB_S3_BUCKET")
+if vectordb_bucket is None:
+    print("Please set environment variable VECTOR_DB_S3_BUCKET")
+    sys.exit(1)
+logging.info(f"Using Vector DB S3 bucket: {vectordb_bucket}")
+
+vectordb_key = os.environ.get("VECTOR_DB_S3_FILE")
+if vectordb_key is None:
+    print("Please set environment variable VECTOR_DB_S3_FILE")
+    sys.exit(1)
+logging.info(f"Using Vector DB S3 file: {vectordb_key}")
+
+relevant_docs = os.environ.get("RELEVANT_DOCS")
+if relevant_docs == "" or relevant_docs is None:
+    relevant_docs = RELEVANT_DOCS_DEFAULT
+else:
+    relevant_docs = str_to_int(relevant_docs, "RELEVANT_DOCS")
+logging.info(f"Using top-k search from Vector DB, {relevant_docs}}")
+
+# Use s3 client to read in vector store
+s3_client = boto3.client("s3")
+response = None
+try:
+    response = s3_client.get_object(Bucket=vectordb_bucket, Key=vectordb_key)
+except ClientError as e:
+    print(
+        f"Error accessing object, {vectordb_key} in bucket, {vectordb_bucket}, err: {e}"
+    )
+    sys.exit(1)
+body = response["Body"].read()
+
+logging.info("Loading Vector DB...")
 # needs prereq packages: sentence_transformers and faiss-cpu
 vectorstore = pickle.loads(body)
 
 # Retriever configuration parameters reference:
 # https://python.langchain.com/api_reference/community/vectorstores/langchain_community.vectorstores.faiss.FAISS.html#langchain_community.vectorstores.faiss.FAISS.as_retriever
 retriever = vectorstore.as_retriever(search_kwargs={"k": relevant_docs})
-logging.info("Created Vector DB retriever successfully. \n")
+logging.info("Created Vector DB retriever successfully.")
 
 # Uncomment to run a local test
 #logging.info("Testing with a sample question:")

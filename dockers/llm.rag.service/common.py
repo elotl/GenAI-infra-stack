@@ -31,6 +31,7 @@ def remove_context_from_answer(generated_answer: str):
         return ""
 
     context_title = "Context:"
+    answer = generated_answer
     # Split text at the token and take only the content before it
     if context_title in generated_answer:
         answer = generated_answer.split(context_title, 1)[0]

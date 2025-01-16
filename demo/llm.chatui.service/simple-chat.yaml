@@ -4,7 +4,6 @@ metadata:
   name: simple-chat
   labels:
     app: simple-chat
-    elotl-luna: "true"
 spec:
   replicas: 1
   selector:
@@ -14,6 +13,9 @@ spec:
     metadata:
       labels:
         app: simple-chat
+        elotl-luna: "true"
+      annotations:
+        node.elotl.co/instance-type-regexp: "^(t3.xlarge|n2-standard-4)$"
     spec:
       containers:
       - name: chat

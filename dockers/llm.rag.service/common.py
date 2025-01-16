@@ -93,7 +93,7 @@ async def async_get_answer_with_settings(question, retriever, client, model_id, 
 
     print("Calling chat completions for JSON model...")
     start_time = time.time()
-    stream = await client.chat.completions.create(
+    completions = await client.chat.completions.create(
         model=model_id,
         messages=[
             {"role": "system", "content": system_prompt},
@@ -104,17 +104,12 @@ async def async_get_answer_with_settings(question, retriever, client, model_id, 
         ],
         max_tokens=max_tokens,
         temperature=model_temperature,
-        stream=True,
+        stream=False,
     )
-    completions = ""
-    async for chunk in stream:
-        if "choices" in chunk and chunk["choices"]:
-            completions += chunk["choices"][0]["delta"].get("content", "")
-
     print("--- Completions: %s seconds ---" % (time.time() - start_time))
 
     answer = {
-        "answer": completions,
+        "answer": completions.choices[0].message.content,
         "relevant_tickets": [r.metadata["ticket"] for r in docs],
         "sources": [r.metadata["source"] for r in docs],
         "context": context,  # TODO: if this is big consider logging context here and sending some reference id to UI

@@ -142,25 +142,20 @@ if __name__ == "__main__":
     print("Using Vector DB file: ", vectordb_file)
 
     # This is the chunk size that will be used by the embedding model
-    embedding_chunk_size = os.environ.get("EMBEDDING_CHUNK_SIZE")
-    if embedding_chunk_size == "" or embedding_chunk_size is None:
-        embedding_chunk_size = EMBEDDING_CHUNK_SIZE_DEFAULT
-    else:
-        embedding_chunk_size = str_to_int(embedding_chunk_size, "EMBEDDING_CHUNK_SIZE")
+    embedding_chunk_size = str_to_int(
+        os.environ.get("EMBEDDING_CHUNK_SIZE", EMBEDDING_CHUNK_SIZE_DEFAULT),
+        "EMBEDDING_CHUNK_SIZE",
+    )
     print("Using Embedding Chunk Size: ", embedding_chunk_size)
 
-    embedding_chunk_overlap = os.environ.get("EMBEDDING_CHUNK_OVERLAP")
-    if embedding_chunk_overlap == "" or embedding_chunk_overlap is None:
-        embedding_chunk_overlap = EMBEDDING_CHUNK_OVERLAP_DEFAULT
-    else:
-        embedding_chunk_overlap = str_to_int(
-            embedding_chunk_overlap, "EMBEDDING_CHUNK_OVERLAP"
-        )
+ 
+    embedding_chunk_overlap = str_to_int(
+        os.environ.get("EMBEDDING_CHUNK_OVERLAP", EMBEDDING_CHUNK_OVERLAP_DEFAULT), 
+        "EMBEDDING_CHUNK_OVERLAP",
+    )
     print("Using Embedding Chunk Overlap: ", embedding_chunk_overlap)
 
-    embedding_model_name = os.environ.get("EMBEDDING_MODEL_NAME")
-    if embedding_model_name == "" or embedding_model_name is None:
-        embedding_model_name = EMBEDDING_MODEL_NAME_DEFAULT
+    embedding_model_name = os.environ.get("EMBEDDING_MODEL_NAME", EMBEDDING_MODEL_NAME_DEFAULT)
     print("Using Embedding Model: ", embedding_model_name)
 
     # Initialize vectorstore and create pickle representation

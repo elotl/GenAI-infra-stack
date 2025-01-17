@@ -186,46 +186,6 @@ if __name__ == "__main__":
 
         vectorstore = FAISS.from_documents(texts, embeddings)
 
-    elif vectordb_input_type == "text-docs":
-        #######
-        # Download text documents from the S3 bucket
-
-        # This is a folder within the S3 bucket which will contain all the
-        # text documents that need to be used as the RAG dataset
-        vectordb_s3_input_dir = vectordb_input_arg
-
-        # this is a temporary folder where all the text documents from S3 are stored locally
-        # before saving it in the Vector DB
-        # TODO (improvement for later) update to using text data from the S3 bucket directly
-        local_tmp_dir = "/tmp/" + vectordb_file
-
-        # create this temp dir if it does not already exist
-        if not os.path.exists(local_tmp_dir):
-            os.makedirs(local_tmp_dir)
-
-        # download text docs from S3 bucket + folder (vectordb_s3_input_dir/arg) into this tmp local directory
-        num_files = download_files_from_s3(
-            vectordb_bucket, vectordb_input_arg, local_tmp_dir
-        )
-        print(
-            f"Number of files downloaded is {num_files}, local tmp dir is {local_tmp_dir}"
-        )
-
-        loader = DirectoryLoader(local_tmp_dir, glob="**/*")
-        documents = loader.load()
-        print(f"Number of documents loaded via DirectoryLoader is {len(documents)}")
-
-        # TODO (improvement for later) Allow users to configure chunk size and overlap values
-        text_splitter = CharacterTextSplitter(
-            chunk_size=embedding_chunk_size, chunk_overlap=embedding_chunk_overlap
-        )
-        docs = text_splitter.split_documents(documents)
-
-        # default model name values has been deprecated since 0.2.16, so we choose a specific model
-        embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
-
-        vectorstore = FAISS.from_documents(docs, embeddings)
-
     elif vectordb_input_type == "json-format":
         local_tmp_dir = "/tmp/" + vectordb_file
 

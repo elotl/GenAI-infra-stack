@@ -4,14 +4,6 @@ import sys
 
 import boto3
 from botocore.exceptions import ClientError
-from langchain.text_splitter import (
-    CharacterTextSplitter,
-    RecursiveCharacterTextSplitter,
-)
-from langchain_community.document_loaders import DirectoryLoader
-from langchain_community.document_loaders.sitemap import SitemapLoader
-from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
 
 from common import create_vectordb, EMBEDDING_CHUNK_SIZE_DEFAULT, EMBEDDING_CHUNK_OVERLAP_DEFAULT
 
@@ -174,7 +166,7 @@ if __name__ == "__main__":
     print(
         f"Number of files downloaded is {num_files}, local tmp dir is {local_tmp_dir}"
     )
-    
+
     vectorstore = create_vectordb(
         local_tmp_dir,
         embedding_model_name,

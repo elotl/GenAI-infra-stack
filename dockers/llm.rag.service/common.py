@@ -70,8 +70,9 @@ def get_answer_with_settings(question, retriever, client, model_id, max_tokens, 
     # Handle common hallucinations observed:
     #    1. Added-Context hallucination
     #    2. Added-Question hallucination
+    #    3. Added-Context hallucination just labelled as "Content" (instead of Context like 1)
     logging.info(f"Removing any observed hallucinations in the generated answer: {generated_answer}")
-    labels_to_trim = ["Context:", "Question:"]
+    labels_to_trim = ["Context:", "Question:", "Content:"]
     answer = generated_answer
 
     for label in labels_to_trim:

@@ -51,19 +51,30 @@ def get_answer_with_settings(question, retriever, client, model_id, max_tokens, 
     logging.info(f"Context after formatting: {context}")
 
     logging.info("Calling chat completions for JSON model...")
-    completions = client.chat.completions.create(
-        model=model_id,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {
-                "role": "user",
-                "content": f"Context:\n{context}\n\nQuestion: {question}",
-            },
-        ],
-        max_tokens=max_tokens,
-        temperature=model_temperature,
-        stream=False,
-    )
+    try:
+        completions = client.chat.completions.create(
+            model=model_id,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {
+                    "role": "user",
+                    "content": f"Context:\n{context}\n\nQuestion: {question}",
+                },
+            ],
+            max_tokens=max_tokens,
+            temperature=model_temperature,
+            stream=False,
+        )
+    except Exception as e:
+        # Handle any error
+        logging.error(f"An unexpected error occurred: {e}")
+        errorToUI = {
+            "answer": f"Please try another question. Received error from LLM invocation: {e}",
+            "relevant_tickets": [],
+            "sources": [],
+            "context": context,
+        }
+        return errorToUI
 
     generated_answer = completions.choices[0].message.content
 

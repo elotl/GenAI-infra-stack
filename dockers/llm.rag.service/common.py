@@ -19,23 +19,24 @@ def format_context(results: List[Dict[str, Any]]) -> str:
 
     return "\n\n".join(context_parts)
 
-def remove_context_from_answer(generated_answer: str):
+def trim_answer(generated_answer: str, label_separator: str) -> str:
     """
-    Remove any Context included in the generated answer after and including the specified token from the text.
+    From the generated_answer, remove all content after and including
+    the provided label separator
     Args:
-        text (str): the generated answer to remove context from
+        generated_answer (str): the generated answer to remove from
+        label_separator (str): string after which content needs to be trimmed
+                               Note: this string will also be trimmed
     Returns:
-        str: Cleaned answer with all content before the context label
+        str: Cleaned answer with all content before the label separator
     """
     if not generated_answer:  # Handle empty text
         return ""
-
-    context_title = "Context:"
     answer = generated_answer
     # Split text at the token and take only the content before it
-    if context_title in generated_answer:
-        answer = generated_answer.split(context_title, 1)[0]
-        logging.info(f"Context seems to have been included in the generated answer and it has been removed: {answer}")
+    if label_separator in generated_answer:
+        answer = generated_answer.split(label_separator, 1)[0]
+        logging.info(f"Label separator: {label_separator} seems to have been included in the generated answer and it has been removed: {answer}")
 
     return answer.strip()
 
@@ -50,25 +51,46 @@ def get_answer_with_settings(question, retriever, client, model_id, max_tokens, 
     logging.info(f"Context after formatting: {context}")
 
     logging.info("Calling chat completions for JSON model...")
-    completions = client.chat.completions.create(
-        model=model_id,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {
-                "role": "user",
-                "content": f"Context:\n{context}\n\nQuestion: {question}",
-            },
-        ],
-        max_tokens=max_tokens,
-        temperature=model_temperature,
-        stream=False,
-    )
+    try:
+        completions = client.chat.completions.create(
+            model=model_id,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {
+                    "role": "user",
+                    "content": f"Context:\n{context}\n\nQuestion: {question}",
+                },
+            ],
+            max_tokens=max_tokens,
+            temperature=model_temperature,
+            stream=False,
+        )
+    except Exception as e:
+        # Handle any error
+        logging.error(f"An unexpected error occurred: {e}")
+        errorToUI = {
+            "answer": f"Please try another question. Received error from LLM invocation: {e}",
+            "relevant_tickets": [],
+            "sources": [],
+            "context": context,
+        }
+        return errorToUI
 
     generated_answer = completions.choices[0].message.content
 
-    # force remove context for the cases when the LLM appends context to the generated answer
-    answer = remove_context_from_answer(generated_answer)
-    logging.info(f"Generated answer (after cleanup): {answer}")
+    # Handle common hallucinations observed:
+    #    1. Added-Context hallucination
+    #    2. Added-Question hallucination
+    #    3. Added-Context hallucination just labelled as "Content" (instead of Context like 1)
+    logging.info(f"Removing any observed hallucinations in the generated answer: {generated_answer}")
+    labels_to_trim = ["Context:", "Question:", "Content:"]
+    answer = generated_answer
+
+    for label in labels_to_trim:
+        if label in answer:
+            answer = trim_answer(answer, label)
+
+    logging.info(f"Answer (after cleanup): {answer}")
 
     answerToUI = {
         "answer": answer,

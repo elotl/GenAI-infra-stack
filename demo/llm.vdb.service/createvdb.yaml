@@ -4,17 +4,19 @@ metadata:
   name: createvectordb
   labels:
     app: modeldataingest
-    elotl-luna: "true"
-  annotations:
-    node.elotl.co/instance-type-regexp: "^(t3.xlarge|n2-standard-4)$"
 spec:
   ttlSecondsAfterFinished: 120
   template:
+    metadata:
+      labels:
+        elotl-luna: "true"
+      annotations:
+        node.elotl.co/instance-type-regexp: "^(t3.xlarge|n2-standard-4)$"
     spec:
       restartPolicy: Never
       containers:
       - name: createvectordb
-        image: elotl/createvectordb:v1.3.3
+        image: elotl/createvectordb:v1.3.4
         imagePullPolicy: Always
         resources:
           requests:

@@ -8,6 +8,9 @@ from botocore.exceptions import ClientError, NoCredentialsError
 from fastapi import FastAPI
 from openai import OpenAI
 
+import logging
+from logging.handlers import TimedRotatingFileHandler
+
 from common import get_answer_with_settings
 
 ########
@@ -18,15 +21,16 @@ RELEVANT_DOCS_DEFAULT = 2
 MAX_TOKENS_DEFAULT = 64
 MODEL_TEMPERATURE_DEFAULT = 0.01
 MODEL_ID_DEFAULT = MOSAICML_MODEL_ID
+
 SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Format your responses following these rules:
                 1. Answer the provided question only using the provided context.
-                2. Provide a clear, direct and factual answer
+                2. Do not add the provided context to the generated answer.
                 3. Include relevant technical details when present or provide a summary of the comments in the ticket.
-                4. If the information is outdated, mention when it was last updated
-                5. Include the submitter, assignee and collaborator for a ticket when this info is available.
-                6. If the question cannot be answered with the given context, please say so and do not attempt to provide an answer.
-                7. Do not create new questions related to the given question, instead answer only the provided question.
-                """
+                4. Include the submitter, assignee and collaborator for a ticket when this info is available.
+                5. If the question cannot be answered with the given context, please say so and do not attempt to provide an answer.
+                6. Do not create new questions related to the given question, instead answer only the provided question.
+                7. Provide a clear, direct and factual answer.
+                """ 
 
 template = """Answer the question based only on the following context:
 {context}
@@ -41,7 +45,7 @@ def str_to_int(value, name):
         # Convert the environment variable (or default) to an integer
         int_value = int(value)
     except ValueError:
-        print(
+        logging.error(
             f"Error: Value {name} could not be converted to an integer value, please check."
         )
         sys.exit(1)
@@ -53,7 +57,7 @@ def str_to_float(value, name):
         # Convert the environment variable (or default) to an integer
         float_value = float(value)
     except ValueError:
-        print(
+        logging.error(
             f"Error: Value {name} could not be converted to an float value, please check."
         )
         sys.exit(1)
@@ -64,51 +68,49 @@ def str_to_float(value, name):
 # Fetch RAG context for question, form prompt from context and question, and call model
 def get_answer(question: Union[str, None]):
 
-    print("In get_answer, received question: ", question)
+    logging.info(f"In get_answer, received question: {question}")
 
     model_id = os.environ.get("MODEL_ID")
     if model_id == "" or model_id is None:
         model_id = MODEL_ID_DEFAULT
-    print("Using Model ID: ", model_id)
+    logging.info(f"Using Model ID: {model_id}")
 
     model_temperature = os.environ.get("MODEL_TEMPERATURE")
     if model_temperature == "" or model_temperature is None:
         model_temperature = MODEL_TEMPERATURE_DEFAULT
     else:
         model_temperature = str_to_float(model_temperature, "MODEL_TEMPERATURE")
-    print("Using Model Temperature: ", model_temperature)
+    logging.info(f"Using Model Temperature: {model_temperature}")
 
     max_tokens = os.environ.get("MAX_TOKENS")
     if max_tokens == "" or max_tokens is None:
         max_tokens = MAX_TOKENS_DEFAULT
     else:
         max_tokens = str_to_int(max_tokens, "MAX_TOKENS")
-    print("Using Max Tokens: ", max_tokens)
+    logging.info(f"Using Max Tokens: {max_tokens}")
 
     relevant_docs = os.environ.get("RELEVANT_DOCS")
     if relevant_docs == "" or relevant_docs is None:
         relevant_docs = RELEVANT_DOCS_DEFAULT
     else:
         relevant_docs = str_to_int(relevant_docs, "RELEVANT_DOCS")
-    print("Using top-k search from Vector DB, k: ", relevant_docs)
+    logging.info(f"Using top-k search from Vector DB, k: {relevant_docs}")
 
     is_json_mode = os.environ.get("IS_JSON_MODE", "False") == "True"
-    print("Using is_json_mode: ", is_json_mode)
+    logging.info(f"Using is_json_mode: {is_json_mode}")
 
     system_prompt = os.environ.get("SYSTEM_PROMPT")
     if system_prompt  == "" or system_prompt is None:
         system_prompt  = SYSTEM_PROMPT_DEFAULT
-    print("Using System Prompt: ", system_prompt)
+    logging.info(f"Using System Prompt: {system_prompt}")
 
     # retrieve docs relevant to the input question
     docs = retriever.invoke(input=question)
-    print(
-        "Number of relevant documents retrieved and that will be used as context for query: ",
-        len(docs),
-    )
+    num_of_docs = len(docs)
+    logging.info(f"Number of relevant documents retrieved and that will be used as context for query: {num_of_docs}")
 
     if is_json_mode:
-        print("Sending query to the LLM (JSON mode)...")
+        logging.info("Sending query to the LLM (JSON mode)...")
         return get_answer_with_settings(
             question,
             retriever,
@@ -119,7 +121,7 @@ def get_answer(question: Union[str, None]):
             system_prompt,
         )
     else:
-        print("Sending query to the LLM (non JSON mode)...")
+        logging.info("Sending query to the LLM (non JSON mode)...")
         # concatenate relevant docs retrieved to be used as context
         allcontext = ""
         for i in range(len(docs)):
@@ -141,9 +143,24 @@ def get_answer(question: Union[str, None]):
         )
 
         answer = completions.choices[0].message.content
-        print("Received answer (from non JSON processing): ", answer)
+        logging.info(f"Received answer (from non JSON processing): {answer}")
         return answer
 
+########
+# Setup logging
+
+# When running locally: export RAGLLM_LOGS_PATH=logs/ragllm.log
+log_file_path = os.getenv("RAGLLM_LOGS_PATH") or "/app/logs/ragllm.log"
+os.makedirs(os.path.dirname(log_file_path), exist_ok=True)  # Ensure log directory exists
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+         # Log to file, rotate every 1H and store files from last 24 hrs * 7 days files == 168H data
+        TimedRotatingFileHandler(log_file_path, when='h', interval=1, backupCount=168),
+        logging.StreamHandler()             # Also log to console
+    ]
+)
 
 ########
 # Get connection to LLM server
@@ -152,17 +169,15 @@ if model_llm_server_url is None:
     model_llm_server_url = (
         "http://llm-model-serve-serve-svc.default.svc.cluster.local:8000"
     )
-    print(
-        "Setting environment variable MODEL_LLM_SERVER_URL to default value: ",
-        model_llm_server_url,
-    )
+    logging.info(
+        f"Setting environment variable MODEL_LLM_SERVER_URL to default value: {model_llm_server_url}")
 llm_server_url = model_llm_server_url + "/v1"
 
-print("Creating an OpenAI client to the hosted model at URL: ", llm_server_url)
+logging.info(f"Creating an OpenAI client to the hosted model at URL: {llm_server_url}")
 try:
     client = OpenAI(base_url=llm_server_url, api_key="na")
 except Exception as e:
-    print("Error creating client:", e)
+    logging.error(f"Error creating client to self-hosted LLM: {e}")
     sys.exit(1)
 
 ########
@@ -171,22 +186,22 @@ except Exception as e:
 # get env vars needed to access Vector DB
 vectordb_bucket = os.environ.get("VECTOR_DB_S3_BUCKET")
 if vectordb_bucket is None:
-    print("Please set environment variable VECTOR_DB_S3_BUCKET")
+    logging.error("Please set environment variable VECTOR_DB_S3_BUCKET")
     sys.exit(1)
-print("Using Vector DB S3 bucket: ", vectordb_bucket)
+logging.info(f"Using Vector DB S3 bucket: {vectordb_bucket}")
 
 vectordb_key = os.environ.get("VECTOR_DB_S3_FILE")
 if vectordb_key is None:
-    print("Please set environment variable VECTOR_DB_S3_FILE")
+    logging.error("Please set environment variable VECTOR_DB_S3_FILE")
     sys.exit(1)
-print("Using Vector DB S3 file: ", vectordb_key)
+logging.info(f"Using Vector DB S3 file: {vectordb_key}")
 
 relevant_docs = os.environ.get("RELEVANT_DOCS")
 if relevant_docs == "" or relevant_docs is None:
     relevant_docs = RELEVANT_DOCS_DEFAULT
 else:
     relevant_docs = str_to_int(relevant_docs, "RELEVANT_DOCS")
-print("Using top-k search from Vector DB, k: ", relevant_docs)
+logging.info(f"Using top-k search from Vector DB, {relevant_docs}")
 
 # Use s3 client to read in vector store
 s3_client = boto3.client("s3")
@@ -194,23 +209,23 @@ response = None
 try:
     response = s3_client.get_object(Bucket=vectordb_bucket, Key=vectordb_key)
 except ClientError as e:
-    print(
+    logging.error(
         f"Error accessing object, {vectordb_key} in bucket, {vectordb_bucket}, err: {e}"
     )
     sys.exit(1)
 body = response["Body"].read()
 
-print("Loading Vector DB...\n")
+logging.info("Loading Vector DB...")
 # needs prereq packages: sentence_transformers and faiss-cpu
 vectorstore = pickle.loads(body)
 
 # Retriever configuration parameters reference:
 # https://python.langchain.com/api_reference/community/vectorstores/langchain_community.vectorstores.faiss.FAISS.html#langchain_community.vectorstores.faiss.FAISS.as_retriever
 retriever = vectorstore.as_retriever(search_kwargs={"k": relevant_docs})
-print("Created Vector DB retriever successfully. \n")
+logging.info("Created Vector DB retriever successfully.")
 
 # Uncomment to run a local test
-#print("Testing with a sample question:")
+#logging.info("Testing with a sample question:")
 #get_answer("What's a recent SSH issue customers had?")
 
 ########
@@ -220,7 +235,7 @@ app = FastAPI()
 
 @app.get("/answer/{question}")
 def read_item(question: Union[str, None] = None):
-    print(f"Received question: {question}")
+    logging.info(f"Received question: {question}")
     answer = get_answer(question)
-    print(f"Received answer: {answer}")
+    logging.info(f"Received answer: {answer}")
     return {"question": question, "answer": answer}

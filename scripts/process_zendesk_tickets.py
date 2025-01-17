@@ -102,7 +102,7 @@ def process_item(
     result_text = []
     
     # First process title and description
-    priority_fields = ['Title', 'Description']
+    priority_fields = ['Title', 'Description', "Ticket"]
     for field in priority_fields:
         if field in config["composite_text_fields"]:
             column = config["composite_text_fields"][field]

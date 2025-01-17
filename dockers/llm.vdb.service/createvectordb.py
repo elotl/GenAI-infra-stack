@@ -161,50 +161,26 @@ if __name__ == "__main__":
     # Initialize vectorstore and create pickle representation
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-    if vectordb_input_type == "sitemap":
-        sitemap_loader = SitemapLoader(
-            web_path=vectordb_input_arg, filter_urls=["^((?!.*/v.*).)*$"]
-        )
-        sitemap_loader.requests_per_second = 1
-        docs = sitemap_loader.load()
-        print("Count of sitemap docs loaded:", len(docs))
+    local_tmp_dir = "/tmp/" + vectordb_file
 
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=embedding_chunk_size,
-            chunk_overlap=embedding_chunk_overlap,
-            length_function=len,
-        )
-        texts = text_splitter.split_documents(docs)
+    # create this temp dir if it does not already exist
+    if not os.path.exists(local_tmp_dir):
+        os.makedirs(local_tmp_dir)
 
-        # default model name values has been deprecated since 0.2.16, so we choose a specific model
-        embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
-
-        vectorstore = FAISS.from_documents(texts, embeddings)
-
-    elif vectordb_input_type == "json-format":
-        local_tmp_dir = "/tmp/" + vectordb_file
-
-        # create this temp dir if it does not already exist
-        if not os.path.exists(local_tmp_dir):
-            os.makedirs(local_tmp_dir)
-
-        # download text docs from S3 bucket + folder (vectordb_s3_input_dir/arg) into this tmp local directory
-        num_files = download_files_from_s3(
-            vectordb_bucket, vectordb_input_arg, local_tmp_dir
-        )
-        print(
-            f"Number of files downloaded is {num_files}, local tmp dir is {local_tmp_dir}"
-        )
-        vectorstore = create_vectordb(
-            local_tmp_dir,
-            embedding_model_name,
-            embedding_chunk_size,
-            embedding_chunk_overlap,
-        )
-
-    else:
-        print("Unknown value for VECTOR_DB_INPUT_TYPE:", vectordb_input_type)
-        sys.exit(1)
+    # download text docs from S3 bucket + folder (vectordb_s3_input_dir/arg) into this tmp local directory
+    num_files = download_files_from_s3(
+        vectordb_bucket, vectordb_input_arg, local_tmp_dir
+    )
+    print(
+        f"Number of files downloaded is {num_files}, local tmp dir is {local_tmp_dir}"
+    )
+    
+    vectorstore = create_vectordb(
+        local_tmp_dir,
+        embedding_model_name,
+        embedding_chunk_size,
+        embedding_chunk_overlap,
+    )
 
     pickle_byte_obj = pickle.dumps(vectorstore)
 

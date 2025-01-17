@@ -166,11 +166,7 @@ if __name__ == "__main__":
     # Initialize vectorstore and create pickle representation
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-    if vectordb_input_type == "text":
-        vectorstore = FAISS.from_texts(
-            vectordb_input_arg, embedding=HuggingFaceEmbeddings()
-        )
-    elif vectordb_input_type == "sitemap":
+    if vectordb_input_type == "sitemap":
         sitemap_loader = SitemapLoader(
             web_path=vectordb_input_arg, filter_urls=["^((?!.*/v.*).)*$"]
         )

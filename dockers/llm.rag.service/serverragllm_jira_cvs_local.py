@@ -52,6 +52,13 @@ def setup(
         print("Error creating client:", e)
         sys.exit(1)
 
+    jira_system_prompt = """You are a specialized support ticket assistant. Format your responses following these rules:
+                1. Answer the provided question only using the provided context.
+                2. Provide a clear, direct and factual answer
+                3. Include relevant technical details when present
+                4. If the information is outdated, mention when it was last updated
+                """
+
     get_answer = partial(
         get_answer_with_settings,
         retriever=retriever,
@@ -59,6 +66,7 @@ def setup(
         model_id=model_id,
         max_tokens=max_tokens,
         model_temperature=model_temperature,
+        system_prompt=jira_system_prompt,
     )
 
     @app.get("/answer/{question}")

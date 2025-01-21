@@ -1,7 +1,21 @@
-# Question-Answering in a Box with Self-hosted LLMs & RAG
+# Question-Answer ChatBot with Self-hosted LLMs & RAG
 
-- Setup the complete infrastructure stack for a Question-Answering chatbot for your private data in just a few minutes!
+- Setup the complete infrastructure stack for a Question-Answer chatbot for your private data in just a few minutes!
 - Your stack will be powered by Self-hosted Open-Source Large Language Models and Retrieval Augmented Generation running on Kubernetes Cloud clusters.
+
+## Overview
+
+The Question-Answer ChatBot provided in this repo is powered by these technologies:
+
+1. Open-Source [Large Language Models](https://en.wikipedia.org/wiki/Large_language_model)
+2. [Retrieval Augmented Generation (RAG)](https://en.wikipedia.org/wiki/Retrieval-augmented_generation)
+3. [Vector Stores](https://en.wikipedia.org/wiki/Vector_database)
+
+Here is a high-level graphic on how these component technologies are used to determine an answer to the end-user's question about a specific knowledge base.
+
+<center>
+<img src="./docs/diagrams/elotl_genai_stack_enduser.png" alt="elotl_genai_stack_enduser" width="600"/>
+</center>
 
 ## Install Documentation
 

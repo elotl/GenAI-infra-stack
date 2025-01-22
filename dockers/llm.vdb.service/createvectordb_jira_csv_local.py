@@ -15,23 +15,33 @@ import click
 import pickle
 
 from common import create_vectordb
+from config import LocalSettings
 
 
 @click.command()
-@click.argument("local_tmp_dir", type=click.Path(exists=True))
-@click.argument("output_file", type=click.Path())
-@click.argument(
-    "embedding_model_name", default="sentence-transformers/all-MiniLM-L6-v2"
-)
-def run(local_tmp_dir: str, output_file: str, embedding_model_name: str):
-    vectorstore = create_vectordb(local_tmp_dir, embedding_model_name)
+@click.option("--env_file", type=click.Path(exists=True), help="Path to the environment file")
+def run(env_file: str):
+    if env_file:
+        config = LocalSettings(_env_file=env_file)
+    else:
+        config = LocalSettings()
+
+    if not config:
+        raise "Missing local config" 
+
+    vectorstore = create_vectordb(
+        config.local_directory, 
+        config.embedding_model_name,
+        chunk_size=config.embedding_chunk_size,
+        chunk_overlap=config.embedding_chunk_overlap,
+    )
 
     pickle_byte_obj = pickle.dumps(vectorstore)
 
-    with open(output_file, "wb") as file:
+    with open(config.output_filename, "wb") as file:
         file.write(pickle_byte_obj)
 
-    print(f"Pickle byte object saved to {output_file}")
+    print(f"Pickle byte object saved to {config.output_filename}")
 
 
 if __name__ == "__main__":

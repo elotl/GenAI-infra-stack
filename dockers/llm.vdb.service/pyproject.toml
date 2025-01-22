@@ -5,4 +5,4 @@ description = "Create FAISS vectordb, serialize and upload to S3"
 requires-python = ">=3.8"
 
 [tool.setuptools]
-py-modules = ["common", "config", "createvectordb", "createvectordb_jira_csv_local"]
+py-modules = ["common", "config", "createvectordb", "createvectordb_jira_csv_local", "s3_utils"]

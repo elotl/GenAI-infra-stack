@@ -48,6 +48,7 @@ COPY createvectordb.py .
 COPY createvectordb_jira_csv_local.py .
 COPY common.py .
 COPY config.py .
+COPY s3_utils.py .
 COPY pyproject.toml .
 
 CMD ["python", "createvectordb.py"]

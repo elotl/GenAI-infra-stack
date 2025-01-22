@@ -26,9 +26,6 @@ def run(env_file: str):
     else:
         config = LocalSettings()
 
-    if not config:
-        raise "Missing local config" 
-
     vectorstore = create_vectordb(
         config.local_directory, 
         config.embedding_model_name,

@@ -1,3 +1,4 @@
+import click
 import os
 import pickle
 import sys
@@ -7,9 +8,13 @@ from config import S3Settings
 from s3_utils import download_files_from_s3, save_file_to_s3
 
 
-if __name__ == "__main__":
-
-    config = S3Settings()
+@click.command()
+@click.option("--env_file", type=click.Path(exists=True), help="Path to the environment file")
+def run(env_file: str):
+    if env_file:
+        config = S3Settings(_env_file=env_file)
+    else:
+        config = S3Settings()
 
     # Initialize vectorstore and create pickle representation
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -42,3 +47,7 @@ if __name__ == "__main__":
     
     print("Uploaded vectordb to", config.s3_bucket_name, config.vectordb_name)
     sys.exit(0)
+
+
+if __name__ == "__main__":
+    run()

@@ -5,8 +5,6 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 
-EMBEDDING_CHUNK_SIZE_DEFAULT = 1000
-EMBEDDING_CHUNK_OVERLAP_DEFAULT = 100
 
 def load_jsonl_files_from_directory(directory):
     data = []
@@ -64,8 +62,8 @@ def chunk_documents_with_metadata(data, chunk_size=1000, chunk_overlap=200):
 def create_vectordb(
     local_tmp_dir: str,
     embedding_model_name: str,
-    chunk_size: int = EMBEDDING_CHUNK_SIZE_DEFAULT,
-    chunk_overlap: int = EMBEDDING_CHUNK_OVERLAP_DEFAULT,
+    chunk_size,
+    chunk_overlap,
 ):
     print("Load JSON files")
     data = load_jsonl_files_from_directory(local_tmp_dir)

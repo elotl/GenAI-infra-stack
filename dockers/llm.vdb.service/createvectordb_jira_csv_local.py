@@ -5,6 +5,7 @@
 #     "faiss-cpu",
 #     "langchain-community",
 #     "langchain-huggingface",
+#     "pydantic_settings",
 # ]
 # ///
 

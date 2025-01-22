@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from pydantic import Field
+from pydantic import Field, ValidationError
 
 from typing import Optional
 
@@ -79,3 +79,28 @@ class LocalSettings(BaseSettings):
 
     class Config:
         env_file = ".env"
+
+
+def try_load_settings(env_file):
+    if env_file:
+        try:
+            s3_settings = S3Settings(_env_file=env_file)
+            return s3_settings, None
+        except ValidationError:
+            
+            try:
+                local_settings = LocalSettings(_env_file=env_file)
+                return None, local_settings
+            except ValidationError:
+                raise "Missing config"
+            
+    try:
+        s3_settings = S3Settings()
+        return s3_settings, None
+    except ValidationError:
+        
+        try:
+            local_settings = LocalSettings()
+            return None, local_settings
+        except ValidationError:
+            raise "Missing config"

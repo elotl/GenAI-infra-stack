@@ -15,16 +15,18 @@ import click
 import pickle
 
 from common import create_vectordb
-from config import LocalSettings
+from config import try_load_settings
 
 
 @click.command()
 @click.option("--env_file", type=click.Path(exists=True), help="Path to the environment file")
 def run(env_file: str):
-    if env_file:
-        config = LocalSettings(_env_file=env_file)
-    else:
-        config = LocalSettings()
+    _, local_settings = try_load_settings(env_file)
+
+    if not local_settings:
+        raise "Missing local settings"
+    
+    config = local_settings
 
     vectorstore = create_vectordb(
         config.local_directory, 

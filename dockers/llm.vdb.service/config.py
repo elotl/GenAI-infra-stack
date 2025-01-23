@@ -26,6 +26,7 @@ class S3Settings(BaseSettings):
 
     # AWS ccredentials
     s3_region: Optional[str] = Field(
+        None,
         alias="AWS_REGION", 
         description="Region of the S3 bucket"
     )
@@ -86,21 +87,19 @@ def try_load_settings(env_file):
         try:
             s3_settings = S3Settings(_env_file=env_file)
             return s3_settings, None
-        except ValidationError:
-            
+        except ValidationError as e:
             try:
                 local_settings = LocalSettings(_env_file=env_file)
                 return None, local_settings
-            except ValidationError:
-                raise "Missing config"
-            
+            except ValidationError as e:
+                raise ValueError(f"Missing or invalid configuration: {e}")
+
     try:
         s3_settings = S3Settings()
         return s3_settings, None
-    except ValidationError:
-        
+    except ValidationError as e:
         try:
             local_settings = LocalSettings()
             return None, local_settings
-        except ValidationError:
-            raise "Missing config"
+        except ValidationError as e:
+            raise ValueError(f"Missing or invalid configuration: {e}")

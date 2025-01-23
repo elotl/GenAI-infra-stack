@@ -1,6 +1,5 @@
 import json
 import os
-import s3fs
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
@@ -22,30 +21,6 @@ def load_jsonl_files_from_directory(directory):
                     # If that fails, try reading as regular JSON
                     f.seek(0)  # Go back to start of file
                     data.append(json.load(f))
-    return data
-
-
-def load_jsonl_files_from_s3(bucket_name, prefix=""):
-    fs = s3fs.S3FileSystem()
-    data = []
-
-    # List all files under the given prefix
-    files = fs.ls(f"{bucket_name}/{prefix}")
-
-    for file_path in files:
-        print("Processing file:", file_path, "...")
-        if file_path.endswith('.json'):
-            with fs.open(file_path, 'r') as f:
-                try:
-                    # Try reading as JSONL first
-                    for line in f:
-                        if line.strip():  # Skip empty lines
-                            data.append(json.loads(line.strip()))
-                except json.JSONDecodeError:
-                    # If that fails, try reading as regular JSON
-                    f.seek(0)  # Go back to start of file
-                    data.append(json.load(f))
-
     return data
 
 

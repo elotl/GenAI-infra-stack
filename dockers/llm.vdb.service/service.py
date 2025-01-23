@@ -5,10 +5,9 @@ from dataclasses import dataclass
 from common import (
     create_vectordb_from_data,
     load_jsonl_files_from_directory,
-    load_jsonl_files_from_s3,
 )
 from config import LocalSettings, S3Settings
-from s3_utils import save_file_to_s3
+from s3_utils import load_jsonl_files_from_s3, save_file_to_s3
 
 
 @dataclass

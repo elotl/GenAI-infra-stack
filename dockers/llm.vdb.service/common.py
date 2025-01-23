@@ -1,5 +1,6 @@
 import json
 import os
+import s3fs
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
@@ -22,6 +23,31 @@ def load_jsonl_files_from_directory(directory):
                     f.seek(0)  # Go back to start of file
                     data.append(json.load(f))
     return data
+
+
+def load_jsonl_files_from_s3(bucket_name, prefix=""):
+    fs = s3fs.S3FileSystem()
+    data = []
+
+    # List all files under the given prefix
+    files = fs.ls(f"{bucket_name}/{prefix}")
+
+    for file_path in files:
+        print("Processing file:", file_path, "...")
+        if file_path.endswith('.json'):
+            with fs.open(file_path, 'r') as f:
+                try:
+                    # Try reading as JSONL first
+                    for line in f:
+                        if line.strip():  # Skip empty lines
+                            data.append(json.loads(line.strip()))
+                except json.JSONDecodeError:
+                    # If that fails, try reading as regular JSON
+                    f.seek(0)  # Go back to start of file
+                    data.append(json.load(f))
+
+    return data
+
 
 def get_documents_with_metadata(data):
     texts = [doc["text"] for doc in data]
@@ -70,6 +96,25 @@ def create_vectordb(
 
     # no chunking
     # texts, metadatas = get_documents_with_metadata(data)
+    # with chunking texts
+    print("Start chunking documents")
+    texts, metadatas = chunk_documents_with_metadata(data, chunk_size, chunk_overlap)
+
+    embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
+    print("Convert to FAISS vectorstore")
+    vectorstore = FAISS.from_texts(texts, embeddings, metadatas=metadatas)
+    return vectorstore
+
+
+def create_vectordb_from_data(
+    data,
+    embedding_model_name: str,
+    chunk_size,
+    chunk_overlap,
+):
+    # no chunking
+    # texts, metadatas = get_documents_with_metadata(data)
+
     # with chunking texts
     print("Start chunking documents")
     texts, metadatas = chunk_documents_with_metadata(data, chunk_size, chunk_overlap)

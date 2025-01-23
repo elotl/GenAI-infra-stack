@@ -1,3 +1,4 @@
+import os
 import pickle
 
 from dataclasses import dataclass
@@ -15,6 +16,8 @@ class S3VectorDbCreationService:
     config: S3Settings
 
     def create(self):
+        os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
         print("Load JSON files")
         data = load_jsonl_files_from_s3(self.config.s3_bucket_name, self.config.s3_dir_name)
 
@@ -37,6 +40,8 @@ class LocalDirDbCreationService:
     config: LocalSettings
 
     def create(self):
+        os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
         print("Load JSON files")
         data = load_jsonl_files_from_directory(self.config.local_directory)
 

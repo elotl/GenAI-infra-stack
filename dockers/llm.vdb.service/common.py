@@ -85,27 +85,6 @@ def chunk_documents_with_metadata(data, chunk_size=1000, chunk_overlap=200):
     return all_chunks, all_metadatas
 
 
-def create_vectordb(
-    local_tmp_dir: str,
-    embedding_model_name: str,
-    chunk_size,
-    chunk_overlap,
-):
-    print("Load JSON files")
-    data = load_jsonl_files_from_directory(local_tmp_dir)
-
-    # no chunking
-    # texts, metadatas = get_documents_with_metadata(data)
-    # with chunking texts
-    print("Start chunking documents")
-    texts, metadatas = chunk_documents_with_metadata(data, chunk_size, chunk_overlap)
-
-    embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
-    print("Convert to FAISS vectorstore")
-    vectorstore = FAISS.from_texts(texts, embeddings, metadatas=metadatas)
-    return vectorstore
-
-
 def create_vectordb_from_data(
     data,
     embedding_model_name: str,

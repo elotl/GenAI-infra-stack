@@ -41,7 +41,8 @@ RUN pip3 install --no-cache-dir \
 RUN pip3 install --no-cache-dir \
     "python-magic" \
     "boto3" \
-    "pydantic_settings"
+    "pydantic_settings" \
+    "s3fs"
 
 COPY __init__.py .
 COPY createvectordb.py .
@@ -49,6 +50,7 @@ COPY createvectordb_jira_csv_local.py .
 COPY common.py .
 COPY config.py .
 COPY s3_utils.py .
+COPY service.py .
 COPY pyproject.toml .
 
 CMD ["python", "createvectordb.py"]

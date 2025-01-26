@@ -1,0 +1,9 @@
+{
+    "text": "title: Implement caching mechanism for cloud resource queries\ndescription: Develop a robust caching strategy to reduce API calls\nstatus: In Progress\ntype: Feature\npriority: High\ncomponents: Core Infrastructure",
+    "metadata": {
+        "ticket": "ENG-916",
+        "type": "Feature",
+        "status": "In Progress",
+        "source": "https://example.atlassian.net/browse/ENG-916"
+    }
+}

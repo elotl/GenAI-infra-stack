@@ -1,0 +1,9 @@
+{
+    "text": "title: Implement multi-factor authentication\ndescription: Add additional security layer for user access\nstatus: Planning\ntype: Security\npriority: Critical\ncomponents: Authentication",
+    "metadata": {
+        "ticket": "ENG-919",
+        "type": "Security",
+        "status": "Planning",
+        "source": "https://example.atlassian.net/browse/ENG-919"
+    }
+}

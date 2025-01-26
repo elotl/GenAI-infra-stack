@@ -1,0 +1,9 @@
+{
+    "text": "title: Optimize database query performance\ndescription: Analyze and improve slow database queries\nstatus: Review\ntype: Performance\npriority: High\ncomponents: Database",
+    "metadata": {
+        "ticket": "ENG-918",
+        "type": "Performance",
+        "status": "Review",
+        "source": "https://example.atlassian.net/browse/ENG-918"
+    }
+}

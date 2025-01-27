@@ -6,7 +6,7 @@ import s3fs
 
 def load_jsonl_files_from_s3(bucket_name, prefix=""):
     # TODO: init client with data from config
-    if os.environ["TEST_FAKE_S3"] == "true":
+    if os.environ.get("TEST_FAKE_S3") == "true":
         fs = s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555/"})
     else:
         fs = s3fs.S3FileSystem()
@@ -34,7 +34,7 @@ def load_jsonl_files_from_s3(bucket_name, prefix=""):
 
 def save_file_to_s3(file_to_upload, bucket, key):
     # TODO: init client with data from config
-    if os.environ["TEST_FAKE_S3"] == "true":
+    if os.environ.get("TEST_FAKE_S3") == "true":
         fs = s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555/"})
     else:
         fs = s3fs.S3FileSystem()

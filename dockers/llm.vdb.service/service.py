@@ -20,6 +20,7 @@ class S3VectorDbCreationService:
 
         os.environ["AWS_ACCESS_KEY_ID"] = self.config.s3_access_key
         os.environ["AWS_SECRET_ACCESS_KEY"] = self.config.s3_secret_key
+        os.environ["AWS_DEFAULT_REGION"] = self.config.s3_region
 
         print("Load JSON files")
         data = load_jsonl_files_from_s3(self.config.s3_bucket_name, self.config.s3_dir_name)

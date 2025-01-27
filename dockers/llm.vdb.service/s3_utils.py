@@ -1,9 +1,15 @@
 import json
+import os
+
 import s3fs
 
 
 def load_jsonl_files_from_s3(bucket_name, prefix=""):
-    fs = s3fs.S3FileSystem()
+    # TODO: init client with data from config
+    if os.environ["TEST_FAKE_S3"] == "true":
+        fs = s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555/"})
+    else:
+        fs = s3fs.S3FileSystem()
     data = []
 
     # List all files under the given prefix
@@ -27,7 +33,11 @@ def load_jsonl_files_from_s3(bucket_name, prefix=""):
 
 
 def save_file_to_s3(file_to_upload, bucket, key):
-    fs = s3fs.S3FileSystem()
+    # TODO: init client with data from config
+    if os.environ["TEST_FAKE_S3"] == "true":
+        fs = s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555/"})
+    else:
+        fs = s3fs.S3FileSystem()
     s3_path = f"{bucket}/{key}"
 
     with fs.open(s3_path, 'wb') as s3_file:

@@ -45,7 +45,6 @@ RUN pip3 install --no-cache-dir \
 
 COPY __init__.py .
 COPY createvectordb.py .
-COPY createvectordb_jira_csv_local.py .
 COPY common.py .
 COPY config.py .
 COPY s3_utils.py .

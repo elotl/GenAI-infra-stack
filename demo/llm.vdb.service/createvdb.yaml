@@ -36,8 +36,8 @@ spec:
           - name: VECTOR_DB_S3_FILE
             value: ${VECTOR_DB_S3_FILE}
           - name: EMBEDDING_CHUNK_SIZE
-            value: ${EMBEDDING_CHUNK_SIZE}
+            value: "${EMBEDDING_CHUNK_SIZE}"
           - name: EMBEDDING_CHUNK_OVERLAP
-            value: ${EMBEDDING_CHUNK_OVERLAP}
+            value: "${EMBEDDING_CHUNK_OVERLAP}"
           - name: EMBEDDING_MODEL_NAME
             value: ${EMBEDDING_MODEL_NAME}

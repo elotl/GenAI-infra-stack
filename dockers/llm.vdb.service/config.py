@@ -1,3 +1,5 @@
+import os
+
 from pydantic_settings import BaseSettings
 from pydantic import Field, ValidationError
 
@@ -88,6 +90,7 @@ def try_load_settings(env_file):
             s3_settings = S3Settings(_env_file=env_file)
             return s3_settings, None
         except ValidationError as e:
+            print("ValidationError: ", e)
             try:
                 local_settings = LocalSettings(_env_file=env_file)
                 return None, local_settings
@@ -98,6 +101,7 @@ def try_load_settings(env_file):
         s3_settings = S3Settings()
         return s3_settings, None
     except ValidationError as e:
+        print("ValidationError: ", e)
         try:
             local_settings = LocalSettings()
             return None, local_settings

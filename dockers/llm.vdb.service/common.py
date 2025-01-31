@@ -4,6 +4,7 @@ import os
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_milvus import Milvus
 
 
 def load_jsonl_files_from_directory(directory):
@@ -76,4 +77,22 @@ def create_vectordb_from_data(
     embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
     print("Convert to FAISS vectorstore")
     vectorstore = FAISS.from_texts(texts, embeddings, metadatas=metadatas)
+    return vectorstore
+
+
+def create_milvus_vectordb_from_data(
+    data,
+    embedding_model_name: str,
+    milvus_uri: str,
+    collection_name: str,
+):
+    embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
+    print("Convert to Milvus vectorstore")
+
+    vectorstore = Milvus(
+        data,
+        embedding_function=embeddings,
+        collection_name=collection_name,
+        connection_args={"uri": milvus_uri},
+    )
     return vectorstore

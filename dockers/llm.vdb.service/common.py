@@ -3,6 +3,7 @@ import os
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
+from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_milvus import Milvus
 
@@ -61,6 +62,13 @@ def chunk_documents_with_metadata(data, chunk_size=1000, chunk_overlap=200):
     return all_chunks, all_metadatas
 
 
+def json_to_document(json_dic):
+    return Document(
+        page_content=json_dic["text"],
+        metadata=json_dic["metadata"]
+    )
+
+
 def create_vectordb_from_data(
     data,
     embedding_model_name: str,
@@ -90,9 +98,17 @@ def create_milvus_vectordb_from_data(
     print("Convert to Milvus vectorstore")
 
     vectorstore = Milvus(
-        data,
         embedding_function=embeddings,
         collection_name=collection_name,
         connection_args={"uri": milvus_uri},
+        # TODO: these index settings are required for local setup
+        # make sure it also makes sense for other setups
+        index_params={
+            "metric_type": "L2",
+            "index_type": "IVF_FLAT",
+            "params": {"nlist": 1024}
+        },
+        auto_id=True,
     )
+    vectorstore.add_documents(documents=data)
     return vectorstore

@@ -2,7 +2,11 @@ import click
 import sys
 
 from config import try_load_settings
-from service import LocalDirDbCreationService, S3VectorDbCreationService
+from service import (
+    LocalDirDbCreationService,
+    LocalDirMilvusDbCreationService,
+    S3VectorDbCreationService,
+)
 
 
 @click.command()
@@ -15,8 +19,12 @@ def run(env_file: str):
         service.create()
 
     elif local_settings:
-        service = LocalDirDbCreationService(local_settings)
-        service.create()
+        if local_settings:
+            service = LocalDirMilvusDbCreationService(local_settings)
+            service.create()
+        else:
+            service = LocalDirDbCreationService(local_settings)
+            service.create()
 
     else:
         # TODO: not really needed, error will be thrown earlier

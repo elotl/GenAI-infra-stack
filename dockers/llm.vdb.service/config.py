@@ -54,6 +54,15 @@ class S3Settings(BaseSettings):
         description="Name of the embedding model to use"
     )
 
+    milvus_uri: str = Field(
+        default="",
+        description="Milvus connection URI"
+    )
+    milvus_collection_name: str = Field(
+        default="",
+        description="Milvus collection name"
+    )
+
     class Config:
         env_file = ".env"
 
@@ -78,6 +87,15 @@ class LocalSettings(BaseSettings):
     embedding_model_name: str = Field(
         default="sentence-transformers/all-MiniLM-L6-v2",
         description="Name of the embedding model to use"
+    )
+
+    milvus_uri: str = Field(
+        default="",
+        description="Milvus connection URI"
+    )
+    milvus_collection_name: str = Field(
+        default="",
+        description="Milvus collection name"
     )
 
     class Config:

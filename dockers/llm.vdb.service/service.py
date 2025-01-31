@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from common import (
     create_milvus_vectordb_from_data,
     create_vectordb_from_data,
-    json_to_document,
     load_jsonl_files_from_directory,
 )
 from config import LocalSettings, S3Settings
@@ -72,16 +71,15 @@ class LocalDirMilvusDbCreationService:
     def create(self):
         print("Load JSON files")
         data = load_jsonl_files_from_directory(self.config.local_directory)
-        docs = []
-        for d in data:
-            docs.append(json_to_document(d))
 
         print("Convert to Milvus vectorstore")
         create_milvus_vectordb_from_data(
-            docs,
+            data,
             self.config.embedding_model_name,
             self.config.milvus_uri,
             self.config.milvus_collection_name,
+            self.config.embedding_chunk_size,
+            self.config.embedding_chunk_overlap,
         )
 
         print(f"Milvus collection saved {self.config.milvus_collection_name}")

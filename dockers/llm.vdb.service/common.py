@@ -62,13 +62,6 @@ def chunk_documents_with_metadata(data, chunk_size=1000, chunk_overlap=200):
     return all_chunks, all_metadatas
 
 
-def json_to_document(json_dic):
-    return Document(
-        page_content=json_dic["text"],
-        metadata=json_dic["metadata"]
-    )
-
-
 def create_vectordb_from_data(
     data,
     embedding_model_name: str,
@@ -93,7 +86,21 @@ def create_milvus_vectordb_from_data(
     embedding_model_name: str,
     milvus_uri: str,
     collection_name: str,
+    chunk_size,
+    chunk_overlap,
 ):
+    print("Start chunking documents")
+    texts, metadatas = chunk_documents_with_metadata(data, chunk_size, chunk_overlap)
+
+    docs = []
+    for text, metadata in zip(texts, metadatas):
+        docs.append(
+            Document(
+                page_content=text,
+                metadata=metadata,
+            )
+        )
+
     embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
     print("Convert to Milvus vectorstore")
 
@@ -110,5 +117,5 @@ def create_milvus_vectordb_from_data(
         },
         auto_id=True,
     )
-    vectorstore.add_documents(documents=data)
+    vectorstore.add_documents(documents=docs)
     return vectorstore

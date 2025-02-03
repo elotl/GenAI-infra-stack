@@ -32,7 +32,7 @@ if RAG_LLM_QUERY_URL is None:
 
 logging.info(f"RAG query endpoint, RAG_LLM_QUERY_URL: {RAG_LLM_QUERY_URL}")
 
-USE_CHATBOT_HISTORY = os.getenv("USE_CHATBOT_HISTORY", "False") == "True"
+USE_CHATBOT_HISTORY = os.getenv("USE_CHATBOT_HISTORY", "True") == "True"
 
 logging.info(f"Use history {USE_CHATBOT_HISTORY}")
 

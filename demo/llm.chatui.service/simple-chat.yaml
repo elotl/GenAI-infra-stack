@@ -27,7 +27,7 @@ spec:
         - name: RAG_LLM_QUERY_URL
           value: "http://serveragllm-service.default.svc.cluster.local:8000"
         - name: USE_CHATBOT_HISTORY
-          value: "false"
+          value: "True"
         resources:
           requests:
             cpu: "200m"

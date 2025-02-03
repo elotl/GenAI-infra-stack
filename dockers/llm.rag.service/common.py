@@ -2,6 +2,7 @@ from typing import Any, Dict, List
 
 import logging
 
+
 def format_context(results: List[Dict[str, Any]]) -> str:
     """Format search results into context for the LLM"""
     context_parts = []
@@ -18,6 +19,7 @@ def format_context(results: List[Dict[str, Any]]) -> str:
         )
 
     return "\n\n".join(context_parts)
+
 
 def trim_answer(generated_answer: str, label_separator: str) -> str:
     """
@@ -83,12 +85,14 @@ def get_answer_with_settings(question, retriever, client, model_id, max_tokens, 
     #    2. Added-Question hallucination
     #    3. Added-Context hallucination just labelled as "Content" (instead of Context like 1)
     logging.info(f"Removing any observed hallucinations in the generated answer: {generated_answer}")
-    labels_to_trim = ["Context:", "Question:", "Content:"]
+    labels_to_trim = ["<|im_end|>", "Context:", "Question:", "Content:"]
     answer = generated_answer
 
     for label in labels_to_trim:
         if label in answer:
             answer = trim_answer(answer, label)
+
+    answer = answer.replace("<|im_start|>", "")
 
     logging.info(f"Answer (after cleanup): {answer}")
 

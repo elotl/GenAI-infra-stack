@@ -5,7 +5,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_milvus import Milvus
+from langchain_milvus import BM25BuiltInFunction, Milvus
 
 
 def load_jsonl_files_from_directory(directory):
@@ -104,18 +104,58 @@ def create_milvus_vectordb_from_data(
     embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
     print("Convert to Milvus vectorstore")
 
-    vectorstore = Milvus(
-        embedding_function=embeddings,
-        collection_name=collection_name,
-        connection_args={"uri": milvus_uri},
-        # TODO: these index settings are required for local setup
-        # make sure it also makes sense for other setups
-        index_params={
-            "metric_type": "L2",
-            "index_type": "IVF_FLAT",
-            "params": {"nlist": 1024}
+    # vectorstore = Milvus(
+    #     embedding_function=embeddings,
+    #     vector_field=["dense", "sparse"],
+    #     builtin_function=BM25BuiltInFunction(),
+    #     collection_name=collection_name,
+    #     connection_args={"uri": milvus_uri},
+    #     # TODO: these index settings are required for local setup
+    #     # make sure it also makes sense for other setups
+    #     index_params=[
+    #         {
+    #             "field_name": "dense",
+    #             "index_type": "IVF_FLAT",
+    #             "metric_type": "L2",
+    #             "params": {"nlist": 1024}
+    #         },
+    #         {
+    #             "field_name": "sparse",
+    #             "index_type": "IVF_FLAT",
+    #             "metric_type": "L2",
+    #             "params": {"nlist": 1024}
+    #         }
+    #     ],
+    #     auto_id=True,
+    # )
+
+    from langchain_openai import OpenAIEmbeddings
+
+    vectorstore = Milvus.from_documents(
+        documents=docs,
+        embedding=OpenAIEmbeddings(),
+        builtin_function=BM25BuiltInFunction(),
+        vector_field=["dense", "sparse"],
+        connection_args={
+            "uri": milvus_uri,
         },
+        index_params=[
+            {
+                "field_name": "dense",
+                "index_type": "IVF_FLAT",
+                "metric_type": "L2",
+                "params": {"nlist": 1024}
+            },
+            {
+                "field_name": "sparse",
+                "index_type": "IVF_FLAT",
+                "metric_type": "L2",
+                "params": {"nlist": 1024}
+            }
+        ],
+        consistency_level="Strong",
         auto_id=True,
     )
+
     vectorstore.add_documents(documents=docs)
     return vectorstore

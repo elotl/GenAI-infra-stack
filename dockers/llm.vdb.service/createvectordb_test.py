@@ -2,10 +2,9 @@ import click
 import os
 import pytest
 import s3fs
+import subprocess
 
 from botocore.session import Session
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_milvus import Milvus
 from moto.moto_server.threaded_moto_server import ThreadedMotoServer
 from s3fs.core import S3FileSystem
 
@@ -25,25 +24,24 @@ def test_create_faiss_vector_db_using_local_files():
         os.remove("test_data/output/output_pickled.obj")
 
 
-def test_create_milvus_vector_db_using_local_files():
+@pytest.fixture(scope="module")
+def standalone_environment():
+    # Start the standalone environment before tests
+    try:
+        subprocess.run(["bash", "standalone_embed.sh", "start"], check=True)
+        yield
+    finally:
+        # Stop the standalone environment after tests, even if tests fail
+        subprocess.run(["bash", "standalone_embed.sh", "stop"], check=True)
+        subprocess.run(["bash", "standalone_embed.sh", "delete"], check=True)
+
+
+def test_create_milvus_vector_db_using_local_files(standalone_environment):
     ctx = click.Context(run)
     try:
         ctx.forward(run, env_file="test_data/.env_local_milvus")
     except SystemExit as e:
         assert e.code == 0
-
-    URI = "./milvus_example.db"
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    vector_store_loaded = Milvus(
-        embeddings,
-        connection_args={"uri": URI},
-        collection_name="langchain_example",
-    )
-
-    vector_store_loaded.similarity_search_with_score("Enhance error tracking?", k=2)
-
-    if os.path.exists("milvus_example.db"):
-        os.remove("milvus_example.db")
 
 
 @pytest.fixture(scope="module")

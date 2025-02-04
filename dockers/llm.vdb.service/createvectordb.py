@@ -15,11 +15,13 @@ def run(env_file: str):
     s3_settings, local_settings = try_load_settings(env_file)
 
     if s3_settings:
+        if s3_settings.milvus_uri and s3_settings.milvus_collection_name:
+            raise "Missing config"
         service = S3VectorDbCreationService(s3_settings)
         service.create()
 
     elif local_settings:
-        if local_settings:
+        if local_settings.milvus_uri and local_settings.milvus_collection_name:
             service = LocalDirMilvusDbCreationService(local_settings)
             service.create()
         else:

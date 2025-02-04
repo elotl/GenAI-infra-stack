@@ -1,0 +1,6 @@
+click
+faiss-cpu
+langchain_community
+langchain_huggingface
+pydantic_settings
+s3fs

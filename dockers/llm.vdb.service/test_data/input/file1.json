@@ -1,0 +1,9 @@
+{
+  "text": "title: Split configuration for each cloud provider into a separate subsection\ndescription: \nstatus: To Do\ntype: Improvement\npriority: Medium\ncomponents: APP",
+  "metadata": {
+    "ticket": "ENG-915",
+    "type": "Improvement",
+    "status": "To Do",
+    "source": "https://example.atlassian.net/browse/ENG-915"
+  }
+}

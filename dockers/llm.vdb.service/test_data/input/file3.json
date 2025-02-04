@@ -1,0 +1,9 @@
+{
+    "text": "title: Add comprehensive error logging for network operations\ndescription: Enhance error tracking and diagnostic capabilities\nstatus: Backlog\ntype: Technical Debt\npriority: Low\ncomponents: Networking",
+    "metadata": {
+        "ticket": "ENG-917",
+        "type": "Technical Debt",
+        "status": "Backlog",
+        "source": "https://example.atlassian.net/browse/ENG-917"
+    }
+}

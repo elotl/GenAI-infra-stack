@@ -16,7 +16,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: createvectordb
-        image: elotl/createvectordb:v1.3.11
+        image: elotl/createvectordb:refactor
         imagePullPolicy: Always
         resources:
           requests:

@@ -5,8 +5,6 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 
-EMBEDDING_CHUNK_SIZE_DEFAULT = 1000
-EMBEDDING_CHUNK_OVERLAP_DEFAULT = 100
 
 def load_jsonl_files_from_directory(directory):
     data = []
@@ -24,6 +22,7 @@ def load_jsonl_files_from_directory(directory):
                     f.seek(0)  # Go back to start of file
                     data.append(json.load(f))
     return data
+
 
 def get_documents_with_metadata(data):
     texts = [doc["text"] for doc in data]
@@ -44,7 +43,7 @@ def chunk_documents_with_metadata(data, chunk_size=1000, chunk_overlap=200):
     all_metadatas = []
 
     for doc in data:
-        print("Chunking doc with key/ticket ID, ", doc["metadata"]["ticket"])
+        print("Chunking doc with key/ticket ID, ", doc["metadata"].get("ticket") or doc["metadata"].get("key"))
         chunks = text_splitter.split_text(doc["text"])
 
         doc_metadatas = [doc["metadata"].copy() for _ in chunks]
@@ -61,17 +60,15 @@ def chunk_documents_with_metadata(data, chunk_size=1000, chunk_overlap=200):
     return all_chunks, all_metadatas
 
 
-def create_vectordb(
-    local_tmp_dir: str,
+def create_vectordb_from_data(
+    data,
     embedding_model_name: str,
-    chunk_size: int = EMBEDDING_CHUNK_SIZE_DEFAULT,
-    chunk_overlap: int = EMBEDDING_CHUNK_OVERLAP_DEFAULT,
+    chunk_size,
+    chunk_overlap,
 ):
-    print("Load JSON files")
-    data = load_jsonl_files_from_directory(local_tmp_dir)
-
     # no chunking
     # texts, metadatas = get_documents_with_metadata(data)
+
     # with chunking texts
     print("Start chunking documents")
     texts, metadatas = chunk_documents_with_metadata(data, chunk_size, chunk_overlap)

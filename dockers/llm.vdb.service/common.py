@@ -110,7 +110,7 @@ def create_milvus_vectordb_from_data(
         builtin_function=BM25BuiltInFunction(),
         collection_name=collection_name,
         connection_args={"uri": milvus_uri},
-        auto_id=True,
+        auto_id=True
     )
 
     vectorstore.add_documents(documents=docs)

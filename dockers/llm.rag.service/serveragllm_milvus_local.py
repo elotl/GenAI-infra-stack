@@ -62,7 +62,8 @@ def setup(
     retriever = vectorstore.as_retriever(
         search_kwargs={
             "k": relevant_docs,
-            "metric_type": "L2",
+            "ranker_type": "weighted",
+            "ranker_params": {"weights": [0.49, 0.51]},
         }
     )
     print("Created Vector DB retriever successfully. \n")

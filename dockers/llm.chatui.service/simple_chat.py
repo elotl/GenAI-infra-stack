@@ -127,9 +127,9 @@ with gr.Blocks() as app:
     bot_response = gr.State()
 
     if USE_CHATBOT_HISTORY:
-        msg.submit(chatbot_response, inputs=[chatbot, msg], outputs=[chatbot, msg])
+        msg.submit(chatbot_response, inputs=[chatbot, msg], outputs=[chatbot, msg, rating_slider, submit_rating_btn, user_message, bot_response])
         send_button.click(
-            chatbot_response, inputs=[chatbot, msg], outputs=[chatbot, msg]
+            chatbot_response, inputs=[chatbot, msg], outputs=[chatbot, msg, rating_slider, submit_rating_btn, user_message, bot_response]
         )
     else:
         msg.submit(

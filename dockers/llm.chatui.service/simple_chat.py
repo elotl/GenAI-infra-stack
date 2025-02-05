@@ -1,24 +1,25 @@
+import logging
 import os
 import sys
 import urllib
+from logging.handlers import TimedRotatingFileHandler
 
 import gradio as gr
 import requests
 
-import logging
-from logging.handlers import TimedRotatingFileHandler
-
 # When running locally: export CHATUI_LOGS_PATH=logs/chatui.log
 log_file_path = os.getenv("CHATUI_LOGS_PATH") or "/app/logs/chatui.log"
-os.makedirs(os.path.dirname(log_file_path), exist_ok=True)  # Ensure log directory exists
+os.makedirs(
+    os.path.dirname(log_file_path), exist_ok=True
+)  # Ensure log directory exists
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-         # Log to file, rotate every 1H and store files from last 24 hrs * 7 days files == 168H data
-        TimedRotatingFileHandler(log_file_path, when='h', interval=1, backupCount=168),
-        logging.StreamHandler()             # Also log to console
-    ]
+        # Log to file, rotate every 1H and store files from last 24 hrs * 7 days files == 168H data
+        TimedRotatingFileHandler(log_file_path, when="h", interval=1, backupCount=168),
+        logging.StreamHandler(),  # Also log to console
+    ],
 )
 
 # Environment variable setup
@@ -35,6 +36,7 @@ logging.info(f"RAG query endpoint, RAG_LLM_QUERY_URL: {RAG_LLM_QUERY_URL}")
 USE_CHATBOT_HISTORY = os.getenv("USE_CHATBOT_HISTORY", "True") == "True"
 
 logging.info(f"Use history {USE_CHATBOT_HISTORY}")
+
 
 def clean_answer(text: str, chatml_end_token: str) -> str:
     """
@@ -58,6 +60,7 @@ def clean_answer(text: str, chatml_end_token: str) -> str:
 
     return text.strip()
 
+
 # Function to generate clickable links for JIRA tickets
 def generate_source_links(sources):
     links = []
@@ -78,13 +81,15 @@ def get_api_response(user_message):
                 return "Could not fetch response."
 
             result = result["answer"]
-            answer = clean_answer(result.get("answer", "Could not fetch response."), "<|im_end|>")
+            answer = clean_answer(
+                result.get("answer", "Could not fetch response."), "<|im_end|>"
+            )
             sources = result.get("sources", [])
             links = generate_source_links(sources)
             clickable_links = "<br>".join(links)
             context = result.get("context", "")
             logging.info(f"Question: {question}\nAnswer: {answer}\nContext: {context}")
-    
+
             return f"{answer}<br><br>Relevant Tickets:<br>{clickable_links}"
         else:
             return "API Error: Unable to fetch response."
@@ -95,19 +100,36 @@ def get_api_response(user_message):
 # Chatbot response functions
 def chatbot_response_no_hist(_chatbot, user_message):
     response_text = get_api_response(user_message)
-    return [[user_message, response_text]], "", gr.update(value=1, visible=True), gr.update(visible=True), user_message, response_text
+    return (
+        [[user_message, response_text]],
+        "",
+        gr.update(value=1, visible=True),
+        gr.update(visible=True),
+        user_message,
+        response_text,
+    )
 
 
 def chatbot_response(history, user_message):
     response_text = get_api_response(user_message)
     history.append((user_message, response_text))
-    return history, "", gr.update(value=1, visible=True), gr.update(visible=True), user_message, response_text
+    return (
+        history,
+        "",
+        gr.update(value=1, visible=True),
+        gr.update(visible=True),
+        user_message,
+        response_text,
+    )
 
 
 def submit_rating(rating, user_message, bot_response):
-    logging.info(f"User rating: {rating}\nQuestion: {user_message}\nAnswer: {bot_response}")
+    logging.info(
+        f"User rating: {rating}\nQuestion: {user_message}\nAnswer: {bot_response}"
+    )
     # Hide the rating slider and submit button after submission
     return gr.update(visible=False), gr.update(visible=False)
+
 
 # In the Gradio UI setup section, change:
 with gr.Blocks() as app:
@@ -117,7 +139,9 @@ with gr.Blocks() as app:
             chatbot = gr.Chatbot(label="Question-Answering Chatbot")
 
             # Rating slider and submit button initially hidden
-            rating_slider = gr.Slider(label="Rate the response", minimum=1, maximum=5, step=1, visible=False)
+            rating_slider = gr.Slider(
+                label="Rate the response", minimum=1, maximum=5, step=1, visible=False
+            )
             submit_rating_btn = gr.Button("Submit Rating", visible=False)
 
             msg = gr.Textbox(placeholder="Type your question here...", label="Question")
@@ -127,16 +151,54 @@ with gr.Blocks() as app:
     bot_response = gr.State()
 
     if USE_CHATBOT_HISTORY:
-        msg.submit(chatbot_response, inputs=[chatbot, msg], outputs=[chatbot, msg, rating_slider, submit_rating_btn, user_message, bot_response])
+        msg.submit(
+            chatbot_response,
+            inputs=[chatbot, msg],
+            outputs=[
+                chatbot,
+                msg,
+                rating_slider,
+                submit_rating_btn,
+                user_message,
+                bot_response,
+            ],
+        )
         send_button.click(
-            chatbot_response, inputs=[chatbot, msg], outputs=[chatbot, msg, rating_slider, submit_rating_btn, user_message, bot_response]
+            chatbot_response,
+            inputs=[chatbot, msg],
+            outputs=[
+                chatbot,
+                msg,
+                rating_slider,
+                submit_rating_btn,
+                user_message,
+                bot_response,
+            ],
         )
     else:
         msg.submit(
-            chatbot_response_no_hist, inputs=[chatbot, msg], outputs=[chatbot, msg, rating_slider, submit_rating_btn, user_message, bot_response]
+            chatbot_response_no_hist,
+            inputs=[chatbot, msg],
+            outputs=[
+                chatbot,
+                msg,
+                rating_slider,
+                submit_rating_btn,
+                user_message,
+                bot_response,
+            ],
         )
         send_button.click(
-            chatbot_response_no_hist, inputs=[chatbot, msg], outputs=[chatbot, msg, rating_slider, submit_rating_btn, user_message, bot_response]
+            chatbot_response_no_hist,
+            inputs=[chatbot, msg],
+            outputs=[
+                chatbot,
+                msg,
+                rating_slider,
+                submit_rating_btn,
+                user_message,
+                bot_response,
+            ],
         )
 
     # Handle rating submission with the button

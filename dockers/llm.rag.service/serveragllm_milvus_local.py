@@ -9,6 +9,8 @@
 #     "uvicorn",
 #     "weaviate",
 #     "langchain_milvus",
+#     "langchain-openai",
+#     "pymilvus"
 # ]
 # ///
 
@@ -46,26 +48,42 @@ def setup(
     app = FastAPI()
 
     # TODO: move to imports
-    from langchain_huggingface import HuggingFaceEmbeddings
-    from langchain_milvus import Milvus
+    from langchain_milvus.retrievers import MilvusCollectionHybridSearchRetriever
+    from langchain_milvus.function import (
+        BM25BuiltInFunction,
+    )
+    from langchain.embeddings import HuggingFaceEmbeddings
+    from pymilvus import connections, Collection, utility, WeightedRanker
 
     # TODO: pass through settings or params
     URI = "http://localhost:19530"
+    collection_name = "test_milvus_collection"
     embedding_model_name = "sentence-transformers/all-MiniLM-L6-v2"
     embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
-    vectorstore = Milvus(
-        embeddings,
-        connection_args={"uri": URI},
-        collection_name="langchain_example",
+
+    connections.connect(
+        alias="default",
+        uri=URI
     )
 
-    retriever = vectorstore.as_retriever(
-        search_kwargs={
-            "k": relevant_docs,
-            "ranker_type": "weighted",
-            "ranker_params": {"weights": [0.49, 0.51]},
-        }
+    # Connect to the existing collection
+    collection = Collection(collection_name)
+    collection.load()
+
+    # from langchain_openai import OpenAIEmbeddings
+    # dense_embedding_func = OpenAIEmbeddings()
+
+    # Initialize the hybrid retriever with both vector fields
+    retriever = MilvusCollectionHybridSearchRetriever(
+        collection=collection,
+        content_field="page_content",  # Field containing the document text
+        anns_fields=["dense", "sparse"],  # Both vector fields
+        metadata_fields=["metadata"],  # Include all metadata
+        field_embeddings=[embeddings, BM25BuiltInFunction()],  # You might need to specify how sparse embeddings are handled
+        # Reranking configuration (optional but resolves validation)
+        rerank=WeightedRanker(0.5, 0.5),  # or provide a reranking method if available
     )
+
     print("Created Vector DB retriever successfully. \n")
 
     print("Creating an OpenAI client to the hosted model at URL: ", llm_server_url)

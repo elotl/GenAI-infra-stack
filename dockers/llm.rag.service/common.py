@@ -3,6 +3,9 @@ from typing import Any, Dict, List
 import logging
 
 
+logging.basicConfig(level=logging.DEBUG)
+
+
 def format_context(results: List[Dict[str, Any]]) -> str:
     """Format search results into context for the LLM"""
     context_parts = []
@@ -44,7 +47,22 @@ def trim_answer(generated_answer: str, label_separator: str) -> str:
 
 
 def get_answer_with_settings(question, retriever, client, model_id, max_tokens, model_temperature, system_prompt):
-    docs = retriever.invoke(input=question)
+    search_params = {
+        "param": {
+            "metric_type": "L2",
+            "params": {"nprobe": 10},
+        },
+        "limit": 5,
+        "field_names": ["page_content", "metadata"],
+        "vector_field": ["dense", "sparse"],
+        "weights": [0.7, 0.2]  # Weights for dense and sparse vectors
+    }
+
+    docs = retriever.get_relevant_documents(
+        query=question,
+        search_kwargs=search_params
+    )
+
     num_of_docs = len(docs)
     logging.info(f"Number of relevant documents retrieved and that will be used as context for query: {num_of_docs}")
 

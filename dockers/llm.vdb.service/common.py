@@ -45,7 +45,7 @@ def chunk_documents_with_metadata(data, chunk_size=1000, chunk_overlap=200):
     all_metadatas = []
 
     for doc in data:
-        print("Chunking doc with key, ", doc["metadata"]["key"])
+        print("Chunking doc with key, ", doc["metadata"].get("key") or doc["metadata"].get("ticket"))
         chunks = text_splitter.split_text(doc["text"])
 
         doc_metadatas = [doc["metadata"].copy() for _ in chunks]
@@ -150,5 +150,5 @@ def create_vectordb_local_weaviate(
         documents.append(document)
 
     # TODO: enable connecting to other weaviate than local
-    weaviate_client = weaviate.connect_to_local()
-    return WeaviateVectorStore.from_documents(documents, embeddings, client=weaviate_client, index_name="my_custom_index")
+    with weaviate.connect_to_local() as weaviate_client:
+        return WeaviateVectorStore.from_documents(documents, embeddings, client=weaviate_client, index_name="my_custom_index")

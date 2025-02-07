@@ -7,7 +7,7 @@
 #     "langchain-huggingface",
 #     "openai",
 #     "uvicorn",
-#     "weaviate",
+#     "weaviate-client",
 #     "langchain_weaviate",
 # ]
 # ///

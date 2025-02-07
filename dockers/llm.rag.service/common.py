@@ -11,7 +11,7 @@ def format_context(results: List[Dict[str, Any]]) -> str:
         ticket_content = result.page_content
 
         context_parts.append(
-            f"Key: {ticket_metadata['key']} | Status: {ticket_metadata['status']} - "
+            f"Key: {ticket_metadata.get('key') or ticket_metadata.get('ticket')} | Status: {ticket_metadata['status']} - "
             f"Type: {ticket_metadata['type']}\n"
             f"Content: {ticket_content}...\n"
         )
@@ -53,7 +53,7 @@ def get_answer_with_settings(question, retriever, client, model_id, max_tokens, 
 
     answer = {
         "answer": completions.choices[0].message.content,
-        "relevant_tickets": [r.metadata["key"] for r in docs],
+        "relevant_tickets": [r.metadata.get("key") or r.metadata.get("ticket") for r in docs],
         "sources": [r.metadata["source"] for r in docs],
         "context": context,  # TODO: if this is big consider logging context here and sending some reference id to UI
     }

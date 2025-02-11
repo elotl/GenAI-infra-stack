@@ -12,7 +12,7 @@ def clean_text(text: Any) -> str:
         return ""
     result = str(text).strip().replace("\n", " ").replace("\r", " ")
     result = re.sub(r'-{3,}', '-', result)
-    return re.sub(r' {2,}', ' ', result)
+    return re.sub(r'\s+', ' ', result)
 
 def get_nested_value(data: Dict[str, Any], field_path: str) -> Any:
     """Extract value from nested dictionary using dot notation.

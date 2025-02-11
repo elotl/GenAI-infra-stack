@@ -60,6 +60,41 @@ def chunk_documents_with_metadata(data, chunk_size=1000, chunk_overlap=200):
     return all_chunks, all_metadatas
 
 
+def chunk_documents_with_metadata_add_metadata_to_text(data, chunk_size=1000, chunk_overlap=200):
+    """
+    Chunks documents while maintaining alignment between text chunks and metadata
+    """
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size, chunk_overlap=chunk_overlap
+    )
+
+    # Lists to store chunks and corresponding metadata
+    all_chunks = []
+    all_metadatas = []
+
+    for doc in data:
+        print("Chunking doc with key/ticket ID, ", doc["metadata"].get("ticket") or doc["metadata"].get("key"))
+        chunks = text_splitter.split_text(doc["text"])
+        chunks_enriched_with_metadata = []
+
+        doc_metadatas = [doc["metadata"].copy() for _ in chunks]
+
+        meta_enhancement = "\n".join([f"{key}: {value}" for key, value in doc["metadata"]])
+
+        for i, (chunk, metadata) in enumerate(zip(chunks, doc_metadatas)):
+            chunks_enriched_with_metadata.append(chunk + "\n" + meta_enhancement)
+
+            # This is just to see if it's used or not
+            metadata["chunk_index"] = i
+            metadata["chunk_total"] = len(chunks)
+
+        all_chunks.extend(chunks_enriched_with_metadata)
+        all_metadatas.extend(doc_metadatas)
+
+    print("Number of chunks created: ", len(all_chunks))
+    return all_chunks, all_metadatas
+
+
 def create_vectordb_from_data(
     data,
     embedding_model_name: str,

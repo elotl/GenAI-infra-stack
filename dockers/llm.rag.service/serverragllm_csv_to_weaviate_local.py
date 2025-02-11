@@ -46,7 +46,7 @@ def setup(
     embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
 
     weaviate_client = weaviate.connect_to_local()
-    vectorstore  = WeaviateVectorStore(
+    vectorstore = WeaviateVectorStore(
        client=weaviate_client,
        index_name="my_custom_index",
        text_key="text",
@@ -89,7 +89,7 @@ def setup(
 MICROSOFT_MODEL_ID = "microsoft/Phi-3-mini-4k-instruct"
 MOSAICML_MODEL_ID = "mosaicml/mpt-7b-chat"
 RELEVANT_DOCS_DEFAULT = 2
-MAX_TOKENS_DEFAULT = 64
+MAX_TOKENS_DEFAULT = 256
 MODEL_TEMPERATURE_DEFAULT = 0.01
 
 relevant_docs = os.getenv("RELEVANT_DOCS", RELEVANT_DOCS_DEFAULT)

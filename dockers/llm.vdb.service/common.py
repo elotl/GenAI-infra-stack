@@ -62,8 +62,23 @@ def chunk_documents_with_metadata(data, chunk_size=1000, chunk_overlap=200):
 
 def chunk_documents_with_metadata_add_metadata_to_text(data, chunk_size=1000, chunk_overlap=200):
     """
-    Chunks documents while maintaining alignment between text chunks and metadata
+    Chunks documents while maintaining alignment between text chunks and metadata and adds
+    metadata to text, so each chunk ahs metadata inside
     """
+    # TODO: find a better way to find the biggest metadata
+    max_size_of_metadata = 0
+    for doc in data:
+        meta_enhancement = "\n".join([f"{key}: {value}" for key, value in doc["metadata"]])
+        max_size_of_metadata = max(max_size_of_metadata, len(meta_enhancement))
+
+    print(f"Biggest metada has {max_size_of_metadata} characters.")
+    effective_chunk_size = chunk_size - max_size_of_metadata
+    print(f"Effective chunk size will be {effective_chunk_size}")
+
+    # TODO: handle better
+    if effective_chunk_size <= 0:
+        raise "Use bigger chunk size"
+
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size, chunk_overlap=chunk_overlap
     )

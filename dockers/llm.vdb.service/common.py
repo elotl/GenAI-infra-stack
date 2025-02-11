@@ -62,8 +62,13 @@ def chunk_documents_with_metadata(data, chunk_size=1000, chunk_overlap=200):
 
 def chunk_documents_with_metadata_add_metadata_to_text(data, chunk_size=1000, chunk_overlap=200):
     """
-    Chunks documents while maintaining alignment between text chunks and metadata and adds
-    metadata to text, so each chunk ahs metadata inside
+    Splits documents into smaller text chunks while preserving alignment with metadata.
+    Additionally, each chunk is enriched by embedding its corresponding metadata into the text.
+
+    The method determines the maximum metadata size across all documents and adjusts
+    the effective chunk size accordingly to ensure that metadata fits within each chunk.
+
+    Metadata keys with `None` values are excluded from the embedded metadata in the text.
     """
     # TODO: find a better way to find the biggest metadata
     max_size_of_metadata = 0

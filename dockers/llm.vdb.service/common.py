@@ -30,7 +30,7 @@ def get_documents_with_metadata(data):
     return texts, metadatas
 
 
-def chunk_documents_with_metadata(data, chunk_size=1000, chunk_overlap=200):
+def chunk_documents_with_metadata(data, chunk_size, chunk_overlap):
     """
     Chunks documents while maintaining alignment between text chunks and metadata
     """
@@ -60,7 +60,7 @@ def chunk_documents_with_metadata(data, chunk_size=1000, chunk_overlap=200):
     return all_chunks, all_metadatas
 
 
-def chunk_documents_with_metadata_add_metadata_to_text(data, chunk_size=1000, chunk_overlap=200):
+def chunk_documents_with_metadata_add_metadata_to_text(data, chunk_size, chunk_overlap):
     """
     Splits documents into smaller text chunks while preserving alignment with metadata.
     Additionally, each chunk is enriched by embedding its corresponding metadata into the text.

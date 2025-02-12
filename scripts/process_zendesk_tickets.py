@@ -1,4 +1,5 @@
 import os
+import re
 import json
 from configparser import ConfigParser
 from typing import Any, Dict, List, Union
@@ -9,7 +10,9 @@ def clean_text(text: Any) -> str:
     """Clean and standardize text content."""
     if text is None or text == "":
         return ""
-    return str(text).strip().replace("\n", " ").replace("\r", " ")
+    result = str(text).strip().replace("\n", " ").replace("\r", " ")
+    result = re.sub(r'-{3,}', '-', result)
+    return re.sub(r'\s+', ' ', result)
 
 def get_nested_value(data: Dict[str, Any], field_path: str) -> Any:
     """Extract value from nested dictionary using dot notation.
@@ -155,13 +158,6 @@ def process_item(
         if values:
             result_text.append(f"{target_field.lower()}: {' '.join(values)}")
     
-    # Process list fields
-    for field in config["list_fields"]:
-        if field in data:
-            values = parse_list(data[field])
-            if values:
-                result_text.append(f"{field.lower()}: {', '.join(values)}")
-    
     # Build metadata
     metadata = {}
     for field, column in config["metadata_fields"].items():
@@ -175,6 +171,13 @@ def process_item(
         else:
             value = data.get(column, "")
         metadata[field.lower()] = clean_text(value)
+
+    # Process list fields
+    for field in config["list_fields"]:
+        if field in data:
+            values = parse_list(data[field])
+            if values:
+                metadata[field.lower()] = ", ".join(values)
     
     # Add source URL
     metadata_unique_id = config["metadata_unique_id"]

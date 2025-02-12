@@ -56,6 +56,7 @@ class S3Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 
 class LocalSettings(BaseSettings):
@@ -82,6 +83,7 @@ class LocalSettings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 
 def try_load_settings(env_file):
@@ -107,3 +109,29 @@ def try_load_settings(env_file):
             return None, local_settings
         except ValidationError as e:
             raise ValueError(f"Missing or invalid configuration: {e}")
+
+
+class WeaviateSettings(BaseSettings):
+    weaviate_uri: Optional[str] = Field(
+        ...,
+        alias="WEAVIATE_URI",
+    )
+
+    weaviate_index_name: Optional[str] = Field(
+        ...,
+        alias="WEAVIATE_INDEX_NAME",
+    )
+
+    class Config:
+        env_file = ".env"
+        extra = "ignore"
+
+    def is_set(self) -> bool:
+        return all([self.weaviate_uri, self.weaviate_index_name])
+
+
+def try_load_weaviate_settings(env_file):
+    if env_file:
+        return WeaviateSettings(_env_file=env_file)
+    else:
+        return WeaviateSettings()

@@ -2,9 +2,13 @@ import json
 import os
 from typing import List
 
+import weaviate
+
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
+from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_weaviate.vectorstores import WeaviateVectorStore
 
 
 def load_jsonl_files_from_directory(directory):
@@ -119,8 +123,8 @@ def chunk_documents_with_added_metadata(data, chunk_size, chunk_overlap):
 def create_vectordb_from_data(
     data,
     embedding_model_name: str,
-    chunk_size,
-    chunk_overlap,
+    chunk_size: int,
+    chunk_overlap: int,
 ):
     # no chunking
     # texts, metadatas = get_documents(data)
@@ -139,23 +143,18 @@ def create_vectordb_from_data(
 
 
 def create_vectordb_local_weaviate(
-    local_tmp_dir: str,
+    data,
     embedding_model_name: str,
     chunk_size: int,
     chunk_overlap: int,
+    weaviate_uri: str,
+    weaviate_index_name: str,
 ):
-    data = load_jsonl_files_from_directory(local_tmp_dir)
-
     # with adding metadata to text
     print("Start chunking documents")
     texts, metadatas = chunk_documents_with_added_metadata(data, chunk_size, chunk_overlap)
 
     embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
-
-    # TODO: move to imports
-    import weaviate
-    from langchain_weaviate.vectorstores import WeaviateVectorStore
-    from langchain_core.documents import Document
 
     # adapt data
     documents: List[Document] = []
@@ -168,4 +167,9 @@ def create_vectordb_local_weaviate(
 
     # TODO: enable connecting to other weaviate than local
     with weaviate.connect_to_local() as weaviate_client:
-        return WeaviateVectorStore.from_documents(documents, embeddings, client=weaviate_client, index_name="my_custom_index")
+        return WeaviateVectorStore.from_documents(
+            documents,
+            embeddings,
+            client=weaviate_client,
+            index_name=weaviate_index_name,
+        )

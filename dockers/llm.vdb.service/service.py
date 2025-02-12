@@ -4,6 +4,7 @@ import pickle
 from dataclasses import dataclass
 
 from common import (
+    create_milvus_vectordb_from_data,
     create_vectordb_from_data,
     load_jsonl_files_from_directory,
 )
@@ -61,3 +62,24 @@ class LocalDirDbCreationService:
         with open(self.config.output_filename, "wb") as file:
             file.write(pickle_byte_obj)
         print(f"Pickle byte object saved to {self.config.output_filename}")
+
+
+@dataclass
+class LocalDirMilvusDbCreationService:
+    config: LocalSettings
+
+    def create(self):
+        print("Load JSON files")
+        data = load_jsonl_files_from_directory(self.config.local_directory)
+
+        print("Convert to Milvus vectorstore")
+        create_milvus_vectordb_from_data(
+            data,
+            self.config.embedding_model_name,
+            self.config.milvus_uri,
+            self.config.milvus_collection_name,
+            self.config.embedding_chunk_size,
+            self.config.embedding_chunk_overlap,
+        )
+
+        print(f"Milvus collection saved {self.config.milvus_collection_name}")

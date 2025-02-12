@@ -2,5 +2,6 @@ click
 faiss-cpu
 langchain_community
 langchain_huggingface
+langchain_milvus
 pydantic_settings
 s3fs

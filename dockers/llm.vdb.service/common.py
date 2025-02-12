@@ -3,7 +3,9 @@ import os
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
+from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_milvus import BM25BuiltInFunction, Milvus
 
 
 def load_jsonl_files_from_directory(directory):
@@ -134,4 +136,40 @@ def create_vectordb_from_data(
     embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
     print("Convert to FAISS vectorstore")
     vectorstore = FAISS.from_texts(texts, embeddings, metadatas=metadatas)
+    return vectorstore
+
+
+def create_milvus_vectordb_from_data(
+    data,
+    embedding_model_name: str,
+    milvus_uri: str,
+    collection_name: str,
+    chunk_size,
+    chunk_overlap,
+):
+    print("Start chunking documents")
+    texts, metadatas = chunk_documents_with_metadata(data, chunk_size, chunk_overlap)
+
+    docs = []
+    for text, metadata in zip(texts, metadatas):
+        docs.append(
+            Document(
+                page_content=text,
+                metadata=metadata,
+            )
+        )
+
+    embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
+    print("Convert to Milvus vectorstore")
+
+    vectorstore = Milvus(
+        embedding_function=embeddings,
+        vector_field=["dense", "sparse"],
+        builtin_function=BM25BuiltInFunction(),
+        collection_name=collection_name,
+        connection_args={"uri": milvus_uri},
+        auto_id=True
+    )
+
+    vectorstore.add_documents(documents=docs)
     return vectorstore

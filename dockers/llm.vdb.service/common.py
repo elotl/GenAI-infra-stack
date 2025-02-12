@@ -24,13 +24,13 @@ def load_jsonl_files_from_directory(directory):
     return data
 
 
-def get_documents_with_metadata(data):
+def get_documents(data):
     texts = [doc["text"] for doc in data]
     metadatas = [doc["metadata"] for doc in data]
     return texts, metadatas
 
 
-def chunk_documents_with_metadata(data, chunk_size, chunk_overlap):
+def chunk_documents(data, chunk_size, chunk_overlap):
     """
     Chunks documents while maintaining alignment between text chunks and metadata
     """
@@ -60,7 +60,7 @@ def chunk_documents_with_metadata(data, chunk_size, chunk_overlap):
     return all_chunks, all_metadatas
 
 
-def chunk_documents_with_metadata_add_metadata_to_text(data, chunk_size, chunk_overlap):
+def chunk_documents_with_added_metadata(data, chunk_size, chunk_overlap):
     """
     Splits documents into smaller text chunks while preserving alignment with metadata.
     Additionally, each chunk is enriched by embedding its corresponding metadata into the text.
@@ -122,14 +122,14 @@ def create_vectordb_from_data(
     chunk_overlap,
 ):
     # no chunking
-    # texts, metadatas = get_documents_with_metadata(data)
+    # texts, metadatas = get_documents(data)
 
     # with chunking texts
-    # texts, metadatas = chunk_documents_with_metadata(data, chunk_size, chunk_overlap)
+    # texts, metadatas = chunk_documents(data, chunk_size, chunk_overlap)
 
     # with adding metadata to text
     print("Start chunking documents")
-    texts, metadatas = chunk_documents_with_metadata_add_metadata_to_text(data, chunk_size, chunk_overlap)
+    texts, metadatas = chunk_documents_with_added_metadata(data, chunk_size, chunk_overlap)
 
     embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
     print("Convert to FAISS vectorstore")

@@ -83,4 +83,4 @@ class LocalDirWeaviateDbCreationService:
             self.db_config.weaviate_index_name,
         )
 
-        print(f"Weaviate index saved {self.db_config.milvus_collection_name}")
+        print(f"Weaviate index saved {self.db_config.weaviate_index_name}")

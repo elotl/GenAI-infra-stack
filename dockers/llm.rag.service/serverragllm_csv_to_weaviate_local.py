@@ -64,13 +64,26 @@ def setup(
        embedding=embeddings,
     )
 
-    retriever = vectorstore.as_retriever(
-        # search_type="mmr",
-        search_kwargs={
-            "k": relevant_docs,
-            "alpha": 0.5,
-        }
-    )
+    from typing import List
+
+    from langchain_core.documents import Document
+    from langchain_core.runnables import chain
+
+    @chain
+    def retriever(query: str) -> List[Document]:
+        docs, scores = zip(*vectorstore.similarity_search_with_score(query, k=relevant_docs))
+        for doc, score in zip(docs, scores):
+            doc.metadata["score"] = score
+
+        return docs
+
+    # retriever = vectorstore.as_retriever(
+    #     # search_type="mmr",
+    #     search_kwargs={
+    #         "k": relevant_docs,
+    #         "alpha": 0.5,
+    #     }
+    # )
     print("Created Vector DB retriever successfully. \n")
 
     print("Creating an OpenAI client to the hosted model at URL: ", llm_server_url)

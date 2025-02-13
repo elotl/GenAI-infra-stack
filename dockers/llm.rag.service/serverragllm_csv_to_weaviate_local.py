@@ -26,6 +26,17 @@ from openai import OpenAI
 from common import get_answer_with_settings
 
 
+SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Format your responses following these rules:
+                1. Answer the provided question only using the provided context.
+                2. Do not add the provided context to the generated answer.
+                3. Include relevant technical details when present or provide a summary of the comments in the ticket.
+                4. Include the submitter, assignee and collaborator for a ticket when this info is available.
+                5. If the question cannot be answered with the given context, please say so and do not attempt to provide an answer.
+                6. Do not create new questions related to the given question, instead answer only the provided question.
+                7. Provide a clear, direct and factual answer.
+                """
+
+
 def setup(
         relevant_docs: int,
         llm_server_url:str,
@@ -46,7 +57,7 @@ def setup(
     embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
 
     weaviate_client = weaviate.connect_to_local()
-    vectorstore  = WeaviateVectorStore(
+    vectorstore = WeaviateVectorStore(
        client=weaviate_client,
        index_name="my_custom_index",
        text_key="text",
@@ -54,6 +65,7 @@ def setup(
     )
 
     retriever = vectorstore.as_retriever(
+        # search_type="mmr",
         search_kwargs={
             "k": relevant_docs,
             "alpha": 0.5,
@@ -75,6 +87,7 @@ def setup(
         model_id=model_id,
         max_tokens=max_tokens,
         model_temperature=model_temperature,
+        system_prompt=SYSTEM_PROMPT_DEFAULT,
     )
 
     @app.get("/answer/{question}")
@@ -97,6 +110,8 @@ llm_server_url = os.getenv("LLM_SERVER_URL", "http://localhost:11434/v1")
 model_id = os.getenv("MODEL_ID", "llama2")
 max_tokens = int(os.getenv("MAX_TOKENS", MAX_TOKENS_DEFAULT))
 model_temperature = float(os.getenv("MODEL_TEMPERATURE", MODEL_TEMPERATURE_DEFAULT))
+
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 app = setup(relevant_docs, llm_server_url, model_id, max_tokens, model_temperature)
 

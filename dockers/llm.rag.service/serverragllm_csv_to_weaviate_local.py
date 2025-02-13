@@ -73,6 +73,7 @@ def setup(
     def retriever(query: str) -> List[Document]:
         docs, scores = zip(*vectorstore.similarity_search_with_score(query, k=relevant_docs))
         for doc, score in zip(docs, scores):
+            print("----> ", score)
             doc.metadata["score"] = score
 
         return docs

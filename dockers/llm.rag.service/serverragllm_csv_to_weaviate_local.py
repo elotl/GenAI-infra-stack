@@ -69,22 +69,22 @@ def setup(
     from langchain_core.documents import Document
     from langchain_core.runnables import chain
 
-    @chain
-    def retriever(query: str) -> List[Document]:
-        docs, scores = zip(*vectorstore.similarity_search_with_score(query, k=relevant_docs))
-        for doc, score in zip(docs, scores):
-            print("----> ", score)
-            doc.metadata["score"] = score
+    # @chain
+    # def retriever(query: str) -> List[Document]:
+    #     docs, scores = zip(*vectorstore.similarity_search_with_score(query, k=relevant_docs, alpha=1))
+    #     for doc, score in zip(docs, scores):
+    #         print("----> ", score)
+    #         doc.metadata["score"] = score
+    #
+    #     return docs
 
-        return docs
-
-    # retriever = vectorstore.as_retriever(
-    #     # search_type="mmr",
-    #     search_kwargs={
-    #         "k": relevant_docs,
-    #         "alpha": 0.5,
-    #     }
-    # )
+    retriever = vectorstore.as_retriever(
+        # search_type="mmr",
+        search_kwargs={
+            "k": relevant_docs,
+            "alpha": 0.5,
+        }
+    )
     print("Created Vector DB retriever successfully. \n")
 
     print("Creating an OpenAI client to the hosted model at URL: ", llm_server_url)
@@ -120,8 +120,10 @@ MAX_TOKENS_DEFAULT = 256
 MODEL_TEMPERATURE_DEFAULT = 0.01
 
 relevant_docs = os.getenv("RELEVANT_DOCS", RELEVANT_DOCS_DEFAULT)
-llm_server_url = os.getenv("LLM_SERVER_URL", "http://localhost:11434/v1")
-model_id = os.getenv("MODEL_ID", "llama2")
+# llm_server_url = os.getenv("LLM_SERVER_URL", "http://localhost:11434/v1")
+llm_server_url = os.getenv("LLM_SERVER_URL", "http://localhost:9000/v1")
+# model_id = os.getenv("MODEL_ID", "llama2")
+model_id = os.getenv("MODEL_ID", "microsoft/Phi-3-mini-4k-instruct")
 max_tokens = int(os.getenv("MAX_TOKENS", MAX_TOKENS_DEFAULT))
 model_temperature = float(os.getenv("MODEL_TEMPERATURE", MODEL_TEMPERATURE_DEFAULT))
 

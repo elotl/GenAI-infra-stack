@@ -64,10 +64,10 @@ def setup(
        embedding=embeddings,
     )
 
-    from typing import List
-
-    from langchain_core.documents import Document
-    from langchain_core.runnables import chain
+    # from typing import List
+    #
+    # from langchain_core.documents import Document
+    # from langchain_core.runnables import chain
 
     # @chain
     # def retriever(query: str) -> List[Document]:
@@ -124,6 +124,7 @@ relevant_docs = os.getenv("RELEVANT_DOCS", RELEVANT_DOCS_DEFAULT)
 llm_server_url = os.getenv("LLM_SERVER_URL", "http://localhost:9000/v1")
 # model_id = os.getenv("MODEL_ID", "llama2")
 model_id = os.getenv("MODEL_ID", "microsoft/Phi-3-mini-4k-instruct")
+# model_id = os.getenv("MODEL_ID", "phi3")
 max_tokens = int(os.getenv("MAX_TOKENS", MAX_TOKENS_DEFAULT))
 model_temperature = float(os.getenv("MODEL_TEMPERATURE", MODEL_TEMPERATURE_DEFAULT))
 

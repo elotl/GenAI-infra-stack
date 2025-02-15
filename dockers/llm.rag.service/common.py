@@ -1,30 +1,23 @@
 import re
-import logging
+from openai import BadRequestError
+
 from typing import Any, Dict, List
 from typing_extensions import Annotated
 from typing_extensions import TypedDict
-from operator import itemgetter
-
-import pandas
 
 from sqlalchemy import create_engine
 
 from transformers import AutoTokenizer
 
 from langchain_community.chat_models import ChatOpenAI
-from langchain import hub
-from langchain_community.utilities import SQLDatabase
-from langchain.chains import create_sql_query_chain
 from langchain_community.utilities import SQLDatabase
 from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
-from langchain_community.agent_toolkits import SQLDatabaseToolkit
 
-
-from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import RunnablePassthrough
 
 import logging.config
+
+
 LOGGING_CONFIG = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -65,6 +58,7 @@ class State(TypedDict):
 
 MODEL_MAX_CONTEXT_LEN = 8192
 delta = 50 # value by which we keep the prompt len less than the model context len  
+
 
 def format_context(results: List[Dict[str, Any]]) -> str:
     """Format search results into context for the LLM"""
@@ -109,11 +103,13 @@ def trim_answer(generated_answer: str, label_separator: str) -> str:
 # Answer user's question via vector search or RAG technique
 def get_answer_with_settings(question, retriever, client, model_id, max_tokens, model_temperature, system_prompt):
     docs = retriever.invoke(input=question)
+
     num_of_docs = len(docs)
     logger.info(f"Number of relevant documents retrieved and that will be used as context for query: {num_of_docs}")
-
     logger.info(f"Relevant docs retrieved from Vector store: {docs}")
+
     context = format_context(docs)
+    logger.info(f"Length of context after formatting: {len(context)}")
     logger.info(f"Context after formatting: {context}")
 
     logger.info("Calling chat completions for JSON model...")
@@ -131,6 +127,39 @@ def get_answer_with_settings(question, retriever, client, model_id, max_tokens, 
             temperature=model_temperature,
             stream=False,
         )
+    except BadRequestError as e:
+        if (e.status_code == 400 and
+                "Please reduce the length of the messages or completion." in e.body.get("message", "") and
+                len(docs) > 1
+        ):
+            docs = docs[:-1]  # removing last document
+            context = format_context(docs)
+            logger.info(f"Need to decrease context - length of context after formatting: {len(context)}")
+            try:
+                completions = client.chat.completions.create(
+                    model=model_id,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {
+                            "role": "user",
+                            "content": f"Context:\n{context}\n\nQuestion: {question}",
+                        },
+                    ],
+                    max_tokens=max_tokens,
+                    temperature=model_temperature,
+                    stream=False,
+                )
+            except Exception as e:
+                # Handle any error
+                logger.error(f"An unexpected error occurred: {e}")
+                errorToUI = {
+                    "answer": f"Please try another question. Received error from LLM invocation: {e}",
+                    "relevant_tickets": [],
+                    "sources": [],
+                    "context": context,
+                }
+                return errorToUI
+
     except Exception as e:
         # Handle any error
         logger.error(f"An unexpected error occurred: {e}")

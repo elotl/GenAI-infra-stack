@@ -23,7 +23,7 @@ import click
 from fastapi import FastAPI
 from openai import OpenAI
 
-from common import get_answer_with_settings
+from common import get_answer_with_settings_with_weaviate_filter
 
 
 SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Format your responses following these rules:
@@ -64,29 +64,6 @@ def setup(
        embedding=embeddings,
     )
 
-    # from typing import List
-    #
-    # from langchain_core.documents import Document
-    # from langchain_core.runnables import chain
-
-    # @chain
-    # def retriever(query: str) -> List[Document]:
-    #     docs, scores = zip(*vectorstore.similarity_search_with_score(query, k=relevant_docs, alpha=1))
-    #     for doc, score in zip(docs, scores):
-    #         print("----> ", score)
-    #         doc.metadata["score"] = score
-    #
-    #     return docs
-
-    retriever = vectorstore.as_retriever(
-        # search_type="mmr",
-        search_kwargs={
-            "k": relevant_docs,
-            "alpha": 0.5,
-        }
-    )
-    print("Created Vector DB retriever successfully. \n")
-
     print("Creating an OpenAI client to the hosted model at URL: ", llm_server_url)
     try:
         client = OpenAI(base_url=llm_server_url, api_key="na")
@@ -95,13 +72,14 @@ def setup(
         sys.exit(1)
 
     get_answer = partial(
-        get_answer_with_settings,
-        retriever=retriever,
+        get_answer_with_settings_with_weaviate_filter,
+        vectorstore=vectorstore,
         client=client,
         model_id=model_id,
         max_tokens=max_tokens,
         model_temperature=model_temperature,
         system_prompt=SYSTEM_PROMPT_DEFAULT,
+        relevant_docs=relevant_docs,
     )
 
     @app.get("/answer/{question}")

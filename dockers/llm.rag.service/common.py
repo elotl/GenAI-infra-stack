@@ -1,4 +1,6 @@
+import logging
 import re
+
 from openai import BadRequestError
 
 from typing import Any, Dict, List
@@ -57,7 +59,7 @@ class State(TypedDict):
     answer: str
 
 MODEL_MAX_CONTEXT_LEN = 8192
-delta = 50 # value by which we keep the prompt len less than the model context len  
+delta = 50 # value by which we keep the prompt len less than the model context len
 
 
 def format_context(results: List[Dict[str, Any]]) -> str:
@@ -403,3 +405,54 @@ def convert_sql_result_to_nl(state: State, model_id, llm):
     logger.info(f"LLM generated NL answer to user question: {response.content}")
 
     return {"answer": response.content}
+
+
+
+def get_answer_with_settings_with_weaviate_filter(question, vectorstore, client, model_id, max_tokens, model_temperature, system_prompt, relevant_docs):
+    # from typing import List
+    #
+    # from langchain_core.documents import Document
+    # from langchain_core.runnables import chain
+
+    # @chain
+    # def retriever(query: str) -> List[Document]:
+    #     docs, scores = zip(*vectorstore.similarity_search_with_score(query, k=relevant_docs, alpha=1))
+    #     for doc, score in zip(docs, scores):
+    #         print("----> ", score)
+    #         doc.metadata["score"] = score
+    #
+    #     return docs
+
+    search_kwargs = {
+        "k": relevant_docs,
+        "alpha": 0.5,
+    }
+
+    ticket_id = extract_zendesk_ticket_id(query=question)
+
+    if ticket_id:
+        from weaviate.collections.classes.filters import Filter
+
+        logging.info(f"Using ticket id {ticket_id} filter")
+        # Use Weaviate’s `Filter` class to build the filter
+        search_kwargs["filters"] = Filter.by_property("ticket").equal(ticket_id)
+
+    retriever = vectorstore.as_retriever(
+        # search_type="mmr",
+        search_kwargs=search_kwargs,
+    )
+    logging.info("Created Vector DB retriever successfully. \n")
+
+    return get_answer_with_settings(question, retriever, client, model_id, max_tokens, model_temperature, system_prompt)
+
+
+def extract_zendesk_ticket_id(query):
+    # TODO: implement smth smarter
+
+    # Check if the word "ticket" exists in the query (case insensitive)
+    if not re.search(r'\bticket\b', query, re.IGNORECASE):
+        return None  # Return None if "ticket" is not present
+
+    # Extract numeric ticket ID (assumes tickets are six digit numbers)
+    match = re.search(r'\b\d{6,}\b', query)
+    return match.group(0) if match else None

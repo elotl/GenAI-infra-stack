@@ -78,7 +78,7 @@ def chunk_documents_with_added_metadata(data, chunk_size, chunk_overlap):
     # TODO: find a better way to find the biggest metadata
     max_size_of_metadata = 0
     for doc in data:
-        meta_enhancement = "\n".join([f"{key}: {value}" for key, value in doc["metadata"].items() if value])
+        meta_enhancement = ". ".join([f"{key.title()} is {value}" for key, value in doc["metadata"].items() if value])
         max_size_of_metadata = max(max_size_of_metadata, len(meta_enhancement))
 
     print(f"Biggest metada has {max_size_of_metadata} characters.")

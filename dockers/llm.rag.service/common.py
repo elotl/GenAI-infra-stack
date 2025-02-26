@@ -416,7 +416,7 @@ def get_answer_with_settings_with_weaviate_filter(question, vectorstore, client,
 
     # @chain
     # def retriever(query: str) -> List[Document]:
-    #     docs, scores = zip(*vectorstore.similarity_search_with_score(query, k=relevant_docs, alpha=1))
+    #     docs, scores = zip(*vectorstore.similarity_search_with_score(query, k=relevant_docs, alpha=0.5))
     #     for doc, score in zip(docs, scores):
     #         print("----> ", score)
     #         doc.metadata["score"] = score
@@ -428,14 +428,14 @@ def get_answer_with_settings_with_weaviate_filter(question, vectorstore, client,
         "alpha": 0.5,
     }
 
-    ticket_id = extract_zendesk_ticket_id(query=question)
-
-    if ticket_id:
-        from weaviate.collections.classes.filters import Filter
-
-        logging.info(f"Using ticket id {ticket_id} filter")
-        # Use Weaviate’s `Filter` class to build the filter
-        search_kwargs["filters"] = Filter.by_property("ticket").equal(ticket_id)
+    # ticket_id = extract_zendesk_ticket_id(query=question)
+    #
+    # if ticket_id:
+    #     from weaviate.collections.classes.filters import Filter
+    #
+    #     logging.info(f"Using ticket id {ticket_id} filter")
+    #     # Use Weaviate’s `Filter` class to build the filter
+    #     search_kwargs["filters"] = Filter.by_property("ticket").equal(ticket_id)
 
     retriever = vectorstore.as_retriever(
         # search_type="mmr",

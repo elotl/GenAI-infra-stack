@@ -6,13 +6,21 @@ from typing import Any, Dict, List, Union
 
 import click
 
+
 def clean_text(text: Any) -> str:
     """Clean and standardize text content."""
     if text is None or text == "":
         return ""
     result = str(text).strip().replace("\n", " ").replace("\r", " ")
     result = re.sub(r'-{3,}', '-', result)
+    result = re.sub(r'#+', '', result)
+    result = re.sub(r'\*+', '', result)
+    result = re.sub(r'>+', '', result)
+    result = re.sub(r'<+', '', result)
+    result = result.replace("[]", " ")
+    result = result.replace("[ ]", " ")
     return re.sub(r'\s+', ' ', result)
+
 
 def get_nested_value(data: Dict[str, Any], field_path: str) -> Any:
     """Extract value from nested dictionary using dot notation.
@@ -184,7 +192,7 @@ def process_item(
     metadata["source"] = config["zendesk_url"] + metadata[metadata_unique_id] + ".json"
     
     return {
-        "text": "\n".join(result_text),
+        "text": ". ".join(result_text),
         "metadata": metadata
     }
 

@@ -53,10 +53,16 @@ spec:
           volumeMounts:
           - name: log-storage
             mountPath: /app/logs
+          volumeMounts:
+          - name: db-storage
+            mountPath: /app/db
       volumes:
       - name: log-storage
         persistentVolumeClaim:
           claimName: rag-llm-pvc
+      - name: db-storage
+        persistentVolumeClaim:
+          claimName: questionanswerdb-pvc
 ---
 apiVersion: v1
 kind: Service

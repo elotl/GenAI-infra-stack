@@ -51,13 +51,6 @@ def setup(
     match question_type:
         case QuestionType.AGGREGATION: 
 
-            print("Creating an OpenAI client to the hosted model at URL: ", llm_server_url)
-            try:
-                client = OpenAI(base_url=llm_server_url, api_key="na")
-            except Exception as e:
-                print("Error creating client:", e)
-                sys.exit(1)
-
             get_answer = partial(
                 get_sql_answer,
                 model_id=model_id,

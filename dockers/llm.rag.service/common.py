@@ -5,6 +5,8 @@ from typing_extensions import Annotated
 from typing_extensions import TypedDict
 from operator import itemgetter
 
+import pandas
+
 from sqlalchemy import create_engine
 
 from transformers import AutoTokenizer
@@ -164,18 +166,20 @@ def get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server
             max_tokens=max_tokens
         )        
 
-        logger.info("Loading SQL DB")
-        engine = create_engine("sqlite:///zendesk.db")
-
-        # TO DO 
-        # CREATE the SQL DB from the CSV - to be done only once.
-        #df.to_sql("zendesk", engine, index=False)
+        # create a SQL DB from the CSV (to be done only once)
+        logger.info("Creating SQL DB from input data in CSV format")
+        df = pandas.read_csv("customer_support_tickets.csv")
+        
+        logger.info("Loading the created SQL DB")
+        engine = create_engine("sqlite:///customer_support_tickets.db")
+        df.to_sql("customer_support_tickets", engine, index=False)
 
         logger.info("Check that the SQL data can be accessed from the DB via querying")
         db = SQLDatabase(engine=engine)
         logger.info(f"DB dialect is: {db.dialect}")
         logger.info(f"Usable table names: {db.get_usable_table_names()}")
-        logger.info(f"Table info: {db.get_table_info(["zendesk"])}")
+        logger.info("Sanity test SQL query: ", db.run("SELECT COUNT(*) FROM customer_support_tickets WHERE assignee_name LIKE 'David Levey';"))
+        logger.info("Table info:", db.get_table_info("customer_support_tickets"))
 
         # Use ready-made prompts from Langchain hub
         # Later we can customize this for different datasets
@@ -305,7 +309,7 @@ def write_query(state: State, query_prompt_template, llm, db):
             "input": state["question"],
         }
     )
-    # structure output wasn't implemented for the RUBRA-phi3 model so had to move to the 
+    # structured output wasn't implemented for the RUBRA-phi3 model so had to move to the 
     # raw llm invoke. If we can move to a different function-calling LLM, we can uncomment
     # this.
     #structured_llm = llm.with_structured_output(QueryOutput)

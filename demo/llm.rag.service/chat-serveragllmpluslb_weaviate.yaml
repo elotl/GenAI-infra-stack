@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: serveragllm-deployment
+  labels:
+    app: modelragllmserve
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      model: serveragllm
+  template:
+    metadata:
+      labels:
+        model: serveragllm
+        elotl-luna: "true"
+      annotations:
+        node.elotl.co/instance-type-regexp: "^(t3.xlarge|n2-standard-4)$"
+    spec:
+      containers:
+        - name: serveragllm
+          image: elotl/serveragllm:v1.3.12
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:
+              cpu: "1.5"
+              memory: "1G"
+          env:
+          - name: MODEL_LLM_SERVER_URL
+            value: ${MODEL_LLM_SERVER_URL}
+          - name: AWS_ACCESS_KEY_ID
+            value: ${AWS_ACCESS_KEY_ID}
+          - name: AWS_SECRET_ACCESS_KEY
+            value: ${AWS_SECRET_ACCESS_KEY}
+          - name: VECTOR_DB_S3_BUCKET
+            value: ${VECTOR_DB_S3_BUCKET}
+          - name: SYSTEM_PROMPT
+            value: ${SYSTEM_PROMPT}
+          - name: MODEL_ID
+            value: ${MODEL_ID}
+          - name: MAX_TOKENS
+            value: ${MAX_TOKENS}
+          - name: MODEL_TEMPERATURE
+            value: ${MODEL_TEMPERATURE}
+          - name: RELEVANT_DOCS
+            value: ${RELEVANT_DOCS}
+          - name: WEAVIATE_URI
+            value: ${WEAVIATE_URI}
+          - name: WEAVIATE_INDEX_NAME
+            value: ${WEAVIATE_INDEX_NAME}
+          volumeMounts:
+          - name: log-storage
+            mountPath: /app/logs
+      volumes:
+      - name: log-storage
+        persistentVolumeClaim:
+          claimName: rag-llm-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: serveragllm-service
+  labels:
+    app: modelragllmserve
+spec:
+  type: ClusterIP
+  selector:
+    model: serveragllm
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000

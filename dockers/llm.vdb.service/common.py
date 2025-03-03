@@ -147,7 +147,7 @@ def create_vectordb_local_weaviate(
     embedding_model_name: str,
     chunk_size: int,
     chunk_overlap: int,
-    weaviate_uri: str,
+    weaviate_url: str,
     weaviate_index_name: str,
 ):
     # with adding metadata to text
@@ -166,10 +166,25 @@ def create_vectordb_local_weaviate(
         documents.append(document)
 
     # TODO: enable connecting to other weaviate than local
-    with weaviate.connect_to_local() as weaviate_client:
-        return WeaviateVectorStore.from_documents(
-            documents,
+    with weaviate.connect_to_custom(
+        http_host=weaviate_url,
+        http_port=8080,
+        http_secure=False,
+        grpc_host=weaviate_url,
+        grpc_port=50051,
+        grpc_secure=False,
+    ) as weaviate_client:
+        # return WeaviateVectorStore.from_documents(
+        #     documents,
+        #     embeddings,
+        #     client=weaviate_client,
+        #     index_name=weaviate_index_name,
+        # )
+        return WeaviateVectorStore.from_texts(
+            texts,
             embeddings,
             client=weaviate_client,
+            metadatas=metadatas,
             index_name=weaviate_index_name,
+            text_key="text",
         )

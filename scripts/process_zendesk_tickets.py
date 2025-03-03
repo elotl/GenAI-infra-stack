@@ -17,6 +17,7 @@ def clean_text(text: Any) -> str:
     result = re.sub(r'\*+', '', result)
     result = re.sub(r'>+', '', result)
     result = re.sub(r'<+', '', result)
+    result = re.sub(r'\s+', ' ', result)
     result = result.replace("[]", " ")
     result = result.replace("[ ]", " ")
     return re.sub(r'\s+', ' ', result)

@@ -1,9 +1,18 @@
 import os
 
 from pydantic_settings import BaseSettings
-from pydantic import Field, ValidationError
+from pydantic import Field, ValidationError, field_validator
 
 from typing import Optional
+
+
+def validate_int(value):
+    if type(value) == int:
+        return value
+    try:
+        return int(value.strip("'").strip("\""))
+    except (TypeError, ValueError):
+        raise ValueError("Value must be convertible to an integer")
 
 
 class S3Settings(BaseSettings):
@@ -45,10 +54,22 @@ class S3Settings(BaseSettings):
         default=1000, 
         description="Chunk size used by the embedding model"
     )
+
+    @field_validator('embedding_chunk_size', mode='before')
+    @classmethod
+    def validate_chunk_size(cls, v):
+        return validate_int(v)
+
     embedding_chunk_overlap: int = Field(
         default=100, 
         description="Overlap size between chunks"
     )
+
+    @field_validator('embedding_chunk_overlap', mode='before')
+    @classmethod
+    def validate_chunk_overlap(cls, v):
+        return validate_int(v)
+
     embedding_model_name: str = Field(
         default="sentence-transformers/all-MiniLM-L6-v2",
         description="Name of the embedding model to use"
@@ -114,9 +135,12 @@ def try_load_settings(env_file):
 class WeaviateSettings(BaseSettings):
     weaviate_uri: Optional[str] = Field(
         ...,
-        alias="WEAVIATE_URI",
+        alias="WEAVIATE_URI_WITH_PORT",
     )
-
+    weaviate_grpc_uri: Optional[str] = Field(
+        ...,
+        alias="WEAVIATE_GRPC_URI_WITH_PORT",
+    )
     weaviate_index_name: Optional[str] = Field(
         ...,
         alias="WEAVIATE_INDEX_NAME",
@@ -127,7 +151,7 @@ class WeaviateSettings(BaseSettings):
         extra = "ignore"
 
     def is_set(self) -> bool:
-        return all([self.weaviate_uri, self.weaviate_index_name])
+        return all([self.weaviate_uri, self.weaviate_grpc_uri, self.weaviate_index_name])
 
 
 def try_load_weaviate_settings(env_file):

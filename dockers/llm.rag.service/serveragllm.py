@@ -2,6 +2,7 @@ import os
 import pickle
 import sys
 from typing import Any, Dict, List, Union
+from enum import Enum
 
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
@@ -12,6 +13,7 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 
 from common import get_answer_with_settings
+from common import get_sql_answer
 
 ########
 # Setup model name and query template parameters
@@ -39,6 +41,9 @@ Question: {question}
 """
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+class SearchType(Enum):
+    SQL = 1
+    VECTOR = 2
 
 def str_to_int(value, name):
     try:
@@ -104,6 +109,20 @@ def get_answer(question: Union[str, None]):
         system_prompt  = SYSTEM_PROMPT_DEFAULT
     logging.info(f"Using System Prompt: {system_prompt}")
 
+
+    # TODO: Add question classification block
+
+    search_type_config = os.environ.get("SEARCH_TYPE", "SQL")
+    logging.info(f"Using search type config: {search_type_config}")
+
+    match search_type_config:
+        case "SQL":
+            search_type = SearchType.SQL            
+        case "VECTOR":
+            search_type = SearchType.VECTOR          
+
+    logging.info(f"Using search type: {search_type}")
+
     # retrieve docs relevant to the input question
     docs = retriever.invoke(input=question)
     num_of_docs = len(docs)
@@ -111,15 +130,41 @@ def get_answer(question: Union[str, None]):
 
     if is_json_mode:
         logging.info("Sending query to the LLM (JSON mode)...")
-        return get_answer_with_settings(
-            question,
-            retriever,
-            client,
-            model_id,
-            max_tokens,
-            model_temperature,
-            system_prompt,
-        )
+
+        match search_type:
+            case SearchType.SQL: 
+
+                return get_sql_answer(
+                    question,
+                    model_id,
+                    max_tokens,
+                    model_temperature,
+                    llm_server_url,
+                )
+
+            case SearchType.VECTOR: 
+
+                # Retriever configuration parameters reference:
+                # https://python.langchain.com/api_reference/community/vectorstores/langchain_community.vectorstores.faiss.FAISS.html#langchain_community.vectorstores.faiss.FAISS.as_retriever
+                retriever = vectorstore.as_retriever(search_kwargs={"k": relevant_docs})
+                print("Created Vector DB retriever successfully. \n")
+
+                print("Creating an OpenAI client to the hosted model at URL: ", llm_server_url)
+                try:
+                    client = OpenAI(base_url=llm_server_url, api_key="na")
+                except Exception as e:
+                    print("Error creating client:", e)
+                    sys.exit(1)
+
+                return get_answer_with_settings(
+                    question,
+                    retriever,
+                    client,
+                    model_id,
+                    max_tokens,
+                    model_temperature,
+                    system_prompt,
+                )
     else:
         logging.info("Sending query to the LLM (non JSON mode)...")
         # concatenate relevant docs retrieved to be used as context

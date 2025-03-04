@@ -167,24 +167,29 @@ def get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server
         )        
 
         # create a SQL DB from the CSV (to be done only once)
-        logger.info("Creating SQL DB from input data in CSV format")
-        df = pandas.read_csv("customer_support_tickets.csv")
+        #logger.info("Read DB data in CSV format")
+        #df = pandas.read_csv("zendesk_tickets.csv")
         
-        logger.info("Loading the created SQL DB")
-        engine = create_engine("sqlite:///customer_support_tickets.db")
-        df.to_sql("customer_support_tickets", engine, index=False)
+        #logger.info("Creating SQL DB from input data in CSV format")
+        #df.to_sql("zendesk_tickets", engine, index=False)
+                
+        logger.info("Loading the pre-created SQL DB")
+        #engine = create_engine("sqlite:///customer_support_tickets.db")
+        engine = create_engine("sqlite:///zendesk.db")
 
         logger.info("Check that the SQL data can be accessed from the DB via querying")
         db = SQLDatabase(engine=engine)
         logger.info(f"DB dialect is: {db.dialect}")
         logger.info(f"Usable table names: {db.get_usable_table_names()}")
-        logger.info("Sanity test SQL query: ", db.run("SELECT COUNT(*) FROM customer_support_tickets WHERE assignee_name LIKE 'David Levey';"))
-        logger.info("Table info:", db.get_table_info("customer_support_tickets"))
-
-        # Use ready-made prompts from Langchain hub
-        # Later we can customize this for different datasets
-        # Prompt template to convert NL question to SQL was rertrieved from
-        # langchain hub and customized.
+        #logger.info("Table info:", db.get_table_info("customer_support_tickets"))
+        logger.info("Table info:")
+        print(db.get_table_info(["zendesk"]))
+        #logger.info("Sanity test SQL query: ", db.run("SELECT COUNT(*) FROM customer_support_tickets WHERE assignee_name LIKE 'David Levey';"))
+        logger.info("Running sanity test SQL query:") 
+        db.run("SELECT COUNT(*) FROM zendesk WHERE assignee_name LIKE 'David Levey';")
+        
+        # Prompt template to convert NL question to SQL
+        # This was manually retrieved from langchain hub and customized
         query_prompt_template = prompt_template_for_text_to_sql()
 
         # Alternatively uncomment below to use prompt template from hub 
@@ -217,8 +222,8 @@ def get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server
     
     answerToUI = {
         "answer": answer,
-        "relevant_tickets": [],
-        "sources": [],
+        "relevant_tickets": ["Not applicable for SQL searches"],
+        "sources": ["Not applicable for SQL searches"],
         "context": "",  # TODO: if this is big consider logger context here and sending some reference id to UI
     }
     return answerToUI
@@ -265,6 +270,9 @@ def postprocess_hallucinations(generated_answer: str) -> str:
     return answer
 
 
+# TODO
+# When we change to CSV provided by user, use this code path to convert
+# from CSV to DB file format
 def createdb():
 
     engine = create_engine("sqlite:///zendesk.db")

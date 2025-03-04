@@ -27,10 +27,9 @@ from common import get_answer_with_settings
 from common import get_sql_answer
 from enum import Enum
 
-class QuestionType(Enum):
-    AGGREGATION = 1
-    POINTED = 2
-    # GENERAL = 3 # unused for now
+class SearchType(Enum):
+    SQL = 1
+    VECTOR = 2
 
 
 def setup(
@@ -46,10 +45,10 @@ def setup(
     # TO DO: Add question classification block
 
     # For now, hard-coding question type to aggregation
-    question_type = QuestionType.AGGREGATION
+    search_type = SearchType.SQL
 
-    match question_type:
-        case QuestionType.AGGREGATION: 
+    match search_type:
+        case SearchType.SQL: 
 
             get_answer = partial(
                 get_sql_answer,
@@ -58,7 +57,7 @@ def setup(
                 model_temperature=model_temperature,
                 llm_server_url=llm_server_url,
             )
-        case QuestionType.POINTED: 
+        case SearchType.VECTOR: 
             # Load the object from the pickle file
             with open(file_path, "rb") as file:
                 print("Loading Vector DB...\n")
@@ -129,7 +128,6 @@ max_tokens = int(os.getenv("MAX_TOKENS", MAX_TOKENS_DEFAULT))
 model_temperature = float(os.getenv("MODEL_TEMPERATURE", MODEL_TEMPERATURE_DEFAULT))
 
 app = setup(file_path, relevant_docs, llm_server_url, model_id, max_tokens, model_temperature)
-
 
 @click.command()
 @click.option("--host", default="127.0.0.1", help="Host for the FastAPI server (default: 127.0.0.1)")

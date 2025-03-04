@@ -123,11 +123,6 @@ def get_answer(question: Union[str, None]):
 
     logging.info(f"Using search type: {search_type}")
 
-    # retrieve docs relevant to the input question
-    docs = retriever.invoke(input=question)
-    num_of_docs = len(docs)
-    logging.info(f"Number of relevant documents retrieved and that will be used as context for query: {num_of_docs}")
-
     if is_json_mode:
         logging.info("Sending query to the LLM (JSON mode)...")
 
@@ -143,6 +138,11 @@ def get_answer(question: Union[str, None]):
                 )
 
             case SearchType.VECTOR: 
+
+                logging.info("Retrieving docs relevant to the input question")
+                docs = retriever.invoke(input=question)
+                num_of_docs = len(docs)
+                logging.info(f"Number of relevant documents retrieved and that will be used as context for query: {num_of_docs}")
 
                 # Retriever configuration parameters reference:
                 # https://python.langchain.com/api_reference/community/vectorstores/langchain_community.vectorstores.faiss.FAISS.html#langchain_community.vectorstores.faiss.FAISS.as_retriever

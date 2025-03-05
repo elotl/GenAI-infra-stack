@@ -9,7 +9,7 @@ spec:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   hostPath:
-    path: /mnt/data/questionanswer.db
+    path: /tmp/zendesk.db
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

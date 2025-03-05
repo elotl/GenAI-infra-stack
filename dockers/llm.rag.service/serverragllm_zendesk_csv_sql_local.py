@@ -31,7 +31,6 @@ class SearchType(Enum):
     SQL = 1
     VECTOR = 2
 
-
 def setup(
         file_path: str,
         relevant_docs: int,
@@ -49,6 +48,7 @@ def setup(
 
     match search_type:
         case SearchType.SQL: 
+            logging.info("Handling search type: SQL")
 
             get_answer = partial(
                 get_sql_answer,
@@ -58,6 +58,8 @@ def setup(
                 llm_server_url=llm_server_url,
             )
         case SearchType.VECTOR: 
+            logging.info("Handling search type: VECTOR")
+
             # Load the object from the pickle file
             with open(file_path, "rb") as file:
                 print("Loading Vector DB...\n")

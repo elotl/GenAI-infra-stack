@@ -53,9 +53,6 @@ COPY serverragllm_jira_cvs_local.py .
 COPY common.py .
 COPY pyproject.toml .
 
-# Uncomment to include customer support ticket database
-COPY zendesk.db .
-
 EXPOSE 8000
 
 CMD ["uvicorn", "serveragllm:app", "--host", "0.0.0.0", "--port", "8000"]

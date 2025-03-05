@@ -128,6 +128,7 @@ def get_answer(question: Union[str, None]):
 
         match search_type:
             case SearchType.SQL: 
+                logging.info("Handling search type: SQL")
 
                 return get_sql_answer(
                     question,
@@ -138,6 +139,7 @@ def get_answer(question: Union[str, None]):
                 )
 
             case SearchType.VECTOR: 
+                logging.info("Handling search type: VECTOR")
 
                 logging.info("Retrieving docs relevant to the input question")
                 docs = retriever.invoke(input=question)
@@ -151,7 +153,7 @@ def get_answer(question: Union[str, None]):
 
                 print("Creating an OpenAI client to the hosted model at URL: ", llm_server_url)
                 try:
-                    client = OpenAI(base_url=llm_server_url, api_key="na")
+                    client = OpenAI(base_url=llm_server_url, api_key="n/a")
                 except Exception as e:
                     print("Error creating client:", e)
                     sys.exit(1)
@@ -167,6 +169,7 @@ def get_answer(question: Union[str, None]):
                 )
     else:
         logging.info("Sending query to the LLM (non JSON mode)...")
+        
         # concatenate relevant docs retrieved to be used as context
         allcontext = ""
         for i in range(len(docs)):

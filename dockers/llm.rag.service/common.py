@@ -106,6 +106,7 @@ def trim_answer(generated_answer: str, label_separator: str) -> str:
     return answer.strip()
 
 
+# Answer user's question via vector search or RAG technique
 def get_answer_with_settings(question, retriever, client, model_id, max_tokens, model_temperature, system_prompt):
     docs = retriever.invoke(input=question)
     num_of_docs = len(docs)
@@ -154,6 +155,7 @@ def get_answer_with_settings(question, retriever, client, model_id, max_tokens, 
     return answerToUI
 
 
+# Answer user's question via text-to-sql technique
 def get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server_url):
     
     logger.info("Invoking text-to-sql question-answer search")
@@ -166,37 +168,23 @@ def get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server
             max_tokens=max_tokens
         )        
 
-        # create a SQL DB from the CSV (to be done only once)
-        #logger.info("Read DB data in CSV format")
-        #df = pandas.read_csv("zendesk_tickets.csv")
-        
-        #logger.info("Creating SQL DB from input data in CSV format")
-        #df.to_sql("zendesk_tickets", engine, index=False)
-                
         logger.info("Loading the pre-created SQL DB")
-        #engine = create_engine("sqlite:///customer_support_tickets.db")
-        engine = create_engine("sqlite:///zendesk.db")
+        engine = create_engine("sqlite:////tmp/db/zendesk.db")
 
         logger.info("Check that the SQL data can be accessed from the DB via querying")
         db = SQLDatabase(engine=engine)
         logger.info(f"DB dialect is: {db.dialect}")
         logger.info(f"Usable table names: {db.get_usable_table_names()}")
-        #logger.info("Table info:", db.get_table_info("customer_support_tickets"))
         logger.info("Table info:")
         print(db.get_table_info(["zendesk"]))
-        #logger.info("Sanity test SQL query: ", db.run("SELECT COUNT(*) FROM customer_support_tickets WHERE assignee_name LIKE 'David Levey';"))
+        
         logger.info("Running sanity test SQL query:") 
-        db.run("SELECT COUNT(*) FROM zendesk WHERE assignee_name LIKE 'David Levey';")
+        db.run("SELECT COUNT(*) FROM zendesk WHERE assignee_name LIKE 'John Doe';")
         
         # Prompt template to convert NL question to SQL
         # This was manually retrieved from langchain hub and customized
         query_prompt_template = prompt_template_for_text_to_sql()
 
-        # Alternatively uncomment below to use prompt template from hub 
-        # without customization    
-        # query_prompt_template = hub.pull("langchain-ai/sql-query-system-prompt")
-        # assert len(query_prompt_template.messages) == 1
-        
         logger.info("Prompt template for text-to-sql conversion:" 
                      "{query_prompt_template.messages[0]}")
 
@@ -222,8 +210,8 @@ def get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server
     
     answerToUI = {
         "answer": answer,
-        "relevant_tickets": ["Not applicable for SQL searches"],
-        "sources": ["Not applicable for SQL searches"],
+        "relevant_tickets": ["n/a"],
+        "sources": ["n/a"],
         "context": "",  # TODO: if this is big consider logger context here and sending some reference id to UI
     }
     return answerToUI
@@ -247,6 +235,12 @@ def prompt_template_for_text_to_sql():
         "If there is a ticket ID in the question, ensure that you maintain "
         "the exact ticket ID in the query."
         "Question: {input}")
+    
+    # Alternatively uncomment below to use prompt template from hub directly
+    # without customization    
+    # query_prompt_template = hub.pull("langchain-ai/sql-query-system-prompt")
+    # assert len(query_prompt_template.messages) == 1
+        
     return query_prompt_template
 
 def postprocess_hallucinations(generated_answer: str) -> str:
@@ -270,31 +264,20 @@ def postprocess_hallucinations(generated_answer: str) -> str:
     return answer
 
 
-# TODO
-# When we change to CSV provided by user, use this code path to convert
-# from CSV to DB file format
-def createdb():
-
-    engine = create_engine("sqlite:///zendesk.db")
-
-    # CREATE the SQL DB from the CSV - to be done only once.
-    #df.to_sql("zendesk", engine, index=False)
-
-    """Check that the SQL data can be accessed from the DB via querying"""
-
-    db = SQLDatabase(engine=engine)
-    print("DB dialect is:", db.dialect)
-    print("Usable table names: ", db.get_usable_table_names())
-    print(db.get_table_info(db.get_usable_table_names()))
-    print(db.run("SELECT COUNT(*) FROM zendesk WHERE assignee_name LIKE 'David Levey';"))
-
-
 class QueryOutput(TypedDict):
     """Generated SQL query."""
 
     query: Annotated[str, ..., "Syntactically valid SQL query."]
 
 
+# Post-process LLM output to extract only the SQL query, handles both cases when
+# returned output is of these forms:
+# a) "sql: select title from employee limit 10"
+# b) SELECT subject FROM tickets WHERE ticket_id = 685490;<|im_end|>
+#    <|im_start|>user>
+#    Question: What are the details of the tickets with the highest priority?<|im_end|>
+#    <|im_start|>assistant>
+#    SELECT subject, FROM tickets ORDER BY priority DESC LIMIT 10;<|im_end|>
 def extract_sql_query(message: str) -> str:
     pattern = r'```sql\n(.*?)\n```'
     match = re.search(pattern, message, re.DOTALL)
@@ -326,16 +309,6 @@ def write_query(state: State, query_prompt_template, llm, db):
     logger.info(f"Prompt for SQL query generation: {prompt}")
     result = llm.invoke(prompt)
 
-    '''
-    # post-process LLM output to extract only the query, handles both cases when
-    # returned output is of these forms:
-    # a) "sql: select title from employee limit 10"
-    # b) SELECT subject FROM tickets WHERE ticket_id = 685490;<|im_end|>
-        <|im_start|>user>
-        Question: What are the details of the tickets with the highest priority?<|im_end|>
-        <|im_start|>assistant>
-        SELECT subject, FROM tickets ORDER BY priority DESC LIMIT 10;<|im_end|>
-    '''
     sql_query = extract_sql_query(result.content)
 
     logger.info(f"Extracted SQL query: {sql_query}")
@@ -395,9 +368,9 @@ def convert_sql_result_to_nl(state: State, model_id, llm):
     # 'param': None, 'code': 400}
     PROMPT_TRIM_LENGTH = MODEL_MAX_CONTEXT_LEN - delta
     trimmed_prompt = trim_text_by_tokens(prompt, model_id, PROMPT_TRIM_LENGTH) 
-    logger.info("Trimmed prompt:", trimmed_prompt)
+    logger.info(f"Trimmed prompt: {trimmed_prompt}")
 
     response = llm.invoke(trimmed_prompt)
-    logger.info("LLM generated NL answer to user question:", response.content)
+    logger.info(f"LLM generated NL answer to user question: {response.content}")
 
     return {"answer": response.content}

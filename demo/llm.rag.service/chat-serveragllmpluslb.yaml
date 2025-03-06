@@ -55,7 +55,6 @@ spec:
           volumeMounts:
           - name: log-storage
             mountPath: /app/logs
-          volumeMounts:
           - name: db-storage
             mountPath: /app/db
       volumes:

@@ -414,6 +414,10 @@ def get_answer_with_settings_with_weaviate_filter(question, vectorstore, client,
     #
     #     return docs
 
+    # https://weaviate.io/blog/hybrid-search-explained#a-simple-hybrid-search-pipeline-in-weaviate
+    # alpha = 0 -> pure keyword search
+    # alpha = 0.5 -> equal weighing of keyword and vector search
+    # alpha = 1 -> pure vector search
     search_kwargs = {
         "k": relevant_docs,
         "alpha": 0.5,

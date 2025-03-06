@@ -16,7 +16,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: createvectordb
-        image: elotl/createvectordb:v1.3.12
+        image: elotl/createvectordb:testWeaviateSql1
         imagePullPolicy: Always
         resources:
           requests:
@@ -41,3 +41,9 @@ spec:
             value: ${EMBEDDING_CHUNK_OVERLAP}
           - name: EMBEDDING_MODEL_NAME
             value: ${EMBEDDING_MODEL_NAME}
+          - name: WEAVIATE_URI_WITH_PORT
+            value: ${WEAVIATE_URI_WITH_PORT}
+          - name: WEAVIATE_GRPC_URI_WITH_PORT
+            value: ${WEAVIATE_GRPC_URI_WITH_PORT}
+          - name: WEAVIATE_INDEX_NAME
+            value: ${WEAVIATE_INDEX_NAME}

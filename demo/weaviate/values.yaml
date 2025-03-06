@@ -26,3 +26,11 @@ grpcService:
       # Target port is going to be the same for every port
   type: ClusterIP
   annotations: {}
+
+## The Persistent Volume Claim settings for Weaviate. If there's a
+## storage.fullnameOverride field set, then the default pvc will not be
+## created, instead the one defined in fullnameOverride will be used
+#storage:
+#  fullnameOverride: "weaviate-pvc"
+#  size: 32Gi
+#  storageClassName: ""

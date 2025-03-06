@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: serveragllm
-          image: elotl/serveragllm:v1.3.12
+          image: elotl/serveragllm:testWeaviate1
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
@@ -46,8 +46,10 @@ spec:
             value: ${MODEL_TEMPERATURE}
           - name: RELEVANT_DOCS
             value: ${RELEVANT_DOCS}
-          - name: WEAVIATE_URI
-            value: ${WEAVIATE_URI}
+          - name: WEAVIATE_URI_WITH_PORT
+            value: ${WEAVIATE_URI_WITH_PORT}
+          - name: WEAVIATE_GRPC_URI_WITH_PORT
+            value: ${WEAVIATE_GRPC_URI_WITH_PORT}
           - name: WEAVIATE_INDEX_NAME
             value: ${WEAVIATE_INDEX_NAME}
           volumeMounts:

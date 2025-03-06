@@ -44,7 +44,9 @@ def setup(
         max_tokens: int,
         model_temperature: float,
         weaviate_url: str,
+        weaviate_grpc_url: str,
         weaviate_index: str,
+        embedding_model_name: str,
 ):
     app = FastAPI()
 
@@ -53,18 +55,14 @@ def setup(
     from langchain_weaviate.vectorstores import WeaviateVectorStore
     from langchain_huggingface import HuggingFaceEmbeddings
 
-    # TODO: pass through settings or params
-    # embedding_model_name = "sentence-transformers/all-MiniLM-L6-v2"
-    embedding_model_name = "sentence-transformers/multi-qa-mpnet-base-dot-v1"
-
     embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
 
     weaviate_client = weaviate.connect_to_custom(
-        http_host=weaviate_url,
-        http_port=8080,
+        http_host=weaviate_url.split(":")[0],
+        http_port=int(weaviate_url.split(":")[1]),
         http_secure=False,
-        grpc_host=weaviate_url,
-        grpc_port=50051,
+        grpc_host=weaviate_grpc_url.split(":")[0],
+        grpc_port=int(weaviate_grpc_url.split(":")[1]),
         grpc_secure=False,
     )
 
@@ -108,23 +106,37 @@ RELEVANT_DOCS_DEFAULT = 2
 MAX_TOKENS_DEFAULT = 256
 MODEL_TEMPERATURE_DEFAULT = 0.01
 
-relevant_docs = os.getenv("RELEVANT_DOCS", RELEVANT_DOCS_DEFAULT)
-# llm_server_url = os.getenv("LLM_SERVER_URL", "http://localhost:11434/v1")
-llm_server_url = os.getenv("LLM_SERVER_URL", "http://localhost:9000/v1")
+relevant_docs = int(os.getenv("RELEVANT_DOCS", RELEVANT_DOCS_DEFAULT))
+# llm_server_url = os.getenv("MODEL_LLM_SERVER_URL", "http://localhost:11434/v1")
+llm_server_url = os.getenv("MODEL_LLM_SERVER_URL", "http://localhost:9000/v1")
 # model_id = os.getenv("MODEL_ID", "llama2")
-# model_id = os.getenv("MODEL_ID", "microsoft/Phi-3-mini-4k-instruct")
+model_id = os.getenv("MODEL_ID", "microsoft/Phi-3-mini-4k-instruct")
 # model_id = os.getenv("MODEL_ID", "microsoft/Phi-3-mini-128k-instruct")
-model_id = os.getenv("MODEL_ID", "rubra-ai/Phi-3-mini-128k-instruct")
+# model_id = os.getenv("MODEL_ID", "rubra-ai/Phi-3-mini-128k-instruct")
 # model_id = os.getenv("MODEL_ID", "phi3")
 max_tokens = int(os.getenv("MAX_TOKENS", MAX_TOKENS_DEFAULT))
 model_temperature = float(os.getenv("MODEL_TEMPERATURE", MODEL_TEMPERATURE_DEFAULT))
 
-weaviate_url = os.getenv("WEAVIATE_URI", "localhost")
+weaviate_url = os.getenv("WEAVIATE_URI_WITH_PORT", "localhost:8080")
+weaviate_grpc_url = os.getenv("WEAVIATE_GRPC_URI_WITH_PORT", "localhost:50051")
 weaviate_index = os.getenv("WEAVIATE_INDEX_NAME", "my_custom_index")
+
+embedding_model_name = os.getenv("EMBEDDING_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2")
+# embedding_model_name = "sentence-transformers/multi-qa-mpnet-base-dot-v1"
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-app = setup(relevant_docs, llm_server_url, model_id, max_tokens, model_temperature, weaviate_url, weaviate_index)
+app = setup(
+    relevant_docs,
+    llm_server_url,
+    model_id,
+    max_tokens,
+    model_temperature,
+    weaviate_url,
+    weaviate_grpc_url,
+    weaviate_index,
+    embedding_model_name
+)
 
 
 @click.command()

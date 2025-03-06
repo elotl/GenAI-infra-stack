@@ -5,4 +5,4 @@ langchain_huggingface
 langchain_weaviate
 pydantic_settings
 s3fs
-weaviate
+weaviate-client

@@ -80,6 +80,35 @@ class LocalDirWeaviateDbCreationService:
             self.config.embedding_chunk_size,
             self.config.embedding_chunk_overlap,
             self.db_config.weaviate_uri,
+            self.db_config.weaviate_grpc_uri,
+            self.db_config.weaviate_index_name,
+        )
+
+        print(f"Weaviate index saved {self.db_config.weaviate_index_name}")
+
+
+@dataclass
+class S3WeaviateDbCreationService:
+    config: S3Settings
+    db_config: WeaviateSettings
+
+    def create(self):
+        os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+        os.environ["AWS_ACCESS_KEY_ID"] = self.config.s3_access_key
+        os.environ["AWS_SECRET_ACCESS_KEY"] = self.config.s3_secret_key
+
+        print("Load JSON files")
+        data = load_jsonl_files_from_s3(self.config.s3_bucket_name, self.config.s3_dir_name)
+
+        print("Convert to Weaviate vectorstore")
+        create_vectordb_local_weaviate(
+            data,
+            self.config.embedding_model_name,
+            self.config.embedding_chunk_size,
+            self.config.embedding_chunk_overlap,
+            self.db_config.weaviate_uri,
+            self.db_config.weaviate_grpc_uri,
             self.db_config.weaviate_index_name,
         )
 

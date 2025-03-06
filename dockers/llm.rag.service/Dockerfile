@@ -38,7 +38,9 @@ RUN pip3 install --no-cache-dir \
     "boto3"
 
 RUN pip3 install --no-cache-dir \
-    "uvicorn[standard]"
+    "uvicorn[standard]" \
+    "weaviate-client" \
+    "langchain_weaviate"
 
 RUN pip3 install --no-cache-dir \
     "langchain-community" \

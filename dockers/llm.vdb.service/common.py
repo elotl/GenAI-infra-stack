@@ -148,6 +148,7 @@ def create_vectordb_local_weaviate(
     chunk_size: int,
     chunk_overlap: int,
     weaviate_url: str,
+    weaviate_grpc_url: str,
     weaviate_index_name: str,
 ):
     # with adding metadata to text
@@ -165,13 +166,13 @@ def create_vectordb_local_weaviate(
         )
         documents.append(document)
 
-    # TODO: enable connecting to other weaviate than local
+    # TODO: move extracting url and port to config
     with weaviate.connect_to_custom(
-        http_host=weaviate_url,
-        http_port=8080,
+        http_host=weaviate_url.split(":")[0],
+        http_port=int(weaviate_url.split(":")[1]),
         http_secure=False,
-        grpc_host=weaviate_url,
-        grpc_port=50051,
+        grpc_host=weaviate_grpc_url.split(":")[0],
+        grpc_port=int(weaviate_grpc_url.split(":")[1]),
         grpc_secure=False,
     ) as weaviate_client:
         # return WeaviateVectorStore.from_documents(

@@ -40,6 +40,13 @@ RUN pip3 install --no-cache-dir \
 RUN pip3 install --no-cache-dir \
     "uvicorn[standard]"
 
+RUN pip3 install --no-cache-dir \
+    "langchain-community" \
+    "pandas" \
+    "sqlalchemy"  \
+    "langchain-openai"  \
+    "pandas"
+
 COPY __init__.py .
 COPY serveragllm.py .
 COPY serverragllm_jira_cvs_local.py .

@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: serveragllm
-          image: elotl/serveragllm:v1.3.12
+          image: elotl/serveragllm:selvi-dev-mar5
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
@@ -50,13 +50,21 @@ spec:
             value: ${RELEVANT_DOCS}
           - name: IS_JSON_MODE
             value: "${IS_JSON_MODE}"
+          - name: SEARCH_TYPE
+            value: ${SEARCH_TYPE}
           volumeMounts:
           - name: log-storage
             mountPath: /app/logs
+          volumeMounts:
+          - name: db-storage
+            mountPath: /app/db
       volumes:
       - name: log-storage
         persistentVolumeClaim:
           claimName: rag-llm-pvc
+      - name: db-storage
+        persistentVolumeClaim:
+          claimName: sqldb-s3-pvc
 ---
 apiVersion: v1
 kind: Service

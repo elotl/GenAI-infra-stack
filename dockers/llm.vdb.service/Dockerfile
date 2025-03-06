@@ -41,7 +41,9 @@ RUN pip3 install --no-cache-dir \
 RUN pip3 install --no-cache-dir \
     "python-magic" \
     "pydantic_settings" \
-    "s3fs"
+    "s3fs" \
+    "weaviate-client" \
+    "langchain_weaviate"
 
 COPY __init__.py .
 COPY createvectordb.py .

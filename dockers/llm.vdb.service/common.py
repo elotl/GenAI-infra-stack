@@ -1,9 +1,14 @@
 import json
 import os
+from typing import List
+
+import weaviate
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
+from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_weaviate.vectorstores import WeaviateVectorStore
 
 
 def load_jsonl_files_from_directory(directory):
@@ -73,7 +78,7 @@ def chunk_documents_with_added_metadata(data, chunk_size, chunk_overlap):
     # TODO: find a better way to find the biggest metadata
     max_size_of_metadata = 0
     for doc in data:
-        meta_enhancement = "\n".join([f"{key}: {value}" for key, value in doc["metadata"].items() if value])
+        meta_enhancement = ". ".join([f"{key.title()}: {value}" for key, value in doc["metadata"].items() if value])
         max_size_of_metadata = max(max_size_of_metadata, len(meta_enhancement))
 
     print(f"Biggest metada has {max_size_of_metadata} characters.")
@@ -99,7 +104,7 @@ def chunk_documents_with_added_metadata(data, chunk_size, chunk_overlap):
 
         doc_metadatas = [doc["metadata"].copy() for _ in chunks]
 
-        meta_enhancement = "\n".join([f"{key}: {value}" for key, value in doc["metadata"].items() if value])
+        meta_enhancement = ". ".join([f"{key.title()}: {value}" for key, value in doc["metadata"].items() if value])
 
         for i, (chunk, metadata) in enumerate(zip(chunks, doc_metadatas)):
             chunks_enriched_with_metadata.append(chunk + "\n" + meta_enhancement)
@@ -118,8 +123,8 @@ def chunk_documents_with_added_metadata(data, chunk_size, chunk_overlap):
 def create_vectordb_from_data(
     data,
     embedding_model_name: str,
-    chunk_size,
-    chunk_overlap,
+    chunk_size: int,
+    chunk_overlap: int,
 ):
     # no chunking
     # texts, metadatas = get_documents(data)
@@ -135,3 +140,52 @@ def create_vectordb_from_data(
     print("Convert to FAISS vectorstore")
     vectorstore = FAISS.from_texts(texts, embeddings, metadatas=metadatas)
     return vectorstore
+
+
+def create_vectordb_local_weaviate(
+    data,
+    embedding_model_name: str,
+    chunk_size: int,
+    chunk_overlap: int,
+    weaviate_url: str,
+    weaviate_grpc_url: str,
+    weaviate_index_name: str,
+):
+    # with adding metadata to text
+    print("Start chunking documents")
+    texts, metadatas = chunk_documents_with_added_metadata(data, chunk_size, chunk_overlap)
+
+    embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
+
+    # adapt data
+    documents: List[Document] = []
+    for txt, met in zip(texts, metadatas):
+        document = Document(
+            page_content=txt,
+            metadata=met
+        )
+        documents.append(document)
+
+    # TODO: move extracting url and port to config
+    with weaviate.connect_to_custom(
+        http_host=weaviate_url.split(":")[0],
+        http_port=int(weaviate_url.split(":")[1]),
+        http_secure=False,
+        grpc_host=weaviate_grpc_url.split(":")[0],
+        grpc_port=int(weaviate_grpc_url.split(":")[1]),
+        grpc_secure=False,
+    ) as weaviate_client:
+        # return WeaviateVectorStore.from_documents(
+        #     documents,
+        #     embeddings,
+        #     client=weaviate_client,
+        #     index_name=weaviate_index_name,
+        # )
+        return WeaviateVectorStore.from_texts(
+            texts,
+            embeddings,
+            client=weaviate_client,
+            metadatas=metadatas,
+            index_name=weaviate_index_name,
+            text_key="text",
+        )

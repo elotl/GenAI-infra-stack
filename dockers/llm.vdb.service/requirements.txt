@@ -2,5 +2,7 @@ click
 faiss-cpu
 langchain_community
 langchain_huggingface
+langchain_weaviate
 pydantic_settings
 s3fs
+weaviate-client

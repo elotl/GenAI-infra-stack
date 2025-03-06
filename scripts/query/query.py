@@ -2,8 +2,8 @@ from openai import OpenAI
 import os
 
 query = input("Type your query here: ")
-modelid = os.getenv("MODEL_ID", "mosaicml/mpt-7b-chat")
-modelurl = os.getenv("MODEL_URL", "http://localhost:8000/v1")
+modelid = os.getenv("MODEL_ID", "microsoft/Phi-3-mini-4k-instruct")
+modelurl = os.getenv("MODEL_URL", "http://localhost:9000/v1")
 
 # Note: Ray Serve doesn't support all OpenAI client arguments and may ignore some.
 client = OpenAI(

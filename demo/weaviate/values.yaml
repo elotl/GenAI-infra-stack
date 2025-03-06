@@ -1,0 +1,36 @@
+# The service controls how weaviate is exposed to the outside world. If you
+# don't want a public load balancer, you can also choose 'ClusterIP' to make
+# weaviate only accessible within your cluster.
+service:
+  name: weaviate
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      # Target port is going to be the same for every port
+  type: ClusterIP
+  annotations: {}
+
+# The service controls how weaviate gRPC endpoint is exposed to the outside world.
+# If you don't want a public load balancer, you can also choose 'ClusterIP' or `NodePort`
+# to make weaviate gRPC port be only accessible within your cluster.
+# This service is by default enabled but if you don't want it to be deployed in your
+# environment then it can be disabled by setting enabled: false option.
+grpcService:
+  enabled: true
+  name: weaviate-grpc
+  ports:
+    - name: grpc
+      protocol: TCP
+      port: 50051
+      # Target port is going to be the same for every port
+  type: ClusterIP
+  annotations: {}
+
+## The Persistent Volume Claim settings for Weaviate. If there's a
+## storage.fullnameOverride field set, then the default pvc will not be
+## created, instead the one defined in fullnameOverride will be used
+#storage:
+#  fullnameOverride: "weaviate-pvc"
+#  size: 32Gi
+#  storageClassName: ""

@@ -169,7 +169,7 @@ def get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server
         )        
 
         logger.info("Loading the pre-created SQL DB")
-        engine = create_engine("sqlite:////tmp/db/zendesk.db")
+        engine = create_engine("sqlite:////app/db/zendesk.db")
 
         logger.info("Check that the SQL data can be accessed from the DB via querying")
         db = SQLDatabase(engine=engine)

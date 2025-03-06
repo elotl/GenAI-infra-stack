@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: sqldb-s3-pv
+spec:
+  capacity:
+    storage: 5Gi # Ignored, required
+  accessModes:
+    - ReadWriteMany # Supported options: ReadWriteMany / ReadOnlyMany
+  storageClassName: "" # Required for static provisioning
+  claimRef: # To ensure no other PVCs can claim this PV
+    namespace: default # Namespace is required even though it's in "default" namespace.
+    name: sqldb-s3-pvc # Name of PVC
+  mountOptions:
+    - allow-delete
+    - region us-west-2
+    - prefix zendesk/
+  csi:
+    driver: s3.csi.aws.com # Required
+    volumeHandle: s3-csi-driver-volume
+    volumeAttributes:
+      bucketName: selvi-txt-to-sql-db # replace with your bucket name 
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sqldb-s3-pvc
+spec:
+  accessModes:
+    - ReadWriteMany # Supported options: ReadWriteMany / ReadOnlyMany
+  storageClassName: "" # Required for static provisioning
+  resources:
+    requests:
+      storage: 5Gi # Ignored, required
+  volumeName: sqldb-s3-pv # Name of your PV

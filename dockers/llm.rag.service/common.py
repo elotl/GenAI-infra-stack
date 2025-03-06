@@ -1,24 +1,16 @@
 import logging
+import logging.config
 import re
-
-from openai import BadRequestError
-
 from typing import Any, Dict, List
-from typing_extensions import Annotated
-from typing_extensions import TypedDict
-
-from sqlalchemy import create_engine
-
-from transformers import AutoTokenizer
 
 from langchain_community.chat_models import ChatOpenAI
-from langchain_community.utilities import SQLDatabase
 from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
-
+from langchain_community.utilities import SQLDatabase
 from langchain_core.prompts import PromptTemplate
-
-import logging.config
-
+from openai import BadRequestError
+from sqlalchemy import create_engine
+from transformers import AutoTokenizer
+from typing_extensions import Annotated, TypedDict
 
 LOGGING_CONFIG = {
     'version': 1,
@@ -405,7 +397,6 @@ def convert_sql_result_to_nl(state: State, model_id, llm):
     logger.info(f"LLM generated NL answer to user question: {response.content}")
 
     return {"answer": response.content}
-
 
 
 def get_answer_with_settings_with_weaviate_filter(question, vectorstore, client, model_id, max_tokens, model_temperature, system_prompt, relevant_docs):

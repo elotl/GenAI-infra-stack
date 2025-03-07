@@ -362,10 +362,10 @@ You can use this AWS cli command to verify that it was created correctly:
 
 ## Setup RAG + LLM service
 
-We will now create a Kubernetes Deployment and a Service that will take in the user’s question, interact with the Vector Store to find relevant documents and then query our hosted LLM service to provide an answer. You can download the manifest chat-serveragllm.yaml from here: [chat-serveragllmpluslb.yaml](https://github.com/elotl/GenAI-infra-stack/blob/main/demo/llm.rag.service/chat-serveragllmpluslb.yaml)
+We will now create a Kubernetes Deployment and a Service that will take in the user’s question, interact with the Vector Store to find relevant documents and then query our hosted LLM service to provide an answer. You can download the manifest rag-chat-serveragllm.yaml from here: [rag-chat-serveragllmpluslb.yaml](https://github.com/elotl/GenAI-infra-stack/blob/main/demo/llm.rag.service/rag-chat-serveragllmpluslb.yaml)
 
 ```sh
-envsubst < chat-serveragllmpluslb.yaml | kubectl apply -f -
+envsubst < rag-chat-serveragllmpluslb.yaml | kubectl apply -f -
 ```
 
 Please wait for the deployment and Kubernetes LoadBalancer service to become ready and to also obtain an external IP. This can take a few minutes. The command outputs below specifically show the deployment, pod and services associated with the RAQ LLM service.

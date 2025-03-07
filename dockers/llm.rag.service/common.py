@@ -207,9 +207,9 @@ def get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server
         )        
 
         logger.info("Loading the pre-created SQL DB")
-        #engine = create_engine("sqlite:////app/db/zendesk.db")
+        engine = create_engine("sqlite:////app/db/zendesk.db")
         # uncomment for local run
-        engine = create_engine("sqlite:////tmp/db/zendesk.db")
+        # engine = create_engine("sqlite:////tmp/db/zendesk.db")
 
         logger.info("Check that the SQL data can be accessed from the DB via querying")
         db = SQLDatabase(engine=engine)
@@ -506,15 +506,15 @@ def predict_question_type(question, model, tfidf, id_to_category):
 
 def load_models():
     # Load the saved model
-    #rf_model_path = "/app/db/random_forest_model.pkl"
+    rf_model_path = "/app/db/random_forest_model.pkl"
     #uncomment for local run
-    rf_model_path = "/tmp/db/random_forest_model.pkl"
+    #rf_model_path = "/tmp/db/random_forest_model.pkl"
     rf_model_loaded = joblib.load(rf_model_path)
 
     # Load the saved TF-IDF vectorizer
-    #tfidf_path = "/app/db/tfidf_vectorizer.pkl"
+    tfidf_path = "/app/db/tfidf_vectorizer.pkl"
     #uncomment for local run
-    tfidf_path = "/tmp/db/tfidf_vectorizer.pkl"
+    #tfidf_path = "/tmp/db/tfidf_vectorizer.pkl"
     tfidf_loaded = joblib.load(tfidf_path)
 
     logging.info("Model and vectorizer loaded successfully.")

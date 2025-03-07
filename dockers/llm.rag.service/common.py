@@ -1,6 +1,9 @@
 import logging
 import logging.config
 import re
+import os
+import joblib
+from enum import Enum
 from typing import Any, Dict, List
 
 from langchain_community.chat_models import ChatOpenAI
@@ -11,6 +14,7 @@ from openai import BadRequestError
 from sqlalchemy import create_engine
 from transformers import AutoTokenizer
 from typing_extensions import Annotated, TypedDict
+
 
 LOGGING_CONFIG = {
     'version': 1,
@@ -49,6 +53,11 @@ class State(TypedDict):
     query: str
     result: str
     answer: str
+
+class SearchType(Enum):
+    SQL = 1
+    VECTOR = 2
+
 
 MODEL_MAX_CONTEXT_LEN = 8192
 delta = 50 # value by which we keep the prompt len less than the model context len
@@ -192,7 +201,9 @@ def get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server
         )        
 
         logger.info("Loading the pre-created SQL DB")
-        engine = create_engine("sqlite:////app/db/zendesk.db")
+        #engine = create_engine("sqlite:////app/db/zendesk.db")
+        # uncomment for local run
+        engine = create_engine("sqlite:////tmp/db/zendesk.db")
 
         logger.info("Check that the SQL data can be accessed from the DB via querying")
         db = SQLDatabase(engine=engine)
@@ -399,7 +410,39 @@ def convert_sql_result_to_nl(state: State, model_id, llm):
     return {"answer": response.content}
 
 
-def get_answer_with_settings_with_weaviate_filter(question, vectorstore, client, model_id, max_tokens, model_temperature, system_prompt, relevant_docs):
+def get_answer_with_settings_with_weaviate_filter(question, vectorstore, client, model_id, max_tokens, model_temperature, system_prompt, relevant_docs, llm_server_url):
+    
+    search_type = question_router(question) 
+    logging.info(f"Chosen search type: {search_type} for question: {question}")
+
+    match search_type:
+        case SearchType.SQL: 
+            logging.info("Handling search type: SQL")
+
+            return get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server_url)
+
+        case SearchType.VECTOR: 
+            logging.info("Handling search type: VECTOR")
+
+            # https://weaviate.io/blog/hybrid-search-explained#a-simple-hybrid-search-pipeline-in-weaviate
+            # alpha = 0 -> pure keyword search
+            # alpha = 0.5 -> equal weighing of keyword and vector search
+            # alpha = 1 -> pure vector search
+            search_kwargs = {
+                "k": relevant_docs,
+                "alpha": 0.5,
+            }
+
+            retriever = vectorstore.as_retriever(
+                # search_type="mmr",
+                search_kwargs=search_kwargs,
+            )
+            logging.info("Created Vector DB retriever successfully. \n")
+
+            return get_answer_with_settings(question, retriever, client, model_id, max_tokens, model_temperature, system_prompt)
+
+
+
     # from typing import List
     #
     # from langchain_core.documents import Document
@@ -414,14 +457,6 @@ def get_answer_with_settings_with_weaviate_filter(question, vectorstore, client,
     #
     #     return docs
 
-    # https://weaviate.io/blog/hybrid-search-explained#a-simple-hybrid-search-pipeline-in-weaviate
-    # alpha = 0 -> pure keyword search
-    # alpha = 0.5 -> equal weighing of keyword and vector search
-    # alpha = 1 -> pure vector search
-    search_kwargs = {
-        "k": relevant_docs,
-        "alpha": 0.5,
-    }
 
     # ticket_id = extract_zendesk_ticket_id(query=question)
     #
@@ -432,13 +467,6 @@ def get_answer_with_settings_with_weaviate_filter(question, vectorstore, client,
     #     # Use Weaviate’s `Filter` class to build the filter
     #     search_kwargs["filters"] = Filter.by_property("ticket").equal(ticket_id)
 
-    retriever = vectorstore.as_retriever(
-        # search_type="mmr",
-        search_kwargs=search_kwargs,
-    )
-    logging.info("Created Vector DB retriever successfully. \n")
-
-    return get_answer_with_settings(question, retriever, client, model_id, max_tokens, model_temperature, system_prompt)
 
 
 def extract_zendesk_ticket_id(query):
@@ -451,3 +479,64 @@ def extract_zendesk_ticket_id(query):
     # Extract numeric ticket ID (assumes tickets are six digit numbers)
     match = re.search(r'\b\d{6,}\b', query)
     return match.group(0) if match else None
+
+
+
+def predict_question_type(question, model, tfidf, id_to_category):
+   
+    logging.info(f"Received question {question} for classification")
+    # Transform the input question into TF-IDF feature representation
+    question_tfidf = tfidf.transform([question]).toarray()
+
+    # Predict the category ID
+    predicted_category_id = model.predict(question_tfidf)[0]
+
+    # Convert category ID back to label
+    predicted_category = id_to_category[predicted_category_id]
+
+    logging.info(f"Question: {question}, Predicted Category: {predicted_category}")
+    return predicted_category_id
+
+
+def load_models():
+    # Load the saved model
+    #rf_model_path = "/app/db/random_forest_model.pkl"
+    #uncomment for local run
+    rf_model_path = "/tmp/db/random_forest_model.pkl"
+    rf_model_loaded = joblib.load(rf_model_path)
+
+    # Load the saved TF-IDF vectorizer
+    #tfidf_path = "/app/db/tfidf_vectorizer.pkl"
+    #uncomment for local run
+    tfidf_path = "/tmp/db/tfidf_vectorizer.pkl"
+    tfidf_loaded = joblib.load(tfidf_path)
+
+    logging.info("Model and vectorizer loaded successfully.")
+    return rf_model_loaded, tfidf_loaded
+
+
+def question_router(question: str) -> SearchType:
+    logging.info("In question router...")
+    rf_model_loaded, tfidf_loaded = load_models()
+    id_to_category = {0: 'aggregation', 1: 'pointed'}
+    predicted_category = predict_question_type(question, rf_model_loaded, tfidf_loaded, id_to_category)
+    print("Received question: ", question, "\nPredicted Question Type:", predicted_category)
+    
+    # If question is of type aggregation or has any alphanumeric words
+    if predicted_category == 0 or containsSymbolsOrNumbers(question):
+        logging.info("Choosing search type SQL")
+        return SearchType.SQL
+    
+    logging.info("Choosing search type VECTOR/TEXT")
+    return SearchType.VECTOR
+
+def containsSymbolsOrNumbers(question: str) -> bool:
+    words = question.split()
+    for i, word in enumerate(words):
+        # skip words ending with '?' or if the last word is just '?'
+        if word.endswith('?') or (i == len(words) - 1 and word == '?'):
+            continue
+
+        if re.search(r'[^a-zA-Z]', word):  # Check if word contains anything other than letters
+            return True
+    return False

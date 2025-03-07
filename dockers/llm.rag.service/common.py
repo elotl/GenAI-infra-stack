@@ -178,10 +178,16 @@ def get_answer_with_settings(question, retriever, client, model_id, max_tokens, 
 
     answer = postprocess_hallucinations(generated_answer)
 
+    sources = [r.metadata["source"] for r in docs]
+    unique_sources = list(set(sources))
+
+    tickets = [r.metadata["ticket"] for r in docs]
+    unique_tickets = list(set(tickets))
+
     answerToUI = {
         "answer": answer,
-        "relevant_tickets": [r.metadata["ticket"] for r in docs],
-        "sources": [r.metadata["source"] for r in docs],
+        "relevant_tickets": unique_tickets,
+        "sources": unique_sources,
         "context": context,  # TODO: if this is big consider logger context here and sending some reference id to UI
     }
     return answerToUI

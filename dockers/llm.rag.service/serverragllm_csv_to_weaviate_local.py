@@ -89,6 +89,7 @@ def setup(
         model_temperature=model_temperature,
         system_prompt=SYSTEM_PROMPT_DEFAULT,
         relevant_docs=relevant_docs,
+        llm_server_url=llm_server_url,
     )
 
     @app.get("/answer/{question}")
@@ -110,10 +111,9 @@ relevant_docs = int(os.getenv("RELEVANT_DOCS", RELEVANT_DOCS_DEFAULT))
 # llm_server_url = os.getenv("MODEL_LLM_SERVER_URL", "http://localhost:11434/v1")
 llm_server_url = os.getenv("MODEL_LLM_SERVER_URL", "http://localhost:9000/v1")
 # model_id = os.getenv("MODEL_ID", "llama2")
-model_id = os.getenv("MODEL_ID", "microsoft/Phi-3-mini-4k-instruct")
-# model_id = os.getenv("MODEL_ID", "microsoft/Phi-3-mini-128k-instruct")
-# model_id = os.getenv("MODEL_ID", "rubra-ai/Phi-3-mini-128k-instruct")
-# model_id = os.getenv("MODEL_ID", "phi3")
+
+# model_id = os.getenv("MODEL_ID", "microsoft/Phi-3-mini-4k-instruct")
+model_id = os.getenv("MODEL_ID", "rubra-ai/Phi-3-mini-128k-instruct")
 max_tokens = int(os.getenv("MAX_TOKENS", MAX_TOKENS_DEFAULT))
 model_temperature = float(os.getenv("MODEL_TEMPERATURE", MODEL_TEMPERATURE_DEFAULT))
 

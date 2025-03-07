@@ -25,11 +25,8 @@ from openai import OpenAI
 
 from common import get_answer_with_settings
 from common import get_sql_answer
-from enum import Enum
-
-class SearchType(Enum):
-    SQL = 1
-    VECTOR = 2
+from common import question_router
+from common import SearchType
 
 def setup(
         file_path: str,
@@ -42,6 +39,7 @@ def setup(
     app = FastAPI()
 
     # TO DO: Add question classification block
+    # search_type = question_router(question) 
 
     # For now, hard-coding question type to aggregation
     search_type = SearchType.SQL
@@ -132,7 +130,7 @@ model_temperature = float(os.getenv("MODEL_TEMPERATURE", MODEL_TEMPERATURE_DEFAU
 app = setup(file_path, relevant_docs, llm_server_url, model_id, max_tokens, model_temperature)
 
 @click.command()
-@click.option("--host", default="127.0.0.1", help="Host for the FastAPI server (default: 127.0.0.1)")
+@click.option("--host", default="127.0.0.1", help="Host for the FastAPI     server (default: 127.0.0.1)")
 @click.option("--port", type=int, default=8000, help="Port for the FastAPI server (default: 8000)")
 def run(host, port):
     # Serve the app using Uvicorn

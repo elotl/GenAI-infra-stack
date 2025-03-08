@@ -377,14 +377,14 @@ def write_query(state: State, query_prompt_template, llm, db):
 
     logger.info(f"Extracted SQL query: {sql_query}")
 
-    return {"query": sql_query}
+    return sql_query
 
 
 # Executes a SQL query against the provided database
-def execute_query(state: State, db):
+def execute_query(query: str, db):
     """Execute SQL query."""
     execute_query_tool = QuerySQLDataBaseTool(db=db)
-    return {"result": execute_query_tool.invoke(state["query"])}
+    return execute_query_tool.invoke(query)
 
 
 # Trims a string to fit within a given token limit using a model-specific tokenizer.

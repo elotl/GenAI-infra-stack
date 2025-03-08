@@ -2,6 +2,7 @@ import logging.config
 import os
 import re
 from enum import Enum
+from pathlib import Path
 from typing import Any, Dict, List
 
 import joblib
@@ -224,9 +225,10 @@ def get_sql_answer(
         )
 
         logger.info("Loading the pre-created SQL DB")
-        engine = create_engine(
-            "sqlite:///" + sql_search_db_and_model_path + "zendesk.db"
-        )
+        base_path = Path(sql_search_db_and_model_path)
+        database_path = base_path / "zendesk.db"
+        database_uri = f"sqlite:///{database_path}"
+        engine = create_engine(database_uri)
 
         logger.info("Check that the SQL data can be accessed from the DB via querying")
         db = SQLDatabase(engine=engine)
@@ -559,12 +561,13 @@ def predict_question_type(question, model, tfidf, id_to_category):
 
 
 def load_models(question_classification_model_path: str):
+    base_path = Path(question_classification_model_path)
     # Load the saved model
-    rf_model_path = question_classification_model_path + "random_forest_model.pkl"
+    rf_model_path = base_path / "random_forest_model.pkl"
     rf_model_loaded = joblib.load(rf_model_path)
 
     # Load the saved TF-IDF vectorizer
-    tfidf_path = question_classification_model_path + "tfidf_vectorizer.pkl"
+    tfidf_path = base_path / "tfidf_vectorizer.pkl"
     tfidf_loaded = joblib.load(tfidf_path)
 
     logger.info("Model and vectorizer loaded successfully.")

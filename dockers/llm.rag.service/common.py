@@ -61,7 +61,7 @@ class SearchType(Enum):
 
 MODEL_MAX_CONTEXT_LEN = 8192
 delta = 50 # value by which we keep the prompt len less than the model context len
-
+WEAVIATE_HYBRID_ALPHA_DEFAULT = 0.5
 
 def format_context(results: List[Dict[str, Any]]) -> str:
     """Format search results into context for the LLM"""
@@ -418,16 +418,19 @@ def get_answer_with_settings_with_weaviate_filter(question, vectorstore, client,
                                                   system_prompt, relevant_docs, llm_server_url, sql_search_db_and_model_path):
     
     search_type = question_router(question, sql_search_db_and_model_path) 
-    logging.info(f"Chosen search type: {search_type} for question: {question}")
+    logger.info(f"Chosen search type: {search_type} for question: {question}")
 
     match search_type:
         case SearchType.SQL: 
-            logging.info("Handling search type: SQL")
+            logger.info("Handling search type: SQL")
 
             return get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server_url, sql_search_db_and_model_path)
 
         case SearchType.VECTOR: 
-            logging.info("Handling search type: VECTOR")
+            logger.info("Handling search type: VECTOR")
+
+            alpha = float(os.getenv("WEAVIATE_HYBRID_ALPHA", WEAVIATE_HYBRID_ALPHA_DEFAULT))
+            logger.info(f"Choosing WEAVIATE_HYBRID_ALPHA value: {alpha}")
 
             # https://weaviate.io/blog/hybrid-search-explained#a-simple-hybrid-search-pipeline-in-weaviate
             # alpha = 0 -> pure keyword search
@@ -435,14 +438,14 @@ def get_answer_with_settings_with_weaviate_filter(question, vectorstore, client,
             # alpha = 1 -> pure vector search
             search_kwargs = {
                 "k": relevant_docs,
-                "alpha": 0.5,
+                "alpha": alpha,
             }
 
             retriever = vectorstore.as_retriever(
                 # search_type="mmr",
                 search_kwargs=search_kwargs,
             )
-            logging.info("Created Vector DB retriever successfully. \n")
+            logger.info("Created Vector DB retriever successfully. \n")
 
             return get_answer_with_settings(question, retriever, client, model_id, max_tokens, model_temperature, system_prompt)
 
@@ -468,7 +471,7 @@ def get_answer_with_settings_with_weaviate_filter(question, vectorstore, client,
     # if ticket_id:
     #     from weaviate.collections.classes.filters import Filter
     #
-    #     logging.info(f"Using ticket id {ticket_id} filter")
+    #     logger.info(f"Using ticket id {ticket_id} filter")
     #     # Use Weaviate’s `Filter` class to build the filter
     #     search_kwargs["filters"] = Filter.by_property("ticket").equal(ticket_id)
 
@@ -489,7 +492,7 @@ def extract_zendesk_ticket_id(query):
 
 def predict_question_type(question, model, tfidf, id_to_category):
    
-    logging.info(f"Received question {question} for classification")
+    logger.info(f"Received question {question} for classification")
     # Transform the input question into TF-IDF feature representation
     question_tfidf = tfidf.transform([question]).toarray()
 
@@ -499,7 +502,7 @@ def predict_question_type(question, model, tfidf, id_to_category):
     # Convert category ID back to label
     predicted_category = id_to_category[predicted_category_id]
 
-    logging.info(f"Question: {question}, Predicted Category: {predicted_category}")
+    logger.info(f"Question: {question}, Predicted Category: {predicted_category}")
     return predicted_category_id
 
 
@@ -512,12 +515,12 @@ def load_models(question_classification_model_path: str):
     tfidf_path = question_classification_model_path + "tfidf_vectorizer.pkl"
     tfidf_loaded = joblib.load(tfidf_path)
 
-    logging.info("Model and vectorizer loaded successfully.")
+    logger.info("Model and vectorizer loaded successfully.")
     return rf_model_loaded, tfidf_loaded
 
 
 def question_router(question: str, question_classification_model_path: str) -> SearchType:
-    logging.info("In question router...")
+    logger.info("In question router...")
     rf_model_loaded, tfidf_loaded = load_models(question_classification_model_path)
     id_to_category = {0: 'aggregation', 1: 'pointed'}
     predicted_category = predict_question_type(question, rf_model_loaded, tfidf_loaded, id_to_category)
@@ -525,10 +528,10 @@ def question_router(question: str, question_classification_model_path: str) -> S
     
     # If question is of type aggregation or has any alphanumeric words
     if predicted_category == 0 or containsSymbolsOrNumbers(question):
-        logging.info("Choosing search type SQL")
+        logger.info("Choosing search type: SQL")
         return SearchType.SQL
     
-    logging.info("Choosing search type VECTOR/TEXT")
+    logger.info("Choosing search type: VECTOR/TEXT")
     return SearchType.VECTOR
 
 def containsSymbolsOrNumbers(question: str) -> bool:

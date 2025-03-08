@@ -150,16 +150,16 @@ def get_answer(question: Union[str, None]):
                 # Retriever configuration parameters reference:
                 # https://python.langchain.com/api_reference/community/vectorstores/langchain_community.vectorstores.faiss.FAISS.html#langchain_community.vectorstores.faiss.FAISS.as_retriever
                 retriever = vectorstore.as_retriever(search_kwargs={"k": relevant_docs})
-                print("Created Vector DB retriever successfully. \n")
+                logging.info("Created Vector DB retriever successfully. \n")
 
-                print(
+                logging.info(
                     "Creating an OpenAI client to the hosted model at URL: ",
                     llm_server_url,
                 )
                 try:
                     client = OpenAI(base_url=llm_server_url, api_key="n/a")
                 except Exception as e:
-                    print("Error creating client:", e)
+                    logging.error("Error creating client:", e)
                     sys.exit(1)
 
                 return get_answer_with_settings(

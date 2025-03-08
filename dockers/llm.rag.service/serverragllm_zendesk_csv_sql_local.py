@@ -57,21 +57,21 @@ def setup(
 
             # Load the object from the pickle file
             with open(file_path, "rb") as file:
-                print("Loading Vector DB...\n")
+                logging.info("Loading Vector DB...\n")
                 vectorstore = pickle.load(file)
 
             # Retriever configuration parameters reference:
             # https://python.langchain.com/api_reference/community/vectorstores/langchain_community.vectorstores.faiss.FAISS.html#langchain_community.vectorstores.faiss.FAISS.as_retriever
             retriever = vectorstore.as_retriever(search_kwargs={"k": relevant_docs})
-            print("Created Vector DB retriever successfully. \n")
+            logging.info("Created Vector DB retriever successfully. \n")
 
-            print(
+            logging.info((
                 "Creating an OpenAI client to the hosted model at URL: ", llm_server_url
             )
             try:
                 client = OpenAI(base_url=llm_server_url, api_key="na")
             except Exception as e:
-                print("Error creating client:", e)
+                logging.error("Error creating client:", e)
                 sys.exit(1)
 
             jira_system_prompt = """You are a specialized support ticket assistant. Format your responses following these rules:
@@ -93,7 +93,7 @@ def setup(
 
     @app.get("/answer/{question}")
     def read_item(question: Union[str, None] = None):
-        print(f"Received question: {question}")
+        logging.info((f"Received question: {question}")
         answer = get_answer(question)
         return {"question": question, "answer": answer}
 
@@ -109,7 +109,7 @@ MODEL_TEMPERATURE_DEFAULT = 0.00
 
 file_path = os.getenv("FILE_PATH")
 if not file_path:
-    print("Please provide the DB file path")
+    logging.info("Please provide the DB file path")
 
 logging.info(
     "Setting LLM setup parameters like LLM server URL, model id, model temperature..."

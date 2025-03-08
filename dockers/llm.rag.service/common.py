@@ -51,7 +51,6 @@ class State(TypedDict):
     question: str
     query: str
     result: str
-    answer: str
 
 
 class SearchType(Enum):

@@ -25,12 +25,12 @@ from common import get_answer_with_settings
 
 
 def setup(
-        file_path: str,
-        relevant_docs: int,
-        llm_server_url:str,
-        model_id: str,
-        max_tokens: int,
-        model_temperature: float,
+    file_path: str,
+    relevant_docs: int,
+    llm_server_url: str,
+    model_id: str,
+    max_tokens: int,
+    model_temperature: float,
 ):
     app = FastAPI()
 
@@ -94,12 +94,20 @@ model_id = os.getenv("MODEL_ID", "llama2")
 max_tokens = int(os.getenv("MAX_TOKENS", MAX_TOKENS_DEFAULT))
 model_temperature = float(os.getenv("MODEL_TEMPERATURE", MODEL_TEMPERATURE_DEFAULT))
 
-app = setup(file_path, relevant_docs, llm_server_url, model_id, max_tokens, model_temperature)
+app = setup(
+    file_path, relevant_docs, llm_server_url, model_id, max_tokens, model_temperature
+)
 
 
 @click.command()
-@click.option("--host", default="127.0.0.1", help="Host for the FastAPI server (default: 127.0.0.1)")
-@click.option("--port", type=int, default=8000, help="Port for the FastAPI server (default: 8000)")
+@click.option(
+    "--host",
+    default="127.0.0.1",
+    help="Host for the FastAPI server (default: 127.0.0.1)",
+)
+@click.option(
+    "--port", type=int, default=8000, help="Port for the FastAPI server (default: 8000)"
+)
 def run(host, port):
     # Serve the app using Uvicorn
     uvicorn.run("serverragllm_jira_cvs_local:app", host=host, port=port, reload=True)

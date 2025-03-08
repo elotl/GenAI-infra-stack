@@ -30,7 +30,7 @@ SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Forma
                 5. If the question cannot be answered with the given context, please say so and do not attempt to provide an answer.
                 6. Do not create new questions related to the given question, instead answer only the provided question.
                 7. Provide a clear, direct and factual answer.
-                """ 
+                """
 
 template = """Answer the question based only on the following context:
 {context}
@@ -39,9 +39,11 @@ Question: {question}
 """
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+
 class SearchType(Enum):
     SQL = 1
     VECTOR = 2
+
 
 def str_to_int(value, name):
     try:
@@ -103,10 +105,9 @@ def get_answer(question: Union[str, None]):
     logging.info(f"Using is_json_mode: {is_json_mode}")
 
     system_prompt = os.environ.get("SYSTEM_PROMPT")
-    if system_prompt  == "" or system_prompt is None:
-        system_prompt  = SYSTEM_PROMPT_DEFAULT
+    if system_prompt == "" or system_prompt is None:
+        system_prompt = SYSTEM_PROMPT_DEFAULT
     logging.info(f"Using System Prompt: {system_prompt}")
-
 
     # TODO: Add question classification block
 
@@ -115,9 +116,9 @@ def get_answer(question: Union[str, None]):
 
     match search_type_config:
         case "SQL":
-            search_type = SearchType.SQL            
+            search_type = SearchType.SQL
         case "VECTOR":
-            search_type = SearchType.VECTOR          
+            search_type = SearchType.VECTOR
 
     logging.info(f"Using search type: {search_type}")
 
@@ -125,7 +126,7 @@ def get_answer(question: Union[str, None]):
         logging.info("Sending query to the LLM (JSON mode)...")
 
         match search_type:
-            case SearchType.SQL: 
+            case SearchType.SQL:
                 logging.info("Handling search type: SQL")
 
                 return get_sql_answer(
@@ -136,20 +137,25 @@ def get_answer(question: Union[str, None]):
                     llm_server_url,
                 )
 
-            case SearchType.VECTOR: 
+            case SearchType.VECTOR:
                 logging.info("Handling search type: VECTOR")
 
                 logging.info("Retrieving docs relevant to the input question")
                 docs = retriever.invoke(input=question)
                 num_of_docs = len(docs)
-                logging.info(f"Number of relevant documents retrieved and that will be used as context for query: {num_of_docs}")
+                logging.info(
+                    f"Number of relevant documents retrieved and that will be used as context for query: {num_of_docs}"
+                )
 
                 # Retriever configuration parameters reference:
                 # https://python.langchain.com/api_reference/community/vectorstores/langchain_community.vectorstores.faiss.FAISS.html#langchain_community.vectorstores.faiss.FAISS.as_retriever
                 retriever = vectorstore.as_retriever(search_kwargs={"k": relevant_docs})
                 print("Created Vector DB retriever successfully. \n")
 
-                print("Creating an OpenAI client to the hosted model at URL: ", llm_server_url)
+                print(
+                    "Creating an OpenAI client to the hosted model at URL: ",
+                    llm_server_url,
+                )
                 try:
                     client = OpenAI(base_url=llm_server_url, api_key="n/a")
                 except Exception as e:
@@ -167,7 +173,7 @@ def get_answer(question: Union[str, None]):
                 )
     else:
         logging.info("Sending query to the LLM (non JSON mode)...")
-        
+
         # concatenate relevant docs retrieved to be used as context
         allcontext = ""
         for i in range(len(docs)):
@@ -192,20 +198,23 @@ def get_answer(question: Union[str, None]):
         logging.info(f"Received answer (from non JSON processing): {answer}")
         return answer
 
+
 ########
 # Setup logging
 
 # When running locally: export RAGLLM_LOGS_PATH=logs/ragllm.log
 log_file_path = os.getenv("RAGLLM_LOGS_PATH") or "/app/logs/ragllm.log"
-os.makedirs(os.path.dirname(log_file_path), exist_ok=True)  # Ensure log directory exists
+os.makedirs(
+    os.path.dirname(log_file_path), exist_ok=True
+)  # Ensure log directory exists
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-         # Log to file, rotate every 1H and store files from last 24 hrs * 7 days files == 168H data
-        TimedRotatingFileHandler(log_file_path, when='h', interval=1, backupCount=168),
-        logging.StreamHandler()             # Also log to console
-    ]
+        # Log to file, rotate every 1H and store files from last 24 hrs * 7 days files == 168H data
+        TimedRotatingFileHandler(log_file_path, when="h", interval=1, backupCount=168),
+        logging.StreamHandler(),  # Also log to console
+    ],
 )
 
 ########
@@ -216,7 +225,8 @@ if model_llm_server_url is None:
         "http://llm-model-serve-serve-svc.default.svc.cluster.local:8000"
     )
     logging.info(
-        f"Setting environment variable MODEL_LLM_SERVER_URL to default value: {model_llm_server_url}")
+        f"Setting environment variable MODEL_LLM_SERVER_URL to default value: {model_llm_server_url}"
+    )
 llm_server_url = model_llm_server_url + "/v1"
 
 logging.info(f"Creating an OpenAI client to the hosted model at URL: {llm_server_url}")
@@ -271,8 +281,8 @@ retriever = vectorstore.as_retriever(search_kwargs={"k": relevant_docs})
 logging.info("Created Vector DB retriever successfully.")
 
 # Uncomment to run a local test
-#logging.info("Testing with a sample question:")
-#get_answer("What's a recent SSH issue customers had?")
+# logging.info("Testing with a sample question:")
+# get_answer("What's a recent SSH issue customers had?")
 
 ########
 # Start API service to answer questions

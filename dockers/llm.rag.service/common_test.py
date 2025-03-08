@@ -17,5 +17,7 @@ When we use 'git merge', we create a new commit that combines the changes from t
 
 
 def test_clean_all_after_first_im_end():
-    assert trim_answer(test_string, "<|im_end|>") == \
-        'A recent SSH issue customers had was related to SSH access being flagged as a problem in their old environment because it was under a reseller account. This issue was identified as a "Won\'t Fix" and the Linux Support Engineer informed the customer that they would need to let their security vendor know about these details so they can be excluded from the report as "False Positives."'
+    assert (
+        trim_answer(test_string, "<|im_end|>")
+        == 'A recent SSH issue customers had was related to SSH access being flagged as a problem in their old environment because it was under a reseller account. This issue was identified as a "Won\'t Fix" and the Linux Support Engineer informed the customer that they would need to let their security vendor know about these details so they can be excluded from the report as "False Positives."'
+    )

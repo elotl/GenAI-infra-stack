@@ -36,16 +36,16 @@ SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Forma
 
 
 def setup(
-        relevant_docs: int,
-        llm_server_url:str,
-        model_id: str,
-        max_tokens: int,
-        model_temperature: float,
-        weaviate_url: str,
-        weaviate_grpc_url: str,
-        weaviate_index: str,
-        embedding_model_name: str,
-        sql_search_db_and_model_path: str,
+    relevant_docs: int,
+    llm_server_url: str,
+    model_id: str,
+    max_tokens: int,
+    model_temperature: float,
+    weaviate_url: str,
+    weaviate_grpc_url: str,
+    weaviate_index: str,
+    embedding_model_name: str,
+    sql_search_db_and_model_path: str,
 ):
     app = FastAPI()
 
@@ -66,15 +66,17 @@ def setup(
     )
 
     vectorstore = WeaviateVectorStore(
-       client=weaviate_client,
-       index_name=weaviate_index,
-       text_key="text",
-       embedding=embeddings,
+        client=weaviate_client,
+        index_name=weaviate_index,
+        text_key="text",
+        embedding=embeddings,
     )
 
     if not llm_server_url.endswith("/v1"):
         llm_server_url = llm_server_url + "/v1"
-    logger.info(f"Creating an OpenAI client to the hosted model at URL: {llm_server_url}")
+    logger.info(
+        f"Creating an OpenAI client to the hosted model at URL: {llm_server_url}"
+    )
     try:
         client = OpenAI(base_url=llm_server_url, api_key="na")
     except Exception as e:
@@ -126,10 +128,14 @@ weaviate_url = os.getenv("WEAVIATE_URI_WITH_PORT", "localhost:8080")
 weaviate_grpc_url = os.getenv("WEAVIATE_GRPC_URI_WITH_PORT", "localhost:50051")
 weaviate_index = os.getenv("WEAVIATE_INDEX_NAME", "my_custom_index")
 
-embedding_model_name = os.getenv("EMBEDDING_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2")
+embedding_model_name = os.getenv(
+    "EMBEDDING_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2"
+)
 # embedding_model_name = "sentence-transformers/multi-qa-mpnet-base-dot-v1"
 
-sql_search_db_and_model_path = os.getenv("SQL_SEARCH_DB_AND_MODEL_PATH", SQL_SEARCH_DB_AND_MODEL_PATH_DEFAULT)
+sql_search_db_and_model_path = os.getenv(
+    "SQL_SEARCH_DB_AND_MODEL_PATH", SQL_SEARCH_DB_AND_MODEL_PATH_DEFAULT
+)
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -143,16 +149,24 @@ app = setup(
     weaviate_grpc_url,
     weaviate_index,
     embedding_model_name,
-    sql_search_db_and_model_path
+    sql_search_db_and_model_path,
 )
 
 
 @click.command()
-@click.option("--host", default="127.0.0.1", help="Host for the FastAPI server (default: 127.0.0.1)")
-@click.option("--port", type=int, default=8000, help="Port for the FastAPI server (default: 8000)")
+@click.option(
+    "--host",
+    default="127.0.0.1",
+    help="Host for the FastAPI server (default: 127.0.0.1)",
+)
+@click.option(
+    "--port", type=int, default=8000, help="Port for the FastAPI server (default: 8000)"
+)
 def run(host, port):
     # Serve the app using Uvicorn
-    uvicorn.run("serverragllm_csv_to_weaviate_local:app", host=host, port=port, reload=True)
+    uvicorn.run(
+        "serverragllm_csv_to_weaviate_local:app", host=host, port=port, reload=True
+    )
 
 
 if __name__ == "__main__":

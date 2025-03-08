@@ -194,7 +194,7 @@ def get_answer_with_settings(question, retriever, client, model_id, max_tokens, 
 
 
 # Answer user's question via text-to-sql technique
-def get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server_url):
+def get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server_url, sql_search_db_and_model_path):
     
     logger.info("Invoking text-to-sql question-answer search")
     try:
@@ -207,9 +207,7 @@ def get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server
         )        
 
         logger.info("Loading the pre-created SQL DB")
-        engine = create_engine("sqlite:////app/db/zendesk.db")
-        # uncomment for local run
-        # engine = create_engine("sqlite:////tmp/db/zendesk.db")
+        engine = create_engine("sqlite:///" + sql_search_db_and_model_path + "zendesk.db")
 
         logger.info("Check that the SQL data can be accessed from the DB via querying")
         db = SQLDatabase(engine=engine)
@@ -225,8 +223,8 @@ def get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server
         # This was manually retrieved from langchain hub and customized
         query_prompt_template = prompt_template_for_text_to_sql()
 
-        logger.info("Prompt template for text-to-sql conversion:" 
-                     "{query_prompt_template.messages[0]}")
+        #logger.info(f"Prompt template for text-to-sql conversion: {query_prompt_template.messages[0]}")
+        logger.info(f"Prompt template for text-to-sql conversion: {query_prompt_template}")
 
     except Exception as e:
         logger.error(f"An unexpected error occurred: {e}")
@@ -239,11 +237,11 @@ def get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server
         return errorToUI
 
     # send SQL query and response to LLM and get a natural language answer
-    # TODO avoid calling text to SQL conversion twice
+    sql_query = write_query({"question": question}, query_prompt_template, llm, db)
     state: State = {
         "question": question,
-        "query": write_query({"question": question}, query_prompt_template, llm, db),
-        "result": execute_query(write_query({"question": question}, query_prompt_template, llm, db), db),
+        "query": sql_query,
+        "result": execute_query(sql_query, db),
     }
     generated_answer = convert_sql_result_to_nl(state, model_id, llm)
     answer = postprocess_hallucinations(generated_answer['answer'])
@@ -416,16 +414,17 @@ def convert_sql_result_to_nl(state: State, model_id, llm):
     return {"answer": response.content}
 
 
-def get_answer_with_settings_with_weaviate_filter(question, vectorstore, client, model_id, max_tokens, model_temperature, system_prompt, relevant_docs, llm_server_url):
+def get_answer_with_settings_with_weaviate_filter(question, vectorstore, client, model_id, max_tokens, model_temperature, 
+                                                  system_prompt, relevant_docs, llm_server_url, sql_search_db_and_model_path):
     
-    search_type = question_router(question) 
+    search_type = question_router(question, sql_search_db_and_model_path) 
     logging.info(f"Chosen search type: {search_type} for question: {question}")
 
     match search_type:
         case SearchType.SQL: 
             logging.info("Handling search type: SQL")
 
-            return get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server_url)
+            return get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server_url, sql_search_db_and_model_path)
 
         case SearchType.VECTOR: 
             logging.info("Handling search type: VECTOR")
@@ -504,26 +503,22 @@ def predict_question_type(question, model, tfidf, id_to_category):
     return predicted_category_id
 
 
-def load_models():
+def load_models(question_classification_model_path: str):
     # Load the saved model
-    rf_model_path = "/app/db/random_forest_model.pkl"
-    #uncomment for local run
-    #rf_model_path = "/tmp/db/random_forest_model.pkl"
+    rf_model_path = question_classification_model_path  + "random_forest_model.pkl"
     rf_model_loaded = joblib.load(rf_model_path)
 
     # Load the saved TF-IDF vectorizer
-    tfidf_path = "/app/db/tfidf_vectorizer.pkl"
-    #uncomment for local run
-    #tfidf_path = "/tmp/db/tfidf_vectorizer.pkl"
+    tfidf_path = question_classification_model_path + "tfidf_vectorizer.pkl"
     tfidf_loaded = joblib.load(tfidf_path)
 
     logging.info("Model and vectorizer loaded successfully.")
     return rf_model_loaded, tfidf_loaded
 
 
-def question_router(question: str) -> SearchType:
+def question_router(question: str, question_classification_model_path: str) -> SearchType:
     logging.info("In question router...")
-    rf_model_loaded, tfidf_loaded = load_models()
+    rf_model_loaded, tfidf_loaded = load_models(question_classification_model_path)
     id_to_category = {0: 'aggregation', 1: 'pointed'}
     predicted_category = predict_question_type(question, rf_model_loaded, tfidf_loaded, id_to_category)
     print("Received question: ", question, "\nPredicted Question Type:", predicted_category)

@@ -127,6 +127,8 @@ model_id = os.getenv("MODEL_ID", "rubra-ai/Phi-3-mini-128k-instruct")
 max_tokens = int(os.getenv("MAX_TOKENS", MAX_TOKENS_DEFAULT))
 model_temperature = float(os.getenv("MODEL_TEMPERATURE", MODEL_TEMPERATURE_DEFAULT))
 
+sql_search_db_and_model_path = os.getenv("SQL_SEARCH_DB_AND_MODEL_PATH","/app/db/")
+
 app = setup(file_path, relevant_docs, llm_server_url, model_id, max_tokens, model_temperature)
 
 @click.command()

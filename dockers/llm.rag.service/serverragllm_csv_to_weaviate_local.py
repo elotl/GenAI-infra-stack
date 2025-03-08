@@ -24,6 +24,7 @@ from fastapi import FastAPI
 from openai import OpenAI
 
 from common import get_answer_with_settings_with_weaviate_filter
+from common import logger
 
 
 SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Format your responses following these rules:
@@ -47,6 +48,7 @@ def setup(
         weaviate_grpc_url: str,
         weaviate_index: str,
         embedding_model_name: str,
+        sql_search_db_and_model_path: str,
 ):
     app = FastAPI()
 
@@ -73,11 +75,13 @@ def setup(
        embedding=embeddings,
     )
 
-    print("Creating an OpenAI client to the hosted model at URL: ", llm_server_url)
+    if not llm_server_url.endswith("/v1"):
+        llm_server_url = llm_server_url + "/v1"
+    logger.info(f"Creating an OpenAI client to the hosted model at URL: {llm_server_url}")
     try:
         client = OpenAI(base_url=llm_server_url, api_key="na")
     except Exception as e:
-        print("Error creating client:", e)
+        logger.error(f"Error creating client: {e}")
         sys.exit(1)
 
     get_answer = partial(
@@ -90,6 +94,7 @@ def setup(
         system_prompt=SYSTEM_PROMPT_DEFAULT,
         relevant_docs=relevant_docs,
         llm_server_url=llm_server_url,
+        sql_search_db_and_model_path=sql_search_db_and_model_path,
     )
 
     @app.get("/answer/{question}")
@@ -106,14 +111,17 @@ MOSAICML_MODEL_ID = "mosaicml/mpt-7b-chat"
 RELEVANT_DOCS_DEFAULT = 2
 MAX_TOKENS_DEFAULT = 256
 MODEL_TEMPERATURE_DEFAULT = 0.01
+SQL_SEARCH_DB_AND_MODEL_PATH_DEFAULT = "/app/db"
 
 relevant_docs = int(os.getenv("RELEVANT_DOCS", RELEVANT_DOCS_DEFAULT))
+
 # llm_server_url = os.getenv("MODEL_LLM_SERVER_URL", "http://localhost:11434/v1")
-llm_server_url = os.getenv("MODEL_LLM_SERVER_URL", "http://localhost:9000/v1")
 # model_id = os.getenv("MODEL_ID", "llama2")
 
+llm_server_url = os.getenv("MODEL_LLM_SERVER_URL", "http://localhost:9000/v1")
 # model_id = os.getenv("MODEL_ID", "microsoft/Phi-3-mini-4k-instruct")
 model_id = os.getenv("MODEL_ID", "rubra-ai/Phi-3-mini-128k-instruct")
+
 max_tokens = int(os.getenv("MAX_TOKENS", MAX_TOKENS_DEFAULT))
 model_temperature = float(os.getenv("MODEL_TEMPERATURE", MODEL_TEMPERATURE_DEFAULT))
 
@@ -123,6 +131,8 @@ weaviate_index = os.getenv("WEAVIATE_INDEX_NAME", "my_custom_index")
 
 embedding_model_name = os.getenv("EMBEDDING_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2")
 # embedding_model_name = "sentence-transformers/multi-qa-mpnet-base-dot-v1"
+
+sql_search_db_and_model_path = os.getenv("SQL_SEARCH_DB_AND_MODEL_PATH", SQL_SEARCH_DB_AND_MODEL_PATH_DEFAULT)
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -135,7 +145,8 @@ app = setup(
     weaviate_url,
     weaviate_grpc_url,
     weaviate_index,
-    embedding_model_name
+    embedding_model_name,
+    sql_search_db_and_model_path
 )
 
 

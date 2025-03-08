@@ -46,11 +46,13 @@ LOGGING_CONFIG = {
 logging.config.dictConfig(LOGGING_CONFIG)
 logger = logging.getLogger('ElotlQAInABoxLogger')
 
+
 class State(TypedDict):
     question: str
     query: str
     result: str
     answer: str
+
 
 class SearchType(Enum):
     SQL = 1
@@ -58,7 +60,7 @@ class SearchType(Enum):
 
 
 MODEL_MAX_CONTEXT_LEN = 8192
-delta = 50 # value by which we keep the prompt len less than the model context len
+delta = 50  # value by which we keep the prompt len less than the model context len
 
 
 def format_context(results: List[Dict[str, Any]]) -> str:
@@ -96,7 +98,8 @@ def trim_answer(generated_answer: str, label_separator: str) -> str:
     # Split text at the token and take only the content before it
     if label_separator in generated_answer:
         answer = generated_answer.split(label_separator, 1)[0]
-        logger.info(f"Label separator: {label_separator} seems to have been included in the generated answer and it has been removed: {answer}")
+        logger.info(
+            f"Label separator: {label_separator} seems to have been included in the generated answer and it has been removed: {answer}")
 
     return answer.strip()
 
@@ -171,7 +174,7 @@ def get_answer_with_settings(question, retriever, client, model_id, max_tokens, 
             "context": context,
         }
         return errorToUI
-    
+
     generated_answer = completions.choices[0].message.content
 
     answer = postprocess_hallucinations(generated_answer)
@@ -193,7 +196,6 @@ def get_answer_with_settings(question, retriever, client, model_id, max_tokens, 
 
 # Answer user's question via text-to-sql technique
 def get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server_url):
-    
     logger.info("Invoking text-to-sql question-answer search")
     try:
         llm = ChatOpenAI(
@@ -202,7 +204,7 @@ def get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server
             openai_api_base=llm_server_url,
             openai_api_key="unused-for-self-hosted-llms",
             max_tokens=max_tokens
-        )        
+        )
 
         logger.info("Loading the pre-created SQL DB")
         engine = create_engine("sqlite:////app/db/zendesk.db")
@@ -215,16 +217,16 @@ def get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server
         logger.info(f"Usable table names: {db.get_usable_table_names()}")
         logger.info("Table info:")
         print(db.get_table_info(["zendesk"]))
-        
-        logger.info("Running sanity test SQL query:") 
+
+        logger.info("Running sanity test SQL query:")
         db.run("SELECT COUNT(*) FROM zendesk WHERE assignee_name LIKE 'John Doe';")
-        
+
         # Prompt template to convert NL question to SQL
         # This was manually retrieved from langchain hub and customized
         query_prompt_template = prompt_template_for_text_to_sql()
 
-        logger.info("Prompt template for text-to-sql conversion:" 
-                     "{query_prompt_template.messages[0]}")
+        logger.info("Prompt template for text-to-sql conversion:"
+                    "{query_prompt_template.messages[0]}")
 
     except Exception as e:
         logger.error(f"An unexpected error occurred: {e}")
@@ -245,7 +247,7 @@ def get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server
     }
     generated_answer = convert_sql_result_to_nl(state, model_id, llm)
     answer = postprocess_hallucinations(generated_answer['answer'])
-    
+
     answerToUI = {
         "answer": answer,
         "relevant_tickets": ["n/a"],
@@ -254,35 +256,35 @@ def get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server
     }
     return answerToUI
 
-def prompt_template_for_text_to_sql():
 
+def prompt_template_for_text_to_sql():
     query_prompt_template = PromptTemplate.from_template(
         "Given an input question, create a syntactically correct "
-        "{dialect} query to run to help find the answer." 
-        "Unless the user specifies in his question a specific " 
-        "number of examples they wish to obtain, always limit " 
+        "{dialect} query to run to help find the answer."
+        "Unless the user specifies in his question a specific "
+        "number of examples they wish to obtain, always limit "
         "your query to at most {top_k} results. You can order "
-        "the results by a relevant column to return the most " 
-        "interesting examples in the database. Never query for " 
-        "all the columns from a specific table, only ask for a " 
-        "few relevant columns given the question. Pay attention " 
+        "the results by a relevant column to return the most "
+        "interesting examples in the database. Never query for "
+        "all the columns from a specific table, only ask for a "
+        "few relevant columns given the question. Pay attention "
         "to use only the column names that you can see in the schema "
         "description. Be careful to not query for columns that do "
-        "not exist. Also, pay attention to which column is in " 
+        "not exist. Also, pay attention to which column is in "
         "which table. Only use the following tables: {table_info}."
         "If there is a ticket ID in the question, ensure that you maintain "
         "the exact ticket ID in the query."
         "Question: {input}")
-    
+
     # Alternatively uncomment below to use prompt template from hub directly
     # without customization    
     # query_prompt_template = hub.pull("langchain-ai/sql-query-system-prompt")
     # assert len(query_prompt_template.messages) == 1
-        
+
     return query_prompt_template
 
-def postprocess_hallucinations(generated_answer: str) -> str:
 
+def postprocess_hallucinations(generated_answer: str) -> str:
     # Handle common hallucinations observed:
     #    1. Added-Context hallucination
     #    2. Added-Question hallucination
@@ -321,7 +323,7 @@ def extract_sql_query(message: str) -> str:
     match = re.search(pattern, message, re.DOTALL)
 
     if match:
-        return match.group(1) 
+        return match.group(1)
     else:
         sql_query = postprocess_hallucinations(message)
 
@@ -350,7 +352,7 @@ def write_query(state: State, query_prompt_template, llm, db):
     sql_query = extract_sql_query(result.content)
 
     logger.info(f"Extracted SQL query: {sql_query}")
-    
+
     return {"query": sql_query}
 
 
@@ -360,42 +362,42 @@ def execute_query(state: State, db):
     execute_query_tool = QuerySQLDataBaseTool(db=db)
     return {"result": execute_query_tool.invoke(state["query"])}
 
+
 # Trims a string to fit within a given token limit using a model-specific tokenizer.
 def trim_text_by_tokens(text: str, model_id: str, token_limit: int) -> str:
- 
     # Load a tokenizer that is specific to the model
     tokenizer = AutoTokenizer.from_pretrained(model_id)
-    
+
     tokens = tokenizer(text)["input_ids"]
-    
+
     # If within the limit, return the original text
     if len(tokens) <= token_limit:
         return text
-    
+
     # Trim the tokens to the allowed limit
     trimmed_tokens = tokens[:token_limit]
-    
+
     # Decode back into text
     trimmed_text = tokenizer.decode(trimmed_tokens, skip_special_tokens=True)
-    
+
     return trimmed_text
 
-# Answer user's question in natural language using SQL query and SQL query results from the 
+
+# Answer user's question in natural language using SQL query and SQL query results from the
 # database as context. 
 def convert_sql_result_to_nl(state: State, model_id, llm):
-    
-    domainExpertInstructions = "In the provided SQL table, each entry or row refers to a ticket and not to a customer." 
+    domainExpertInstructions = "In the provided SQL table, each entry or row refers to a ticket and not to a customer."
     " The column titled requester is also referred to as the customer or submitter or client."
     " The column titled all_comments can also be referred to as responses or resolution or details"
-    
+
     prompt = (
-        "You are a customer support ticket expert. Given the following user question, corresponding SQL query, "
-        "and SQL result, answer the user's question."
-        "Do not make any references to the SQL query or the SQL result in your answer." 
-        + domainExpertInstructions + 
-        f'Question: {state["question"]}\n'
-        f'SQL Query: {state["query"]}\n'
-        f'SQL Result: {state["result"]}'
+            "You are a customer support ticket expert. Given the following user question, corresponding SQL query, "
+            "and SQL result, answer the user's question."
+            "Do not make any references to the SQL query or the SQL result in your answer."
+            + domainExpertInstructions +
+            f'Question: {state["question"]}\n'
+            f'SQL Query: {state["query"]}\n'
+            f'SQL Result: {state["result"]}'
     )
     logger.info(f"Prompt for SQL result to NL conversion: {prompt}. Prompt length: {len(prompt)}")
 
@@ -405,7 +407,7 @@ def convert_sql_result_to_nl(state: State, model_id, llm):
     # 'type': 'BadRequestError',
     # 'param': None, 'code': 400}
     PROMPT_TRIM_LENGTH = MODEL_MAX_CONTEXT_LEN - delta
-    trimmed_prompt = trim_text_by_tokens(prompt, model_id, PROMPT_TRIM_LENGTH) 
+    trimmed_prompt = trim_text_by_tokens(prompt, model_id, PROMPT_TRIM_LENGTH)
     logger.info(f"Trimmed prompt: {trimmed_prompt}")
 
     response = llm.invoke(trimmed_prompt)
@@ -414,18 +416,18 @@ def convert_sql_result_to_nl(state: State, model_id, llm):
     return {"answer": response.content}
 
 
-def get_answer_with_settings_with_weaviate_filter(question, vectorstore, client, model_id, max_tokens, model_temperature, system_prompt, relevant_docs, llm_server_url):
-    
-    search_type = question_router(question) 
+def get_answer_with_settings_with_weaviate_filter(question, vectorstore, client, model_id, max_tokens,
+                                                  model_temperature, system_prompt, relevant_docs, llm_server_url):
+    search_type = question_router(question)
     logging.info(f"Chosen search type: {search_type} for question: {question}")
 
     match search_type:
-        case SearchType.SQL: 
+        case SearchType.SQL:
             logging.info("Handling search type: SQL")
 
             return get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server_url)
 
-        case SearchType.VECTOR: 
+        case SearchType.VECTOR:
             logging.info("Handling search type: VECTOR")
 
             # https://weaviate.io/blog/hybrid-search-explained#a-simple-hybrid-search-pipeline-in-weaviate
@@ -443,9 +445,8 @@ def get_answer_with_settings_with_weaviate_filter(question, vectorstore, client,
             )
             logging.info("Created Vector DB retriever successfully. \n")
 
-            return get_answer_with_settings(question, retriever, client, model_id, max_tokens, model_temperature, system_prompt)
-
-
+            return get_answer_with_settings(question, retriever, client, model_id, max_tokens, model_temperature,
+                                            system_prompt)
 
     # from typing import List
     #
@@ -461,7 +462,6 @@ def get_answer_with_settings_with_weaviate_filter(question, vectorstore, client,
     #
     #     return docs
 
-
     # ticket_id = extract_zendesk_ticket_id(query=question)
     #
     # if ticket_id:
@@ -470,7 +470,6 @@ def get_answer_with_settings_with_weaviate_filter(question, vectorstore, client,
     #     logging.info(f"Using ticket id {ticket_id} filter")
     #     # Use Weaviate’s `Filter` class to build the filter
     #     search_kwargs["filters"] = Filter.by_property("ticket").equal(ticket_id)
-
 
 
 def extract_zendesk_ticket_id(query):
@@ -485,9 +484,7 @@ def extract_zendesk_ticket_id(query):
     return match.group(0) if match else None
 
 
-
 def predict_question_type(question, model, tfidf, id_to_category):
-   
     logging.info(f"Received question {question} for classification")
     # Transform the input question into TF-IDF feature representation
     question_tfidf = tfidf.transform([question]).toarray()
@@ -525,14 +522,15 @@ def question_router(question: str) -> SearchType:
     id_to_category = {0: 'aggregation', 1: 'pointed'}
     predicted_category = predict_question_type(question, rf_model_loaded, tfidf_loaded, id_to_category)
     print("Received question: ", question, "\nPredicted Question Type:", predicted_category)
-    
+
     # If question is of type aggregation or has any alphanumeric words
     if predicted_category == 0 or containsSymbolsOrNumbers(question):
         logging.info("Choosing search type SQL")
         return SearchType.SQL
-    
+
     logging.info("Choosing search type VECTOR/TEXT")
     return SearchType.VECTOR
+
 
 def containsSymbolsOrNumbers(question: str) -> bool:
     words = question.split()

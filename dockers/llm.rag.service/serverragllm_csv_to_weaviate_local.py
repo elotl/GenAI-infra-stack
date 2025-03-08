@@ -14,18 +14,15 @@
 
 import os
 import sys
-import uvicorn
-
 from functools import partial
 from typing import Union
 
 import click
+import uvicorn
 from fastapi import FastAPI
 from openai import OpenAI
 
-from common import get_answer_with_settings_with_weaviate_filter
-from common import logger
-
+from common import get_answer_with_settings_with_weaviate_filter, logger
 
 SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Format your responses following these rules:
                 1. Answer the provided question only using the provided context.
@@ -54,8 +51,8 @@ def setup(
 
     # TODO: move to imports
     import weaviate
-    from langchain_weaviate.vectorstores import WeaviateVectorStore
     from langchain_huggingface import HuggingFaceEmbeddings
+    from langchain_weaviate.vectorstores import WeaviateVectorStore
 
     embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
 

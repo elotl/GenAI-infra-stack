@@ -237,11 +237,11 @@ def get_sql_answer(question, model_id, max_tokens, model_temperature, llm_server
         return errorToUI
 
     # send SQL query and response to LLM and get a natural language answer
-    # TODO avoid calling text to SQL conversion twice
+    query = write_query({"question": question}, query_prompt_template, llm, db)
     state: State = {
         "question": question,
-        "query": write_query({"question": question}, query_prompt_template, llm, db),
-        "result": execute_query(write_query({"question": question}, query_prompt_template, llm, db), db),
+        "query": query,
+        "result": execute_query(query, db),
     }
     generated_answer = convert_sql_result_to_nl(state, model_id, llm)
     answer = postprocess_hallucinations(generated_answer['answer'])

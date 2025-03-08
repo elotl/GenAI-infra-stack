@@ -426,7 +426,7 @@ def convert_sql_result_to_nl(state: State, model_id, llm):
         f'SQL Result: {state["result"]}'
     )
     logger.info(
-        f"Prompt for SQL result to NL conversion: {prompt}. Prompt length: {len(prompt)}"
+        f"Prompt for SQL result to NL conversion: {prompt}.\n Prompt length: {len(prompt)}"
     )
 
     # Prompt length has to be smaller than model max because of errors like this:

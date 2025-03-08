@@ -1,19 +1,17 @@
+import logging
 import os
 import pickle
 import sys
-from typing import Any, Dict, List, Union
 from enum import Enum
+from logging.handlers import TimedRotatingFileHandler
+from typing import Any, Dict, List, Union
 
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 from fastapi import FastAPI
 from openai import OpenAI
 
-import logging
-from logging.handlers import TimedRotatingFileHandler
-
-from common import get_answer_with_settings
-from common import get_sql_answer
+from common import get_answer_with_settings, get_sql_answer
 
 ########
 # Setup model name and query template parameters

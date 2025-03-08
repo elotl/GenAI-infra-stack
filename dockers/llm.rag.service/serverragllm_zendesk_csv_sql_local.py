@@ -10,23 +10,21 @@
 # ]
 # ///
 
+import logging
 import os
 import pickle
 import sys
-import logging
-import uvicorn
-
 from functools import partial
 from typing import Union
 
 import click
+import uvicorn
 from fastapi import FastAPI
 from openai import OpenAI
 
-from common import get_answer_with_settings
-from common import get_sql_answer
-from common import question_router
-from common import SearchType
+from common import (SearchType, get_answer_with_settings, get_sql_answer,
+                    question_router)
+
 
 def setup(
         file_path: str,

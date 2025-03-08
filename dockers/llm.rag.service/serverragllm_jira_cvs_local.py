@@ -13,12 +13,11 @@
 import os
 import pickle
 import sys
-import uvicorn
-
 from functools import partial
 from typing import Union
 
 import click
+import uvicorn
 from fastapi import FastAPI
 from openai import OpenAI
 

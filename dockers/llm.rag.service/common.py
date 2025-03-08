@@ -1,11 +1,10 @@
 import logging
 import logging.config
 import re
-import os
-import joblib
 from enum import Enum
 from typing import Any, Dict, List
 
+import joblib
 from langchain_community.chat_models import ChatOpenAI
 from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
 from langchain_community.utilities import SQLDatabase
@@ -14,7 +13,6 @@ from openai import BadRequestError
 from sqlalchemy import create_engine
 from transformers import AutoTokenizer
 from typing_extensions import Annotated, TypedDict
-
 
 LOGGING_CONFIG = {
     'version': 1,

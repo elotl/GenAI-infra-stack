@@ -60,7 +60,6 @@ class SearchType(Enum):
 
 MODEL_MAX_CONTEXT_LEN = 8192
 delta = 50  # value by which we keep the prompt len less than the model context len
-WEAVIATE_HYBRID_ALPHA_DEFAULT = 0.5
 
 
 def format_context(results: List[Dict[str, Any]]) -> str:
@@ -455,6 +454,7 @@ def get_answer_with_settings_with_weaviate_filter(
     relevant_docs,
     llm_server_url,
     sql_search_db_and_model_path,
+    alpha,
 ):
 
     search_type = question_router(question, sql_search_db_and_model_path)
@@ -475,11 +475,6 @@ def get_answer_with_settings_with_weaviate_filter(
 
         case SearchType.VECTOR:
             logger.info("Handling search type: VECTOR")
-
-            alpha = float(
-                os.getenv("WEAVIATE_HYBRID_ALPHA", WEAVIATE_HYBRID_ALPHA_DEFAULT)
-            )
-            logger.info(f"Choosing WEAVIATE_HYBRID_ALPHA value: {alpha}")
 
             # https://weaviate.io/blog/hybrid-search-explained#a-simple-hybrid-search-pipeline-in-weaviate
             # alpha = 0 -> pure keyword search

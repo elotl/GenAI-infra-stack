@@ -66,8 +66,10 @@ def setup(
             # https://python.langchain.com/api_reference/community/vectorstores/langchain_community.vectorstores.faiss.FAISS.html#langchain_community.vectorstores.faiss.FAISS.as_retriever
             retriever = vectorstore.as_retriever(search_kwargs={"k": relevant_docs})
             logging.info("Created Vector DB retriever successfully. \n")
+
             if not llm_server_url.endswith("/v1"):
                 llm_server_url = llm_server_url + "/v1"
+
             logging.info(
                 "Creating an OpenAI client to the hosted model at URL: ", llm_server_url
             )

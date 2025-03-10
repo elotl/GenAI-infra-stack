@@ -2,6 +2,7 @@ import logging.config
 import os
 import re
 from enum import Enum
+from pathlib import Path
 from typing import Any, Dict, List
 
 import joblib
@@ -224,9 +225,10 @@ def get_sql_answer(
         )
 
         logger.info("Loading the pre-created SQL DB")
-        engine = create_engine(
-            "sqlite:///" + sql_search_db_and_model_path + "zendesk.db"
-        )
+        base_path = Path(sql_search_db_and_model_path)
+        database_path = base_path / "zendesk.db"
+        database_uri = f"sqlite:///{database_path}"
+        engine = create_engine(database_uri)
 
         logger.info("Check that the SQL data can be accessed from the DB via querying")
         db = SQLDatabase(engine=engine)
@@ -377,14 +379,14 @@ def write_query(state: State, query_prompt_template, llm, db):
 
     logger.info(f"Extracted SQL query: {sql_query}")
 
-    return {"query": sql_query}
+    return sql_query
 
 
 # Executes a SQL query against the provided database
-def execute_query(state: State, db):
+def execute_query(query: str, db):
     """Execute SQL query."""
     execute_query_tool = QuerySQLDataBaseTool(db=db)
-    return {"result": execute_query_tool.invoke(state["query"])}
+    return execute_query_tool.invoke(query)
 
 
 # Trims a string to fit within a given token limit using a model-specific tokenizer.
@@ -426,7 +428,7 @@ def convert_sql_result_to_nl(state: State, model_id, llm):
         f'SQL Result: {state["result"]}'
     )
     logger.info(
-        f"Prompt for SQL result to NL conversion: {prompt}. Prompt length: {len(prompt)}"
+        f"Prompt for SQL result to NL conversion: {prompt}.\n Prompt length: {len(prompt)}"
     )
 
     # Prompt length has to be smaller than model max because of errors like this:
@@ -559,12 +561,13 @@ def predict_question_type(question, model, tfidf, id_to_category):
 
 
 def load_models(question_classification_model_path: str):
+    base_path = Path(question_classification_model_path)
     # Load the saved model
-    rf_model_path = question_classification_model_path + "random_forest_model.pkl"
+    rf_model_path = base_path / "random_forest_model.pkl"
     rf_model_loaded = joblib.load(rf_model_path)
 
     # Load the saved TF-IDF vectorizer
-    tfidf_path = question_classification_model_path + "tfidf_vectorizer.pkl"
+    tfidf_path = base_path / "tfidf_vectorizer.pkl"
     tfidf_loaded = joblib.load(tfidf_path)
 
     logger.info("Model and vectorizer loaded successfully.")

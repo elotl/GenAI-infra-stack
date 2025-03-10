@@ -62,6 +62,8 @@ spec:
             value: ${WEAVIATE_HYBRID_ALPHA_DEFAULT}
           - name: SQL_SEARCH_DB_AND_MODEL_PATH
             value: ${SQL_SEARCH_DB_AND_MODEL_PATH}
+          - name: MODEL_MAX_CONTEXT_LEN
+            value: ${MODEL_MAX_CONTEXT_LEN}
           volumeMounts:
           - name: log-storage
             mountPath: /app/logs

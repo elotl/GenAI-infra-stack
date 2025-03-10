@@ -18,9 +18,11 @@ from common import get_answer_with_settings, get_sql_answer
 MICROSOFT_MODEL_ID = "microsoft/Phi-3-mini-4k-instruct"
 MOSAICML_MODEL_ID = "mosaicml/mpt-7b-chat"
 RELEVANT_DOCS_DEFAULT = 2
-MAX_TOKENS_DEFAULT = 64
+MAX_TOKENS_DEFAULT = 256
 MODEL_TEMPERATURE_DEFAULT = 0.01
 MODEL_ID_DEFAULT = MOSAICML_MODEL_ID
+SQL_SEARCH_DB_AND_MODEL_PATH_DEFAULT = "/app/db"
+
 
 SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Format your responses following these rules:
                 1. Answer the provided question only using the provided context.
@@ -122,6 +124,9 @@ def get_answer(question: Union[str, None]):
 
     logging.info(f"Using search type: {search_type}")
 
+    sql_search_db_and_model_path = os.getenv( "SQL_SEARCH_DB_AND_MODEL_PATH", SQL_SEARCH_DB_AND_MODEL_PATH_DEFAULT)
+    logging.info(f"Using sql db and model path: {sql_search_db_and_model_path}")
+
     if is_json_mode:
         logging.info("Sending query to the LLM (JSON mode)...")
 
@@ -135,6 +140,7 @@ def get_answer(question: Union[str, None]):
                     max_tokens,
                     model_temperature,
                     llm_server_url,
+                    sql_search_db_and_model_path,
                 )
 
             case SearchType.VECTOR:

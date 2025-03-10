@@ -26,23 +26,15 @@ RUN pip3 install --no-cache-dir \
     "openai" \
     "langchain" \
     "langchain_community" \
-    "langchain_huggingface"
-
-RUN pip3 install --no-cache-dir \
+    "langchain_huggingface" \
     "unstructured" \
     "sentence-transformers" \
-    "faiss-cpu"
-
-RUN pip3 install --no-cache-dir \
+    "faiss-cpu" \
     "fastapi" \
-    "boto3"
-
-RUN pip3 install --no-cache-dir \
+    "boto3" \
     "uvicorn[standard]" \
     "weaviate-client" \
-    "langchain_weaviate"
-
-RUN pip3 install --no-cache-dir \
+    "langchain_weaviate" \
     "langchain-community" \
     "pandas" \
     "sqlalchemy"  \

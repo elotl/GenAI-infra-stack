@@ -52,6 +52,7 @@ def setup(
                 max_tokens=max_tokens,
                 model_temperature=model_temperature,
                 llm_server_url=llm_server_url,
+                sql_search_db_and_model_path=sql_search_db_and_model_path,
             )
         case SearchType.VECTOR:
             logging.info("Handling search type: VECTOR")
@@ -65,10 +66,12 @@ def setup(
             # https://python.langchain.com/api_reference/community/vectorstores/langchain_community.vectorstores.faiss.FAISS.html#langchain_community.vectorstores.faiss.FAISS.as_retriever
             retriever = vectorstore.as_retriever(search_kwargs={"k": relevant_docs})
             logging.info("Created Vector DB retriever successfully. \n")
-
+            if not llm_server_url.endswith("/v1"):
+                llm_server_url = llm_server_url + "/v1"
             logging.info(
                 "Creating an OpenAI client to the hosted model at URL: ", llm_server_url
             )
+
             try:
                 client = OpenAI(base_url=llm_server_url, api_key="na")
             except Exception as e:
@@ -90,7 +93,7 @@ def setup(
                 max_tokens=max_tokens,
                 model_temperature=model_temperature,
                 system_prompt=jira_system_prompt,
-                sql_search_db_and_model_path=sql_search_db_and_model_path,
+                llm_server_url=llm_server_url,
             )
 
     @app.get("/answer/{question}")
@@ -123,7 +126,7 @@ relevant_docs = int(os.getenv("RELEVANT_DOCS", RELEVANT_DOCS_DEFAULT))
 # model_id = os.getenv("MODEL_ID", "llama2")
 
 # LLM server URL if using k8s elotl hosting + port-forwarding
-llm_server_url = os.getenv("LLM_SERVER_URL", "http://localhost:8080/v1")
+llm_server_url = os.getenv("MODEL_LLM_SERVER_URL", "http://localhost:9000/v1")
 model_id = os.getenv("MODEL_ID", "rubra-ai/Phi-3-mini-128k-instruct")
 
 max_tokens = int(os.getenv("MAX_TOKENS", MAX_TOKENS_DEFAULT))

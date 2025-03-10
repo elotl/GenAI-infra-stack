@@ -412,9 +412,9 @@ def trim_text_by_tokens(text: str, model_id: str, token_limit: int) -> str:
 # database as context.
 def convert_sql_result_to_nl(state: State, model_id, llm):
 
-    domainExpertInstructions = "In the provided SQL table, each entry or row refers to a ticket and not to a customer."
+    domainExpertInstructions = "In the provided SQL table, each entry or row refers to a ticket and not a customer."
     " The column titled requester is also referred to as the customer or submitter or client."
-    " The column titled all_comments can also be referred to as responses or resolution or details"
+    " The column titled all_comments can also be referred to as responses or resolution or details."
 
     prompt = (
         "You are a customer support ticket expert. Given the following user question, corresponding SQL query, "

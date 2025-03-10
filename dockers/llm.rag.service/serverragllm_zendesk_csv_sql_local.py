@@ -32,6 +32,7 @@ def setup(
     model_id: str,
     max_tokens: int,
     model_temperature: float,
+    sql_search_db_and_model_path: str,
 ):
     app = FastAPI()
 
@@ -65,7 +66,7 @@ def setup(
             retriever = vectorstore.as_retriever(search_kwargs={"k": relevant_docs})
             logging.info("Created Vector DB retriever successfully. \n")
 
-            logging.info((
+            logging.info(
                 "Creating an OpenAI client to the hosted model at URL: ", llm_server_url
             )
             try:
@@ -89,11 +90,12 @@ def setup(
                 max_tokens=max_tokens,
                 model_temperature=model_temperature,
                 system_prompt=jira_system_prompt,
+                sql_search_db_and_model_path=sql_search_db_and_model_path,
             )
 
     @app.get("/answer/{question}")
     def read_item(question: Union[str, None] = None):
-        logging.info((f"Received question: {question}")
+        logging.info(f"Received question: {question}")
         answer = get_answer(question)
         return {"question": question, "answer": answer}
 
@@ -130,7 +132,7 @@ model_temperature = float(os.getenv("MODEL_TEMPERATURE", MODEL_TEMPERATURE_DEFAU
 sql_search_db_and_model_path = os.getenv("SQL_SEARCH_DB_AND_MODEL_PATH", "/app/db/")
 
 app = setup(
-    file_path, relevant_docs, llm_server_url, model_id, max_tokens, model_temperature
+    file_path, relevant_docs, llm_server_url, model_id, max_tokens, model_temperature,  sql_search_db_and_model_path
 )
 
 

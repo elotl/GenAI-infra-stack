@@ -7,7 +7,10 @@ ARG TARGETPLATFORM
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+# Upgrade pip
+RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel
+
+RUN apt-get update && apt-get install -y \
   build-essential \
   ca-certificates \
   ccache \
@@ -17,9 +20,6 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
   rm -rf /var/lib/apt/lists/*
 
 WORKDIR /serveragllm
-
-# Upgrade pip
-RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel
 
 # Install dependencies in separate layers
 RUN pip3 install --no-cache-dir \

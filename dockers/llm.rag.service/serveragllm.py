@@ -21,7 +21,7 @@ RELEVANT_DOCS_DEFAULT = 2
 MAX_TOKENS_DEFAULT = 256
 MODEL_TEMPERATURE_DEFAULT = 0.01
 MODEL_ID_DEFAULT = MOSAICML_MODEL_ID
-SQL_SEARCH_DB_AND_MODEL_PATH_DEFAULT = "/app/db"
+SQL_SEARCH_DB_AND_MODEL_PATH_DEFAULT = "/app/db/"
 
 
 SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Format your responses following these rules:

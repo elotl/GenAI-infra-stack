@@ -7,7 +7,10 @@ ARG TARGETPLATFORM
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+# Upgrade pip
+RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel
+
+RUN apt-get update && apt-get install -y \
   build-essential \
   ca-certificates \
   ccache \
@@ -18,31 +21,20 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
 
 WORKDIR /serveragllm
 
-# Upgrade pip
-RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel
-
 # Install dependencies in separate layers
 RUN pip3 install --no-cache-dir \
     "openai" \
     "langchain" \
     "langchain_community" \
-    "langchain_huggingface"
-
-RUN pip3 install --no-cache-dir \
+    "langchain_huggingface" \
     "unstructured" \
     "sentence-transformers" \
-    "faiss-cpu"
-
-RUN pip3 install --no-cache-dir \
+    "faiss-cpu" \
     "fastapi" \
-    "boto3"
-
-RUN pip3 install --no-cache-dir \
+    "boto3" \
     "uvicorn[standard]" \
     "weaviate-client" \
-    "langchain_weaviate"
-
-RUN pip3 install --no-cache-dir \
+    "langchain_weaviate" \
     "langchain-community" \
     "pandas" \
     "sqlalchemy"  \

@@ -32,6 +32,7 @@ def setup(
     model_id: str,
     max_tokens: int,
     model_temperature: float,
+    sql_search_db_and_model_path: str,
 ):
     app = FastAPI()
 
@@ -51,6 +52,7 @@ def setup(
                 max_tokens=max_tokens,
                 model_temperature=model_temperature,
                 llm_server_url=llm_server_url,
+                sql_search_db_and_model_path=sql_search_db_and_model_path,
             )
         case SearchType.VECTOR:
             logging.info("Handling search type: VECTOR")
@@ -64,10 +66,12 @@ def setup(
             # https://python.langchain.com/api_reference/community/vectorstores/langchain_community.vectorstores.faiss.FAISS.html#langchain_community.vectorstores.faiss.FAISS.as_retriever
             retriever = vectorstore.as_retriever(search_kwargs={"k": relevant_docs})
             logging.info("Created Vector DB retriever successfully. \n")
-
-            logging.info((
+            if not llm_server_url.endswith("/v1"):
+                llm_server_url = llm_server_url + "/v1"
+            logging.info(
                 "Creating an OpenAI client to the hosted model at URL: ", llm_server_url
             )
+
             try:
                 client = OpenAI(base_url=llm_server_url, api_key="na")
             except Exception as e:
@@ -89,11 +93,12 @@ def setup(
                 max_tokens=max_tokens,
                 model_temperature=model_temperature,
                 system_prompt=jira_system_prompt,
+                llm_server_url=llm_server_url,
             )
 
     @app.get("/answer/{question}")
     def read_item(question: Union[str, None] = None):
-        logging.info((f"Received question: {question}")
+        logging.info(f"Received question: {question}")
         answer = get_answer(question)
         return {"question": question, "answer": answer}
 
@@ -121,7 +126,7 @@ relevant_docs = int(os.getenv("RELEVANT_DOCS", RELEVANT_DOCS_DEFAULT))
 # model_id = os.getenv("MODEL_ID", "llama2")
 
 # LLM server URL if using k8s elotl hosting + port-forwarding
-llm_server_url = os.getenv("LLM_SERVER_URL", "http://localhost:8080/v1")
+llm_server_url = os.getenv("MODEL_LLM_SERVER_URL", "http://localhost:9000/v1")
 model_id = os.getenv("MODEL_ID", "rubra-ai/Phi-3-mini-128k-instruct")
 
 max_tokens = int(os.getenv("MAX_TOKENS", MAX_TOKENS_DEFAULT))
@@ -130,7 +135,7 @@ model_temperature = float(os.getenv("MODEL_TEMPERATURE", MODEL_TEMPERATURE_DEFAU
 sql_search_db_and_model_path = os.getenv("SQL_SEARCH_DB_AND_MODEL_PATH", "/app/db/")
 
 app = setup(
-    file_path, relevant_docs, llm_server_url, model_id, max_tokens, model_temperature
+    file_path, relevant_docs, llm_server_url, model_id, max_tokens, model_temperature,  sql_search_db_and_model_path
 )
 
 

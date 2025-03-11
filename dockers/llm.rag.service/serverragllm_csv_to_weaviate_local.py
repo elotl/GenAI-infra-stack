@@ -47,7 +47,7 @@ def setup(
     embedding_model_name: str,
     sql_search_db_and_model_path: str,
     alpha: float,
-    max_content_length: int,
+    max_context_length: int,
 ):
     app = FastAPI()
 
@@ -97,7 +97,7 @@ def setup(
         llm_server_url=llm_server_url,
         sql_search_db_and_model_path=sql_search_db_and_model_path,
         alpha=alpha,
-        max_content_length=max_content_length,
+        max_context_length=max_context_length,
     )
 
     @app.get("/answer/{question}")
@@ -146,7 +146,7 @@ sql_search_db_and_model_path = os.getenv(
     "SQL_SEARCH_DB_AND_MODEL_PATH", SQL_SEARCH_DB_AND_MODEL_PATH_DEFAULT
 )
 
-max_content_length = int(os.getenv("MODEL_MAX_CONTEXT_LEN", MODEL_MAX_CONTEXT_LEN))
+max_context_length = int(os.getenv("MODEL_MAX_CONTEXT_LEN", MODEL_MAX_CONTEXT_LEN))
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -163,7 +163,7 @@ app = setup(
     embedding_model_name,
     sql_search_db_and_model_path,
     alpha,
-    max_content_length,
+    max_context_length,
 )
 
 

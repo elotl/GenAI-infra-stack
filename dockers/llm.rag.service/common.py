@@ -206,7 +206,7 @@ def get_sql_answer(
     model_temperature,
     llm_server_url,
     sql_search_db_and_model_path,
-    max_content_length,
+    max_context_length,
 ):
 
     logger.info("Invoking text-to-sql question-answer search")
@@ -260,7 +260,7 @@ def get_sql_answer(
         "query": sql_query,
         "result": execute_query(sql_query, db),
     }
-    generated_answer = convert_sql_result_to_nl(state, model_id, llm, max_content_length)
+    generated_answer = convert_sql_result_to_nl(state, model_id, llm, max_context_length)
     answer = postprocess_hallucinations(generated_answer["answer"])
 
     answerToUI = {
@@ -407,7 +407,7 @@ def trim_text_by_tokens(text: str, model_id: str, token_limit: int) -> str:
 # Answer user's question in natural language using SQL query and SQL query results from the
 # database as context.
 # delta - value by which we keep the prompt len less than the model context len
-def convert_sql_result_to_nl(state: State, model_id, llm, max_content_length, delta=50):
+def convert_sql_result_to_nl(state: State, model_id, llm, max_context_length, delta=50):
 
     domainExpertInstructions = "In the provided SQL table, each entry or row refers to a ticket and not a customer."
     " The column titled requester is also referred to as the customer or submitter or client."
@@ -431,7 +431,7 @@ def convert_sql_result_to_nl(state: State, model_id, llm, max_content_length, de
     # tokens in the messages, Please reduce the length of the messages.",
     # 'type': 'BadRequestError',
     # 'param': None, 'code': 400}
-    prompt_trim_length = max_content_length - delta
+    prompt_trim_length = max_context_length - delta
     trimmed_prompt = trim_text_by_tokens(prompt, model_id, prompt_trim_length)
     logger.info(f"Trimmed prompt: {trimmed_prompt}")
 
@@ -453,7 +453,7 @@ def get_answer_with_settings_with_weaviate_filter(
     llm_server_url,
     sql_search_db_and_model_path,
     alpha,
-    max_content_length,
+    max_context_length,
 ):
 
     search_type = question_router(question, sql_search_db_and_model_path)
@@ -470,7 +470,7 @@ def get_answer_with_settings_with_weaviate_filter(
                 model_temperature,
                 llm_server_url,
                 sql_search_db_and_model_path,
-                max_content_length,
+                max_context_length,
             )
 
         case SearchType.VECTOR:

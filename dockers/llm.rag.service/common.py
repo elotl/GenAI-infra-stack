@@ -314,7 +314,15 @@ def postprocess_hallucinations(generated_answer: str) -> str:
     logger.info(
         f"Removing any observed hallucinations in the generated answer: {generated_answer}"
     )
-    labels_to_trim = ["<|im_end|>", "Context:", "Question:", "Content:"]
+    labels_to_trim = [
+        "<|im_end|>",
+        "Context:",
+        "Question:",
+        "Content:",
+        "Instruction:"
+        "<|end_of_assistant<|im_sep|",
+        "<|end-user-query|>",
+    ]
     answer = generated_answer
 
     for label in labels_to_trim:

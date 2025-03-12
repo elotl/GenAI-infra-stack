@@ -290,6 +290,7 @@ def prompt_template_for_text_to_sql():
         "which table. Only use the following tables: {table_info}."
         "If there is a ticket ID in the question, ensure that you maintain "
         "the exact ticket ID in the query."
+        "Do not make any references to the SQL query or the SQL result in your answer."
         "Question: {input}"
     )
 

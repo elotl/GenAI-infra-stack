@@ -263,10 +263,23 @@ def get_sql_answer(
     generated_answer = convert_sql_result_to_nl(state, model_id, llm, max_context_length)
     answer = postprocess_hallucinations(generated_answer["answer"])
 
+    # TODO: move to e separate method
+    import ast
+    ticket_ids = []
+    if sql_query.get("query", "").startswith("SELECT ticket_id"):
+        results_list = ast.literal_eval(state["result"]["result"])
+        for result in results_list:
+            ticket_ids.append(result[0])
+
+    relevant_tickets = ["n/a"]
+    if len(ticket_ids) > 0:
+        relevant_tickets = ticket_ids[:4]
+    # end TODO
+
     answerToUI = {
         "answer": answer,
-        "relevant_tickets": ["n/a"],
-        "sources": ["n/a"],
+        "relevant_tickets": relevant_tickets,
+        "sources": relevant_tickets,
         "context": "",  # TODO: if this is big consider logger context here and sending some reference id to UI
     }
     return answerToUI
@@ -290,7 +303,12 @@ def prompt_template_for_text_to_sql():
         "which table. Only use the following tables: {table_info}."
         "If there is a ticket ID in the question, ensure that you maintain "
         "the exact ticket ID in the query."
+        "If the query retrieves specific ticket details, **always include the ticket_id column** in the result set, "
+        "even if the user did not explicitly ask for it. This ensures the ticket ID is present in ticket-related queries."
+        "However, if the query is an aggregate function (such as counting all tickets), omit the ticket ID. "
+        "Always include `ticket_id` in ticket-related queries. **Do not use `ticket_url` unless explicitly requested.**"
         "Do not make any references to the SQL query or the SQL result in your answer."
+        ""
         "Question: {input}"
     )
 

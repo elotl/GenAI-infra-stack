@@ -58,11 +58,6 @@ class SearchType(Enum):
     VECTOR = 2
 
 
-MODEL_MAX_CONTEXT_LEN = 8192
-delta = 50  # value by which we keep the prompt len less than the model context len
-WEAVIATE_HYBRID_ALPHA_DEFAULT = 0.5
-
-
 def format_context(results: List[Dict[str, Any]]) -> str:
     """Format search results into context for the LLM"""
     context_parts = []
@@ -211,6 +206,7 @@ def get_sql_answer(
     model_temperature,
     llm_server_url,
     sql_search_db_and_model_path,
+    max_context_length,
 ):
 
     logger.info("Invoking text-to-sql question-answer search")
@@ -264,7 +260,7 @@ def get_sql_answer(
         "query": sql_query,
         "result": execute_query(sql_query, db),
     }
-    generated_answer = convert_sql_result_to_nl(state, model_id, llm)
+    generated_answer = convert_sql_result_to_nl(state, model_id, llm, max_context_length)
     answer = postprocess_hallucinations(generated_answer["answer"])
 
     answerToUI = {
@@ -410,7 +406,8 @@ def trim_text_by_tokens(text: str, model_id: str, token_limit: int) -> str:
 
 # Answer user's question in natural language using SQL query and SQL query results from the
 # database as context.
-def convert_sql_result_to_nl(state: State, model_id, llm):
+# delta - value by which we keep the prompt len less than the model context len
+def convert_sql_result_to_nl(state: State, model_id, llm, max_context_length, delta=50):
 
     domainExpertInstructions = "In the provided SQL table, each entry or row refers to a ticket and not a customer."
     " The column titled requester is also referred to as the customer or submitter or client."
@@ -434,8 +431,8 @@ def convert_sql_result_to_nl(state: State, model_id, llm):
     # tokens in the messages, Please reduce the length of the messages.",
     # 'type': 'BadRequestError',
     # 'param': None, 'code': 400}
-    PROMPT_TRIM_LENGTH = MODEL_MAX_CONTEXT_LEN - delta
-    trimmed_prompt = trim_text_by_tokens(prompt, model_id, PROMPT_TRIM_LENGTH)
+    prompt_trim_length = max_context_length - delta
+    trimmed_prompt = trim_text_by_tokens(prompt, model_id, prompt_trim_length)
     logger.info(f"Trimmed prompt: {trimmed_prompt}")
 
     response = llm.invoke(trimmed_prompt)
@@ -455,6 +452,8 @@ def get_answer_with_settings_with_weaviate_filter(
     relevant_docs,
     llm_server_url,
     sql_search_db_and_model_path,
+    alpha,
+    max_context_length,
 ):
 
     search_type = question_router(question, sql_search_db_and_model_path)
@@ -471,15 +470,11 @@ def get_answer_with_settings_with_weaviate_filter(
                 model_temperature,
                 llm_server_url,
                 sql_search_db_and_model_path,
+                max_context_length,
             )
 
         case SearchType.VECTOR:
             logger.info("Handling search type: VECTOR")
-
-            alpha = float(
-                os.getenv("WEAVIATE_HYBRID_ALPHA", WEAVIATE_HYBRID_ALPHA_DEFAULT)
-            )
-            logger.info(f"Choosing WEAVIATE_HYBRID_ALPHA value: {alpha}")
 
             # https://weaviate.io/blog/hybrid-search-explained#a-simple-hybrid-search-pipeline-in-weaviate
             # alpha = 0 -> pure keyword search

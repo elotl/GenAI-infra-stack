@@ -46,6 +46,8 @@ def setup(
     weaviate_index: str,
     embedding_model_name: str,
     sql_search_db_and_model_path: str,
+    alpha: float,
+    max_context_length: int,
 ):
     app = FastAPI()
 
@@ -94,6 +96,8 @@ def setup(
         relevant_docs=relevant_docs,
         llm_server_url=llm_server_url,
         sql_search_db_and_model_path=sql_search_db_and_model_path,
+        alpha=alpha,
+        max_context_length=max_context_length,
     )
 
     @app.get("/answer/{question}")
@@ -111,6 +115,8 @@ RELEVANT_DOCS_DEFAULT = 2
 MAX_TOKENS_DEFAULT = 256
 MODEL_TEMPERATURE_DEFAULT = 0.01
 SQL_SEARCH_DB_AND_MODEL_PATH_DEFAULT = "/app/db/"
+WEAVIATE_HYBRID_ALPHA_DEFAULT = 0.5
+MODEL_MAX_CONTEXT_LEN = 8192
 
 relevant_docs = int(os.getenv("RELEVANT_DOCS", RELEVANT_DOCS_DEFAULT))
 
@@ -127,6 +133,9 @@ model_temperature = float(os.getenv("MODEL_TEMPERATURE", MODEL_TEMPERATURE_DEFAU
 weaviate_url = os.getenv("WEAVIATE_URI_WITH_PORT", "localhost:8080")
 weaviate_grpc_url = os.getenv("WEAVIATE_GRPC_URI_WITH_PORT", "localhost:50051")
 weaviate_index = os.getenv("WEAVIATE_INDEX_NAME", "my_custom_index")
+alpha = float(
+    os.getenv("WEAVIATE_HYBRID_ALPHA", WEAVIATE_HYBRID_ALPHA_DEFAULT)
+)
 
 embedding_model_name = os.getenv(
     "EMBEDDING_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2"
@@ -136,6 +145,9 @@ embedding_model_name = os.getenv(
 sql_search_db_and_model_path = os.getenv(
     "SQL_SEARCH_DB_AND_MODEL_PATH", SQL_SEARCH_DB_AND_MODEL_PATH_DEFAULT
 )
+
+max_context_length = int(os.getenv("MODEL_MAX_CONTEXT_LEN", MODEL_MAX_CONTEXT_LEN))
+
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -150,6 +162,8 @@ app = setup(
     weaviate_index,
     embedding_model_name,
     sql_search_db_and_model_path,
+    alpha,
+    max_context_length,
 )
 
 

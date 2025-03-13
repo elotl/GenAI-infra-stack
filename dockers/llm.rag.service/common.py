@@ -320,7 +320,7 @@ def prompt_template_for_text_to_sql():
         "the exact ticket ID in the query."
         "If the query retrieves specific ticket details, **always include the ticket ID column** in the result set, "
         "even if the user did not explicitly ask for it. This ensures the ticket ID is present in ticket-related queries."
-        "However, if the query is an aggregate function (such as counting all tickets), omit the ticket ID. "
+        "However, if the query uses an aggregation function (such as COUNT(), SUM(), AVG(), MIN(), or MAX()), omit the ticket ID."
         "Always include `ticket ID` in ticket-related queries. **Do not use `ticket URL` unless explicitly requested.**"
         "Do not make any references to the SQL query or the SQL result in your answer."
         ""

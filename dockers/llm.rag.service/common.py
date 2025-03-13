@@ -271,9 +271,12 @@ def get_sql_answer(
         for result in results_list:
             ticket_ids.append(result[0])
 
+    source_limit = 4
     relevant_tickets = ["n/a"]
     if len(ticket_ids) > 0:
-        relevant_tickets = ticket_ids[:4]
+        relevant_tickets = ticket_ids[:source_limit]
+        if len(ticket_ids) > source_limit:
+            relevant_tickets.append("...")
     # end TODO
 
     answerToUI = {

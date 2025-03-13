@@ -48,6 +48,7 @@ def setup(
     sql_search_db_and_model_path: str,
     alpha: float,
     max_context_length: int,
+    sql_ticket_source: str,
 ):
     app = FastAPI()
 
@@ -98,6 +99,7 @@ def setup(
         sql_search_db_and_model_path=sql_search_db_and_model_path,
         alpha=alpha,
         max_context_length=max_context_length,
+        sql_ticket_source=sql_ticket_source,
     )
 
     @app.get("/answer/{question}")
@@ -148,6 +150,7 @@ sql_search_db_and_model_path = os.getenv(
 
 max_context_length = int(os.getenv("MODEL_MAX_CONTEXT_LEN", MODEL_MAX_CONTEXT_LEN))
 
+sql_ticket_source = os.getenv("SQL_TICKET_SOURCE", "https://zendesk.com/api/v2/tickets/")
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -164,6 +167,7 @@ app = setup(
     sql_search_db_and_model_path,
     alpha,
     max_context_length,
+    sql_ticket_source,
 )
 
 

@@ -207,6 +207,7 @@ def get_sql_answer(
     llm_server_url,
     sql_search_db_and_model_path,
     max_context_length,
+    sql_ticket_source,
 ):
 
     logger.info("Invoking text-to-sql question-answer search")
@@ -263,7 +264,7 @@ def get_sql_answer(
     generated_answer = convert_sql_result_to_nl(state, model_id, llm, max_context_length)
     answer = postprocess_hallucinations(generated_answer["answer"])
 
-    relevant_ticket_ids, relevant_ticket_urls = get_relevant_tickets(sql_query, state)
+    relevant_ticket_ids, relevant_ticket_urls = get_relevant_tickets(sql_query, state, sql_ticket_source)
 
     answerToUI = {
         "answer": answer,
@@ -274,7 +275,7 @@ def get_sql_answer(
     return answerToUI
 
 
-def get_relevant_tickets(sql_query, state):
+def get_relevant_tickets(sql_query, state, sql_ticket_source):
     ticket_ids = []
     if sql_query.get("query", "").startswith("SELECT ticket_id"):
         results_list = ast.literal_eval(state["result"]["result"])
@@ -289,7 +290,7 @@ def get_relevant_tickets(sql_query, state):
 
         urls = []
         for ticket_id in relevant_ticket_ids:
-            urls.append(f"https://zendesk.com/api/v2/tickets/{ticket_id}.json")
+            urls.append(f"{sql_ticket_source}{ticket_id}.json")
         relevant_ticket_urls = urls
 
     if len(ticket_ids) > source_limit:
@@ -495,6 +496,7 @@ def get_answer_with_settings_with_weaviate_filter(
     sql_search_db_and_model_path,
     alpha,
     max_context_length,
+    sql_ticket_source,
 ):
 
     search_type = question_router(question, sql_search_db_and_model_path)
@@ -512,6 +514,7 @@ def get_answer_with_settings_with_weaviate_filter(
                 llm_server_url,
                 sql_search_db_and_model_path,
                 max_context_length,
+                sql_ticket_source,
             )
 
         case SearchType.VECTOR:

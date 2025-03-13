@@ -263,7 +263,18 @@ def get_sql_answer(
     generated_answer = convert_sql_result_to_nl(state, model_id, llm, max_context_length)
     answer = postprocess_hallucinations(generated_answer["answer"])
 
-    # TODO: move to e separate method
+    relevant_tickets = get_relevant_tickets(sql_query, state)
+
+    answerToUI = {
+        "answer": answer,
+        "relevant_tickets": relevant_tickets,
+        "sources": relevant_tickets,
+        "context": "",  # TODO: if this is big consider logger context here and sending some reference id to UI
+    }
+    return answerToUI
+
+
+def get_relevant_tickets(sql_query, state):
     import ast
     ticket_ids = []
     if sql_query.get("query", "").startswith("SELECT ticket_id"):
@@ -277,15 +288,7 @@ def get_sql_answer(
         relevant_tickets = ticket_ids[:source_limit]
         if len(ticket_ids) > source_limit:
             relevant_tickets.append("...")
-    # end TODO
-
-    answerToUI = {
-        "answer": answer,
-        "relevant_tickets": relevant_tickets,
-        "sources": relevant_tickets,
-        "context": "",  # TODO: if this is big consider logger context here and sending some reference id to UI
-    }
-    return answerToUI
+    return relevant_tickets
 
 
 def prompt_template_for_text_to_sql():

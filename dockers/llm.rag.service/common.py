@@ -263,18 +263,18 @@ def get_sql_answer(
     generated_answer = convert_sql_result_to_nl(state, model_id, llm, max_context_length)
     answer = postprocess_hallucinations(generated_answer["answer"])
 
-    relevant_tickets = get_relevant_tickets(sql_query, state)
+    relevant_ticket_urls = get_relevant_ticket_urls(sql_query, state)
 
     answerToUI = {
         "answer": answer,
-        "relevant_tickets": relevant_tickets,
-        "sources": relevant_tickets,
+        "relevant_tickets": relevant_ticket_urls,
+        "sources": relevant_ticket_urls,
         "context": "",  # TODO: if this is big consider logger context here and sending some reference id to UI
     }
     return answerToUI
 
 
-def get_relevant_tickets(sql_query, state):
+def get_relevant_ticket_urls(sql_query, state):
     import ast
     ticket_ids = []
     if sql_query.get("query", "").startswith("SELECT ticket_id"):
@@ -283,12 +283,14 @@ def get_relevant_tickets(sql_query, state):
             ticket_ids.append(result[0])
 
     source_limit = 4
-    relevant_tickets = ["n/a"]
+    relevant_ticket_urls = ["n/a"]
     if len(ticket_ids) > 0:
-        relevant_tickets = ticket_ids[:source_limit]
+        for ticket_id in ticket_ids[:source_limit]:
+            relevant_ticket_urls.append(f"https://zendesk.com/api/v2/tickets/{ticket_id}.json")
+
         if len(ticket_ids) > source_limit:
-            relevant_tickets.append("...")
-    return relevant_tickets
+            relevant_ticket_urls.append("...")
+    return relevant_ticket_urls
 
 
 def prompt_template_for_text_to_sql():

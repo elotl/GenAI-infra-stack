@@ -354,8 +354,9 @@ def postprocess_hallucinations(generated_answer: str) -> str:
         "Question:",
         "Content:",
         "Instruction:"
-        "<|end_of_assistant<|im_sep|",
+        "<|end_of_assistant<|im_sep|>",
         "<|end-user-query|>",
+        "<|end_of_document|>"
     ]
     answer = generated_answer
 

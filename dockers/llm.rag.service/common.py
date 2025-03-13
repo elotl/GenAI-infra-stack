@@ -183,7 +183,7 @@ def get_answer_with_settings(
 
     answer = postprocess_hallucinations(generated_answer)
 
-    sources = [r.metadata["source"] for r in docs]
+    sources = [r.metadata["url"] if "url" in r.metadata else r.metadata["source"] for r in docs]
     unique_sources = list(set(sources))
 
     tickets = [r.metadata["ticket"] for r in docs]

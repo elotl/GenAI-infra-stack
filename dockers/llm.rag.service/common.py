@@ -276,15 +276,19 @@ def get_sql_answer(
 
 
 def get_relevant_tickets(sql_query, state, sql_ticket_source):
-    ticket_ids = []
-    if sql_query.get("query", "").startswith("SELECT ticket_id"):
-        results_list = ast.literal_eval(state["result"]["result"])
-        for result in results_list:
-            ticket_ids.append(result[0])
-
     source_limit = 4
     relevant_ticket_ids = ["n/a"]
     relevant_ticket_urls = ["n/a"]
+    ticket_ids = []
+    if sql_query.get("query", "").startswith("SELECT ticket_id"):
+        try:
+            results_list = ast.literal_eval(state["result"]["result"])
+        except SyntaxError as e:
+            return relevant_ticket_ids, relevant_ticket_urls
+
+        for result in results_list:
+            ticket_ids.append(result[0])
+
     if len(ticket_ids) > 0:
         relevant_ticket_ids = ticket_ids[:source_limit]
 

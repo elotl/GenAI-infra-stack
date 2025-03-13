@@ -1,5 +1,5 @@
+import ast
 import logging.config
-import os
 import re
 from enum import Enum
 from typing import Any, Dict, List
@@ -263,19 +263,18 @@ def get_sql_answer(
     generated_answer = convert_sql_result_to_nl(state, model_id, llm, max_context_length)
     answer = postprocess_hallucinations(generated_answer["answer"])
 
-    relevant_ticket_urls = get_relevant_ticket_urls(sql_query, state)
+    relevant_ticket_ids, relevant_ticket_urls = get_relevant_tickets(sql_query, state)
 
     answerToUI = {
         "answer": answer,
-        "relevant_tickets": relevant_ticket_urls,
+        "relevant_tickets": relevant_ticket_ids,
         "sources": relevant_ticket_urls,
         "context": "",  # TODO: if this is big consider logger context here and sending some reference id to UI
     }
     return answerToUI
 
 
-def get_relevant_ticket_urls(sql_query, state):
-    import ast
+def get_relevant_tickets(sql_query, state):
     ticket_ids = []
     if sql_query.get("query", "").startswith("SELECT ticket_id"):
         results_list = ast.literal_eval(state["result"]["result"])
@@ -283,14 +282,21 @@ def get_relevant_ticket_urls(sql_query, state):
             ticket_ids.append(result[0])
 
     source_limit = 4
+    relevant_ticket_ids = ["n/a"]
     relevant_ticket_urls = ["n/a"]
     if len(ticket_ids) > 0:
-        for ticket_id in ticket_ids[:source_limit]:
-            relevant_ticket_urls.append(f"https://zendesk.com/api/v2/tickets/{ticket_id}.json")
+        relevant_ticket_ids = ticket_ids[:source_limit]
 
-        if len(ticket_ids) > source_limit:
-            relevant_ticket_urls.append("...")
-    return relevant_ticket_urls
+        urls = []
+        for ticket_id in relevant_ticket_ids:
+            urls.append(f"https://zendesk.com/api/v2/tickets/{ticket_id}.json")
+        relevant_ticket_urls = urls
+
+    if len(ticket_ids) > source_limit:
+        relevant_ticket_ids.append("...")
+        relevant_ticket_urls.append("...")
+
+    return relevant_ticket_ids, relevant_ticket_urls
 
 
 def prompt_template_for_text_to_sql():

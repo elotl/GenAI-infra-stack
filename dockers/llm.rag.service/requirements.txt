@@ -9,5 +9,4 @@ pandas
 sqlalchemy
 langchain-openai
 langchain_community
-pandas
 weaviate

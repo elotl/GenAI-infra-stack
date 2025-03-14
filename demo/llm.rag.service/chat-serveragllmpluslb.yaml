@@ -66,6 +66,8 @@ spec:
             value: ${MODEL_MAX_CONTEXT_LEN}
           - name: SQL_SEARCH_DB_AND_MODEL_PATH
             value: ${SQL_SEARCH_DB_AND_MODEL_PATH}
+          - name: SQL_TICKET_SOURCE
+            value: ${SQL_TICKET_SOURCE}
           volumeMounts:
           - name: log-storage
             mountPath: /app/logs

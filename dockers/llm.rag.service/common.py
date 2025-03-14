@@ -1,5 +1,5 @@
+import ast
 import logging.config
-import os
 import re
 from enum import Enum
 from typing import Any, Dict, List
@@ -183,7 +183,7 @@ def get_answer_with_settings(
 
     answer = postprocess_hallucinations(generated_answer)
 
-    sources = [r.metadata["source"] for r in docs]
+    sources = [r.metadata["url"] if "url" in r.metadata else r.metadata["source"] for r in docs]
     unique_sources = list(set(sources))
 
     tickets = [r.metadata["ticket"] for r in docs]
@@ -207,6 +207,7 @@ def get_sql_answer(
     llm_server_url,
     sql_search_db_and_model_path,
     max_context_length,
+    sql_ticket_source,
 ):
 
     logger.info("Invoking text-to-sql question-answer search")
@@ -263,13 +264,44 @@ def get_sql_answer(
     generated_answer = convert_sql_result_to_nl(state, model_id, llm, max_context_length)
     answer = postprocess_hallucinations(generated_answer["answer"])
 
+    relevant_ticket_ids, relevant_ticket_urls = get_relevant_tickets(sql_query, state, sql_ticket_source)
+
     answerToUI = {
         "answer": answer,
-        "relevant_tickets": ["n/a"],
-        "sources": ["n/a"],
+        "relevant_tickets": relevant_ticket_ids,
+        "sources": relevant_ticket_urls,
         "context": "",  # TODO: if this is big consider logger context here and sending some reference id to UI
     }
     return answerToUI
+
+
+def get_relevant_tickets(sql_query, state, sql_ticket_source):
+    source_limit = 4
+    relevant_ticket_ids = ["n/a"]
+    relevant_ticket_urls = ["n/a"]
+    ticket_ids = []
+    if sql_query.get("query", "").startswith("SELECT ticket_id"):
+        try:
+            results_list = ast.literal_eval(state["result"]["result"])
+        except SyntaxError as e:
+            return relevant_ticket_ids, relevant_ticket_urls
+
+        for result in results_list:
+            ticket_ids.append(result[0])
+
+    if len(ticket_ids) > 0:
+        relevant_ticket_ids = ticket_ids[:source_limit]
+
+        urls = []
+        for ticket_id in relevant_ticket_ids:
+            urls.append(f"{sql_ticket_source}{ticket_id}.json")
+        relevant_ticket_urls = urls
+
+    if len(ticket_ids) > source_limit:
+        relevant_ticket_ids.append("...")
+        relevant_ticket_urls.append("...")
+
+    return relevant_ticket_ids, relevant_ticket_urls
 
 
 def prompt_template_for_text_to_sql():
@@ -290,6 +322,12 @@ def prompt_template_for_text_to_sql():
         "which table. Only use the following tables: {table_info}."
         "If there is a ticket ID in the question, ensure that you maintain "
         "the exact ticket ID in the query."
+        "If the query retrieves specific ticket details, **always include the ticket ID column** in the result set, "
+        "even if the user did not explicitly ask for it. This ensures the ticket ID is present in ticket-related queries."
+        "However, if the query uses an aggregation function (such as COUNT(), SUM(), AVG(), MIN(), or MAX()), omit the ticket ID."
+        "Always include `ticket ID` in ticket-related queries. **Do not use `ticket URL` unless explicitly requested.**"
+        "Do not make any references to the SQL query or the SQL result in your answer."
+        ""
         "Question: {input}"
     )
 
@@ -316,8 +354,9 @@ def postprocess_hallucinations(generated_answer: str) -> str:
         "Question:",
         "Content:",
         "Instruction:"
-        "<|end_of_assistant<|im_sep|",
+        "<|end_of_assistant<|im_sep|>",
         "<|end-user-query|>",
+        "<|end_of_document|>"
     ]
     answer = generated_answer
 
@@ -462,6 +501,7 @@ def get_answer_with_settings_with_weaviate_filter(
     sql_search_db_and_model_path,
     alpha,
     max_context_length,
+    sql_ticket_source,
 ):
 
     search_type = question_router(question, sql_search_db_and_model_path)
@@ -479,6 +519,7 @@ def get_answer_with_settings_with_weaviate_filter(
                 llm_server_url,
                 sql_search_db_and_model_path,
                 max_context_length,
+                sql_ticket_source,
             )
 
         case SearchType.VECTOR:

@@ -136,7 +136,7 @@ with gr.Blocks() as app:
     with gr.Row():
         with gr.Column(scale=4):
             # Change from chatbot = gr.Chatbot() to:
-            chatbot = gr.Chatbot(label="Question-Answering Chatbot", height=600, resizable=True)
+            chatbot = gr.Chatbot(label="Question-Answering Chatbot", height=600)
 
             # Rating slider and submit button initially hidden
             rating_slider = gr.Slider(

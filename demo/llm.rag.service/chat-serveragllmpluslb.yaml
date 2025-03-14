@@ -58,8 +58,8 @@ spec:
             value: ${WEAVIATE_GRPC_URI_WITH_PORT}
           - name: WEAVIATE_INDEX_NAME
             value: ${WEAVIATE_INDEX_NAME}
-          - name: WEAVIATE_HYBRID_ALPHA_DEFAULT
-            value: ${WEAVIATE_HYBRID_ALPHA_DEFAULT}
+          - name: WEAVIATE_HYBRID_ALPHA
+            value: ${WEAVIATE_HYBRID_ALPHA}
           - name: SQL_SEARCH_DB_AND_MODEL_PATH
             value: ${SQL_SEARCH_DB_AND_MODEL_PATH}
           - name: MODEL_MAX_CONTEXT_LEN

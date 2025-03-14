@@ -614,7 +614,8 @@ def load_models(question_classification_model_path: str):
     logger.info("Model and vectorizer loaded successfully.")
     return rf_model_loaded, tfidf_loaded
 
-
+# Route the incoming question to either the text-to-sql workflow 
+# or the RAG question-answer workflow
 def question_router(
     question: str, question_classification_model_path: str
 ) -> SearchType:

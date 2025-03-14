@@ -85,7 +85,7 @@ def process_ticket(ticket_data):
 				'group_name':safe_get(ticket_data, 'group', 'name'),
 				'collaborator_name':safe_get(ticket_data, 'collaborator', 'name'),
 				'collaborator_email':safe_get(ticket_data, 'collaborator', 'email'),
-				'tags':tags_str,
+				'categories':tags_str,
 				'satisfaction_rating_score':safe_get(ticket_data, 'satisfaction_rating', 'score'),
 				'number_of_reopens':safe_get(ticket_data, 'metric_set', 'reopens'),
 				'number_of_replies':safe_get(ticket_data, 'metric_set', 'replies'),
@@ -98,7 +98,7 @@ def process_ticket(ticket_data):
 		print(f"Warning: Error processing ticket: {str(e)}")
 		return None
 
-def convert_zendesk_json_to_csv(json_file_path, csv_file_path):
+def convert_customersupport_json_to_csv(json_file_path, csv_file_path):
 	# Define CSV headers
 	headers=[
 	  'ticket_id',
@@ -118,11 +118,11 @@ def convert_zendesk_json_to_csv(json_file_path, csv_file_path):
 	  'assignee_email',
 	  'submitter_name',
 	  'submitter_email',
-	  'collaborator_name',
-	  'collaborator_email',
 	  'organization_name',
 	  'group_name',
-	  'tags',
+	  'collaborator_name',
+	  'collaborator_email',
+	  'categories',
 	  'satisfaction_rating_score',
 	  'number_of_reopens',
 	  'number_of_replies',
@@ -173,10 +173,10 @@ def convert_zendesk_json_to_csv(json_file_path, csv_file_path):
 
 if __name__ == "__main__":
 
-	json_file_path = "zendesk_tickets.json"
-	csv_file_path = "zendesk_tickets.csv"
+	json_file_path = "customersupport_tickets.json"
+	csv_file_path = "customersupport_tickets.csv"
 
 	try:
-		convert_zendesk_json_to_csv(json_file_path, csv_file_path)
+		convert_customersupport_json_to_csv(json_file_path, csv_file_path)
 	except Exception as e:
 			print(f"An error occurred: {str(e)}")

@@ -222,18 +222,18 @@ def get_sql_answer(
 
         logger.info("Loading the pre-created SQL DB")
         engine = create_engine(
-            "sqlite:///" + sql_search_db_and_model_path + "zendesk.db"
+            "sqlite:///" + sql_search_db_and_model_path + "customersupport.db"
         )
 
         logger.info("Check that the SQL data can be accessed from the DB via querying")
         db = SQLDatabase(engine=engine)
         logger.info(f"DB dialect is: {db.dialect}")
         logger.info(f"Usable table names: {db.get_usable_table_names()}")
-        logger.info("Table info:")
-        print(db.get_table_info(["zendesk"]))
+        table_info=db.get_table_info(["customersupport"])
+        logger.info(f"Table info: {table_info}")
 
-        logger.info("Running sanity test SQL query:")
-        db.run("SELECT COUNT(*) FROM zendesk WHERE assignee_name LIKE 'John Doe';")
+        sample_query_result = db.run("SELECT COUNT(*) FROM customersupport WHERE assignee_name LIKE 'John Doe';")
+        logger.debug(f"Running sanity test SQL query: {sample_query_result}")
 
         # Prompt template to convert NL question to SQL
         # This was manually retrieved from langchain hub and customized
@@ -318,19 +318,24 @@ def prompt_template_for_text_to_sql():
         "few relevant columns given the question. Pay attention "
         "to use only the column names that you can see in the schema "
         "description. Be careful to not query for columns that do "
-        "not exist. Also, pay attention to which column is in "
-        "which table. Only use the following tables: {table_info}."
+        "not exist. Only use the following tables: {table_info}."
+        "Please ensure that the generated SQL query is syntactically correct. "
+        "Remember the most important column in this table is the details column that has detailed description of each customer support ticket. "
+        "Use this details column when looking for the description of what a ticket is all about. "
+        "Do not use the categories field in the generated SQL query unless specifically asked for. "
         "If there is a ticket ID in the question, ensure that you maintain "
-        "the exact ticket ID in the query."
-        "If the query retrieves specific ticket details, **always include the ticket ID column** in the result set, "
+        "the exact ticket ID in the generated SQL query."
+        "Do not make any references to the SQL query or the SQL result in your answer."
+        "If the query retrieves specific ticket details, always include the ticket ID column in the result set, "
         "even if the user did not explicitly ask for it. This ensures the ticket ID is present in ticket-related queries."
         "However, if the query uses an aggregation function (such as COUNT(), SUM(), AVG(), MIN(), or MAX()), omit the ticket ID."
-        "Always include `ticket ID` in ticket-related queries. **Do not use `ticket URL` unless explicitly requested.**"
-        "Do not make any references to the SQL query or the SQL result in your answer."
-        ""
+        "Consider all tickets and not only tickets whose status is closed.  "
+        "Please confirm that the generated SQL query is syntactically correct and safe. "
         "Question: {input}"
     )
 
+    # "Always include `ticket ID` in ticket-related queries. **Do not use `ticket URL` unless explicitly requested.**"
+        
     # Alternatively uncomment below to use prompt template from hub directly
     # without customization
     # query_prompt_template = hub.pull("langchain-ai/sql-query-system-prompt")
@@ -356,7 +361,8 @@ def postprocess_hallucinations(generated_answer: str) -> str:
         "Instruction:"
         "<|end_of_assistant<|im_sep|>",
         "<|end-user-query|>",
-        "<|end_of_document|>"
+        "<|end_of_document|>",
+        "<|end_of_instruction|>"
     ]
     answer = generated_answer
 
@@ -456,15 +462,19 @@ def trim_text_by_tokens(text: str, model_id: str, token_limit: int) -> str:
 # delta - value by which we keep the prompt len less than the model context len
 def convert_sql_result_to_nl(state: State, model_id, llm, max_context_length, delta=50):
 
-    domainExpertInstructions = "In the provided SQL table, each entry or row refers to a ticket and not a customer."
-    " The column titled requester is also referred to as the customer or submitter or client."
-    " The column titled all_comments can also be referred to as responses or resolution or details."
+    domainExpertInstructions = "In the provided SQL table, each entry or row refers to a single ticket and not a customer."
+    " The column titled requester_name is also referred to as the customer or submitter or client."
+    " The column titled details can also be referred to as responses or resolution or comments."
+    " The column titled assignee_name or collaborator_name refers to the employee, personnel, representative who works with customers" 
+    " on resolving the ticket."
 
     prompt = (
         "You are a customer support ticket expert. Given the following user question, corresponding SQL query, "
         "and SQL result, answer the user's question."
         "Do not make any references to the SQL query or the SQL result in your answer."
         + domainExpertInstructions
+        + "Ensure that no references to the SQL query or the SQL result is included in the your generated response."
+        + "Do not use any other information to answer the question other than what it is provided in the SQL result."
         + f'Question: {state["question"]}\n'
         f'SQL Query: {state["query"]}\n'
         f'SQL Result: {state["result"]}'
@@ -564,7 +574,7 @@ def get_answer_with_settings_with_weaviate_filter(
     #
     #     return docs
 
-    # ticket_id = extract_zendesk_ticket_id(query=question)
+    # ticket_id = extract_customersupport_ticket_id(query=question)
     #
     # if ticket_id:
     #     from weaviate.collections.classes.filters import Filter
@@ -574,7 +584,7 @@ def get_answer_with_settings_with_weaviate_filter(
     #     search_kwargs["filters"] = Filter.by_property("ticket").equal(ticket_id)
 
 
-def extract_zendesk_ticket_id(query):
+def extract_customersupport_ticket_id(query):
     # TODO: implement smth smarter
 
     # Check if the word "ticket" exists in the query (case insensitive)

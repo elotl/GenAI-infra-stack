@@ -319,14 +319,13 @@ def prompt_template_for_text_to_sql():
         "to use only the column names that you can see in the schema "
         "description. Be careful to not query for columns that do "
         "not exist. Only use the following tables: {table_info}."
-        "Remember the most important column in this table is the details column that has detailed description of each customer support ticket. "
-        "Use this details column when looking for the description of what a ticket is all about. "
         "If there is a ticket ID in the question, ensure that you maintain "
         "the exact ticket ID in the generated SQL query."
         "Do not make any references to the SQL query or the SQL result in your answer."
         "If the query retrieves specific ticket details, always include the ticket ID column in the result set, "
         "even if the user did not explicitly ask for it. This ensures the ticket ID is present in ticket-related queries."
         "However, if the query uses an aggregation function (such as COUNT(), SUM(), AVG(), MIN(), or MAX()), omit the ticket ID."
+        "Always include `ticket ID` in ticket-related queries. **Do not use `ticket URL` unless explicitly requested.**"
         "Question: {input}"
     )
 
@@ -459,7 +458,7 @@ def trim_text_by_tokens(text: str, model_id: str, token_limit: int) -> str:
 def convert_sql_result_to_nl(state: State, model_id, llm, max_context_length, delta=50):
 
     domainExpertInstructions = "In the provided SQL table, each entry or row refers to a single ticket and not a customer."
-    " The column titled requester_name is also referred to as the customer or submitter or client."
+    " The column titled requester is also referred to as the customer or submitter or client."
     " The column titled details can also be referred to as responses or resolution or comments."
 
     prompt = (
@@ -467,7 +466,6 @@ def convert_sql_result_to_nl(state: State, model_id, llm, max_context_length, de
         "and SQL result, answer the user's question."
         "Do not make any references to the SQL query or the SQL result in your answer."
         + domainExpertInstructions
-        + "Do not use any other information to answer the question other than what it is provided in the SQL result."
         + f'Question: {state["question"]}\n'
         f'SQL Query: {state["query"]}\n'
         f'SQL Result: {state["result"]}'

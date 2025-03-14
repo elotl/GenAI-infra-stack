@@ -4,8 +4,9 @@ from langchain_community.utilities import SQLDatabase
 from sqlalchemy import create_engine
 from langchain_openai import ChatOpenAI
 
+data_version = "v1.1_march14"
 print("CREATE the SQL DB from the CSV - to be done only once\n")
-df = pd.read_csv('customersupport_tickets.csv')
+df = pd.read_csv('customersupport_tickets_' + data_version + '.csv')
 engine = create_engine("sqlite:///customersupport.db")
 df.to_sql("customersupport", engine, index=False)
 
@@ -31,16 +32,13 @@ llm = ChatOpenAI(
   openai_api_key="dummy_value",
 )
 
-#######################
 from langchain.chains import create_sql_query_chain
 chain = create_sql_query_chain(llm, db=db)
 
-# we can do stuff with the chain
 response = chain.invoke({"question": "How many total rows are in the customer support table?"})
 print("LLM converted text-to-SQL query:", response)
 
 x = response.split(":")
-#print("Only query is", x[1])
 dbresponse = db.run(x[1])
 print("Running query against DB, SQL query result is: ", dbresponse)
 

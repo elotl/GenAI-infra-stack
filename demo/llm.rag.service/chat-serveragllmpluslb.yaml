@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: serveragllm
-          image: elotl/serveragllm:testweaviatesql3
+          image: elotl/serveragllm:testweaviatesql4
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
@@ -66,6 +66,8 @@ spec:
             value: ${MODEL_MAX_CONTEXT_LEN}
           - name: SQL_TICKET_SOURCE
             value: ${SQL_TICKET_SOURCE}
+          - name: EMBEDDING_MODEL_NAME
+            value: ${EMBEDDING_MODEL_NAME}
           volumeMounts:
           - name: log-storage
             mountPath: /app/logs

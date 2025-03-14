@@ -270,7 +270,7 @@ def get_sql_answer(
         "answer": answer,
         "relevant_tickets": relevant_ticket_ids,
         "sources": relevant_ticket_urls,
-        "context": "",  # TODO: if this is big consider logger context here and sending some reference id to UI
+        "context": state["query"],  # For vector search, we return similar docs from vector DB; for sql we return the query
     }
     return answerToUI
 

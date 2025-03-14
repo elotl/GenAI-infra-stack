@@ -461,8 +461,6 @@ def convert_sql_result_to_nl(state: State, model_id, llm, max_context_length, de
     domainExpertInstructions = "In the provided SQL table, each entry or row refers to a single ticket and not a customer."
     " The column titled requester_name is also referred to as the customer or submitter or client."
     " The column titled details can also be referred to as responses or resolution or comments."
-    " The column titled assignee_name or collaborator_name refers to the employee, personnel, representative who works with customers" 
-    " on resolving the ticket."
 
     prompt = (
         "You are a customer support ticket expert. Given the following user question, corresponding SQL query, "

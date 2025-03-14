@@ -1,4 +1,4 @@
-# Create Vector Databas
+# Create Vector Database
 
 ## Run locally
 Create a venv and install requirements.txt
@@ -24,7 +24,7 @@ uv run createvectordb.py --env_file backup-.env
 ```
 
 ## Run tests
-Also install in your venv requirements-dev.tx and call
+Also install in your venv requirements-dev.txt and call
 ```shell
 uv run pytest
 ```

@@ -6,3 +6,8 @@ langchain_weaviate
 pydantic_settings
 s3fs
 weaviate-client
+boto3
+flask
+flask_cors
+moto
+pytest

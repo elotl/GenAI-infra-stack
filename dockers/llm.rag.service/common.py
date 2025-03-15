@@ -222,18 +222,18 @@ def get_sql_answer(
 
         logger.info("Loading the pre-created SQL DB")
         engine = create_engine(
-            "sqlite:///" + sql_search_db_and_model_path + "zendesk.db"
+            "sqlite:///" + sql_search_db_and_model_path + "customersupport.db"
         )
 
         logger.info("Check that the SQL data can be accessed from the DB via querying")
         db = SQLDatabase(engine=engine)
         logger.info(f"DB dialect is: {db.dialect}")
         logger.info(f"Usable table names: {db.get_usable_table_names()}")
-        logger.info("Table info:")
-        print(db.get_table_info(["zendesk"]))
+        table_info=db.get_table_info(["customersupport"])
+        logger.info(f"Table info: {table_info}")
 
-        logger.info("Running sanity test SQL query:")
-        db.run("SELECT COUNT(*) FROM zendesk WHERE assignee_name LIKE 'John Doe';")
+        sample_query_result = db.run("SELECT COUNT(*) FROM customersupport WHERE assignee_name LIKE 'John Doe';")
+        logger.debug(f"Running sanity test SQL query: {sample_query_result}")
 
         # Prompt template to convert NL question to SQL
         # This was manually retrieved from langchain hub and customized
@@ -254,8 +254,10 @@ def get_sql_answer(
         }
         return errorToUI
 
+    # generate SQL query from 
+    sql_query = write_query({"question": question}, query_prompt_template, llm, db, model_id, max_context_length)
+
     # send SQL query and response to LLM and get a natural language answer
-    sql_query = write_query({"question": question}, query_prompt_template, llm, db)
     state: State = {
         "question": question,
         "query": sql_query,
@@ -270,7 +272,7 @@ def get_sql_answer(
         "answer": answer,
         "relevant_tickets": relevant_ticket_ids,
         "sources": relevant_ticket_urls,
-        "context": "",  # TODO: if this is big consider logger context here and sending some reference id to UI
+        "context": state["query"],  # For vector search, we return similar docs from vector DB; for sql we return the query
     }
     return answerToUI
 
@@ -318,19 +320,26 @@ def prompt_template_for_text_to_sql():
         "few relevant columns given the question. Pay attention "
         "to use only the column names that you can see in the schema "
         "description. Be careful to not query for columns that do "
-        "not exist. Also, pay attention to which column is in "
-        "which table. Only use the following tables: {table_info}."
+        "not exist. Only use columns from the following table schema: {table_info}."
         "If there is a ticket ID in the question, ensure that you maintain "
-        "the exact ticket ID in the query."
-        "If the query retrieves specific ticket details, **always include the ticket ID column** in the result set, "
+        "the exact ticket ID in the generated SQL query."
+        "ENSURE that the SQL query should only use column names that actually exist in the table schema."
+        "Whenever possible include the details column to the result set since this is a very important column "
+        "containing information about the causes, resolution, concerns and issues described in the ticket."
+        "If the query retrieves specific ticket details, always include the ticket ID column in the result set, "
         "even if the user did not explicitly ask for it. This ensures the ticket ID is present in ticket-related queries."
         "However, if the query uses an aggregation function (such as COUNT(), SUM(), AVG(), MIN(), or MAX()), omit the ticket ID."
         "Always include `ticket ID` in ticket-related queries. **Do not use `ticket URL` unless explicitly requested.**"
-        "Do not make any references to the SQL query or the SQL result in your answer."
-        ""
+        "Use **only a few columns** from this list that are appropriate for answering the input question: ticket_id, ticket_type, "
+        "subject, description, details, created_at, status, priority, requester_name, requester_email, assignee_name," 
+        "assignee_email, submitter_name, submitter_email, organization_name, group_name, collaborator_name, "
+        "collaborator_email, categories, satisfaction_rating_score, number_of_reopens, number_of_replies, "
+        "full_resolution_time_in_minutes, dates_assigned_at,"
+        "dates_solved_at, and received_via_channel. Do not use any column names other than those listed."
+        "Use only 5 columns or fewer."
         "Question: {input}"
     )
-
+        
     # Alternatively uncomment below to use prompt template from hub directly
     # without customization
     # query_prompt_template = hub.pull("langchain-ai/sql-query-system-prompt")
@@ -356,7 +365,11 @@ def postprocess_hallucinations(generated_answer: str) -> str:
         "Instruction:"
         "<|end_of_assistant<|im_sep|>",
         "<|end-user-query|>",
-        "<|end_of_document|>"
+        "<|end_of_document|>",
+        "<|end_of_instruction|>",
+        "<|end_of_answer|>",
+        "<|end_of_solution|>",
+        "\n\n---\n\n"
     ]
     answer = generated_answer
 
@@ -369,12 +382,6 @@ def postprocess_hallucinations(generated_answer: str) -> str:
     logger.info(f"Answer (after cleanup): {answer}")
 
     return answer
-
-
-class QueryOutput(TypedDict):
-    """Generated SQL query."""
-
-    query: Annotated[str, ..., "Syntactically valid SQL query."]
 
 
 # Post-process LLM output to extract only the SQL query, handles both cases when
@@ -397,8 +404,8 @@ def extract_sql_query(message: str) -> str:
     return sql_query
 
 
-def write_query(state: State, query_prompt_template, llm, db):
-    """Generate SQL query to fetch information."""
+def write_query(state: State, query_prompt_template, llm, db, model_id, max_context_length):
+    """Generate SQL query to match question."""
     prompt = query_prompt_template.invoke(
         {
             "dialect": db.dialect,
@@ -407,21 +414,43 @@ def write_query(state: State, query_prompt_template, llm, db):
             "input": state["question"],
         }
     )
-    # structured output wasn't implemented for the RUBRA-phi3 model so had to move to the
-    # raw llm invoke. If we can move to a different function-calling LLM, we can uncomment
-    # this.
-    # structured_llm = llm.with_structured_output(QueryOutput)
-    # result = structured_llm.invoke(prompt)
 
     logger.info(f"Prompt for SQL query generation: {prompt}")
     result = llm.invoke(prompt)
 
     sql_query = extract_sql_query(result.content)
+    logger.info(f"Extracted SQL query after generation: {sql_query}")
 
-    logger.info(f"Extracted SQL query: {sql_query}")
+    #validated_sql_query = validate_sql_query(sql_query, llm, db, model_id, max_context_length)
 
     return {"query": sql_query}
 
+
+def validate_sql_query(sql_query: str, llm, db, model_id, max_context_length, delta=50):
+
+    # send the generated sql query and the table info
+    prompt = (
+    "You are an SQL database expert. Given the following SQL query and SQL database table description"
+    "Check that the SQL query only uses columns in the table and is syntactically correct. "
+    "If it uses columns that are not in the table, then remove those fields and return the SQL query"
+    " with only the non-existent columns removed. Ensure that the query is synatically correct"
+    ", if not try to correct the query. If the query is already syntactically correct, return it as is."
+    + f'SQL Query: {sql_query}\n'
+    f'SQL database table schema: {db.get_table_info()}\n'
+    )
+    logger.info(
+        f"Prompt for SQL query validation: {prompt}. Prompt length: {len(prompt)}"
+    )
+
+    prompt_trim_length = max_context_length - delta
+    trimmed_prompt = trim_text_by_tokens(prompt, model_id, prompt_trim_length)
+    logger.info(f"Trimmed prompt for SQL query validation: {trimmed_prompt}")
+
+    response = llm.invoke(trimmed_prompt)
+    validated_sql_query = extract_sql_query(response.content)
+    logger.info(f"Validated SQL query: {sql_query}")
+    
+    return validated_sql_query
 
 # Executes a SQL query against the provided database
 def execute_query(state: State, db):
@@ -456,9 +485,9 @@ def trim_text_by_tokens(text: str, model_id: str, token_limit: int) -> str:
 # delta - value by which we keep the prompt len less than the model context len
 def convert_sql_result_to_nl(state: State, model_id, llm, max_context_length, delta=50):
 
-    domainExpertInstructions = "In the provided SQL table, each entry or row refers to a ticket and not a customer."
+    domainExpertInstructions = "In the provided SQL table, each entry or row refers to a single ticket and not a customer."
     " The column titled requester is also referred to as the customer or submitter or client."
-    " The column titled all_comments can also be referred to as responses or resolution or details."
+    " The column titled details can also be referred to as responses or resolution or comments."
 
     prompt = (
         "You are a customer support ticket expert. Given the following user question, corresponding SQL query, "
@@ -564,7 +593,7 @@ def get_answer_with_settings_with_weaviate_filter(
     #
     #     return docs
 
-    # ticket_id = extract_zendesk_ticket_id(query=question)
+    # ticket_id = extract_customersupport_ticket_id(query=question)
     #
     # if ticket_id:
     #     from weaviate.collections.classes.filters import Filter
@@ -574,7 +603,7 @@ def get_answer_with_settings_with_weaviate_filter(
     #     search_kwargs["filters"] = Filter.by_property("ticket").equal(ticket_id)
 
 
-def extract_zendesk_ticket_id(query):
+def extract_customersupport_ticket_id(query):
     # TODO: implement smth smarter
 
     # Check if the word "ticket" exists in the query (case insensitive)

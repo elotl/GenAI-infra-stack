@@ -16,13 +16,19 @@ import os
 import sys
 from functools import partial
 from typing import Union
+from logging_config import logger
 
 import click
 import uvicorn
 from fastapi import FastAPI
 from openai import OpenAI
 
-from common import get_answer_with_settings_with_weaviate_filter, logger
+import weaviate
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_weaviate.vectorstores import WeaviateVectorStore
+
+
+from common import get_answer_with_settings_with_weaviate_filter
 
 SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Format your responses following these rules:
                 1. Answer the provided question only using the provided context.
@@ -51,11 +57,6 @@ def setup(
     sql_ticket_source: str,
 ):
     app = FastAPI()
-
-    # TODO: move to imports
-    import weaviate
-    from langchain_huggingface import HuggingFaceEmbeddings
-    from langchain_weaviate.vectorstores import WeaviateVectorStore
 
     embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
 
@@ -104,7 +105,7 @@ def setup(
 
     @app.get("/answer/{question}")
     def read_item(question: Union[str, None] = None):
-        print(f"Received question: {question}")
+        logger.info(f"Received question: {question}")
         answer = get_answer(question)
         return {"question": question, "answer": answer}
 

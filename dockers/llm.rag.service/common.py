@@ -1,8 +1,8 @@
 import ast
-import logging.config
 import re
 from enum import Enum
 from typing import Any, Dict, List
+from logging_config import logger
 
 import joblib
 from langchain_community.chat_models import ChatOpenAI
@@ -13,39 +13,6 @@ from openai import BadRequestError
 from sqlalchemy import create_engine
 from transformers import AutoTokenizer
 from typing_extensions import Annotated, TypedDict
-
-LOGGING_CONFIG = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "default": {
-            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        },
-    },
-    "handlers": {
-        "file": {
-            "level": "DEBUG",
-            "class": "logging.FileHandler",
-            "filename": "elotl-qa-in-a-box.log",
-            "formatter": "default",
-        },
-        "stdout": {
-            "level": "DEBUG",
-            "class": "logging.StreamHandler",
-            "formatter": "default",
-        },
-    },
-    "loggers": {
-        "ElotlQAInABoxLogger": {
-            "handlers": ["file", "stdout"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
-    },
-}
-logging.config.dictConfig(LOGGING_CONFIG)
-logger = logging.getLogger("ElotlQAInABoxLogger")
-
 
 class State(TypedDict):
     question: str
@@ -58,8 +25,8 @@ class SearchType(Enum):
     VECTOR = 2
 
 
+# Format search results into context for the LLM
 def format_context(results: List[Dict[str, Any]]) -> str:
-    """Format search results into context for the LLM"""
     context_parts = []
 
     for result in results:
@@ -76,17 +43,8 @@ def format_context(results: List[Dict[str, Any]]) -> str:
     return "\n\n".join(context_parts)
 
 
+# Trim generated answer by removing content after and including the provided label separator
 def trim_answer(generated_answer: str, label_separator: str) -> str:
-    """
-    From the generated_answer, remove all content after and including
-    the provided label separator
-    Args:
-        generated_answer (str): the generated answer to remove from
-        label_separator (str): string after which content needs to be trimmed
-                               Note: this string will also be trimmed
-    Returns:
-        str: Cleaned answer with all content before the label separator
-    """
     if not generated_answer:  # Handle empty text
         return ""
     answer = generated_answer
@@ -239,7 +197,6 @@ def get_sql_answer(
         # This was manually retrieved from langchain hub and customized
         query_prompt_template = prompt_template_for_text_to_sql()
 
-        # logger.info(f"Prompt template for text-to-sql conversion: {query_prompt_template.messages[0]}")
         logger.info(
             f"Prompt template for text-to-sql conversion: {query_prompt_template}"
         )
@@ -654,12 +611,7 @@ def question_router(
     predicted_category = predict_question_type(
         question, rf_model_loaded, tfidf_loaded, id_to_category
     )
-    print(
-        "Received question: ",
-        question,
-        "\nPredicted Question Type:",
-        predicted_category,
-    )
+    logger.info(f"Received question: {question}, Predicted Question Type: {predicted_category}")
 
     # If question is of type aggregation or has any alphanumeric words
     if predicted_category == 0 or containsSymbolsOrNumbers(question):

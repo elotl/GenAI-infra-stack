@@ -44,6 +44,7 @@ RUN pip3 install --no-cache-dir \
 COPY __init__.py .
 COPY proxy_app.py .
 COPY serveragllm.py .
+COPY logging_config.py .
 COPY serverragllm_csv_to_weaviate_local.py .
 COPY common.py .
 COPY pyproject.toml .

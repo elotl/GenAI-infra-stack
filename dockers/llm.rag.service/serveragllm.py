@@ -39,12 +39,12 @@ SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Forma
                 7. Provide a clear, direct and factual answer.
                 """
 
-#template = """Answer the question based only on the following context:
-#{context}
-#
-#Question: {question}
-#"""
-#os.environ["TOKENIZERS_PARALLELISM"] = "false"
+template = """Answer the question based only on the following context:
+{context}
+
+Question: {question}
+"""
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 class SearchType(Enum):

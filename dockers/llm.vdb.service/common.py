@@ -1,6 +1,5 @@
 import json
 import os
-<<<<<<< HEAD
 from typing import List
 
 import weaviate
@@ -14,7 +13,6 @@ from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_weaviate.vectorstores import WeaviateVectorStore
 from langchain_community.document_loaders import DirectoryLoader
-
 
 EMBEDDING_CHUNK_SIZE_DEFAULT = 1000
 EMBEDDING_CHUNK_OVERLAP_DEFAULT = 100
@@ -46,15 +44,7 @@ def load_text_files_from_directory(directory):
             raw_data = raw_file.read()
             detected = chardet.detect(raw_data)
             encoding = detected['encoding']
-            
-        # Open and read each text file
-        # with open(file_path, "r", encoding=encoding) as file: 
-        #   content = file.read()
-        #   data.append({
-        #           "metadata": file_path,
-        #           "text": content
-        #   })
-        
+                    
         with open(file_path, "r") as file: 
             for line in file:
                 # Parse each JSON object in the file

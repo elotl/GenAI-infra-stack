@@ -85,16 +85,13 @@ def setup(
         get_answer_with_settings_with_weaviate_filter,
         vectorstore=vectorstore,
         client=client,
-        model_id=llm_settings.model_id,
-        max_tokens=llm_settings.max_tokens,
-        model_temperature=llm_settings.model_temperature,
         system_prompt=SYSTEM_PROMPT_DEFAULT,
         relevant_docs=relevant_docs,
-        llm_server_url=llm_settings.llm_server_url,
         sql_search_db_and_model_path=sql_search_db_and_model_path,
         alpha=weaviate_settings.weaviate_hybrid_search_alpha,
         max_context_length=max_context_length,
         sql_ticket_source=sql_ticket_source,
+        llm_settings=llm_settings,
     )
 
     @app.get("/answer/{question}")

@@ -20,30 +20,9 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
 
 WORKDIR /createvectordb
 
-# Upgrade pip
-RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel
-
-# Install dependencies in separate layers
-RUN pip3 install --no-cache-dir \
-    "langchain" \
-    "langchain_community" \
-    "langchain_huggingface"
-
-RUN pip3 install --no-cache-dir \
-    "unstructured" \
-    "sentence-transformers" \
-    "faiss-cpu"
-
-RUN pip3 install --no-cache-dir \
-    "lxml" \
-    "bs4"
-
-RUN pip3 install --no-cache-dir \
-    "python-magic" \
-    "pydantic_settings" \
-    "s3fs" \
-    "weaviate-client" \
-    "langchain_weaviate"
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt
 
 COPY __init__.py .
 COPY createvectordb.py .

@@ -4,6 +4,17 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
 
+SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Format your responses following these rules:
+                1. Answer the provided question only using the provided context.
+                2. Do not add the provided context to the generated answer.
+                3. Include relevant technical details when present or provide a summary of the comments in the ticket.
+                4. Include the submitter, assignee and collaborator for a ticket when this info is available.
+                5. If the question cannot be answered with the given context, please say so and do not attempt to provide an answer.
+                6. Do not create new questions related to the given question, instead answer only the provided question.
+                7. Provide a clear, direct and factual answer.
+                """
+
+
 def validate_float(value):
     if type(value) == float:
         return value
@@ -35,30 +46,10 @@ class WeaviateSettings(BaseSettings):
         None,
         alias="WEAVIATE_INDEX_NAME",
     )
-    # TODO: consider moving to hybrid search config
-    weaviate_hybrid_search_alpha: float = Field(
-        default=0.5,
-        alias="WEAVIATE_HYBRID_ALPHA",
-    )
     embedding_model_name: Optional[str] = Field(
         default="sentence-transformers/all-MiniLM-L6-v2",
         alias="EMBEDDING_MODEL_NAME",
     )
-    # TODO: consider moving to hybrid search config
-    hybrid_search_relevant_docs: Optional[int] = Field(
-        default=2,
-        alias="RELEVANT_DOCS",
-    )
-
-    @field_validator("weaviate_hybrid_search_alpha", mode="before")
-    @classmethod
-    def validate_weaviate_hybrid_search_alpha(cls, v):
-        return validate_float(v)
-
-    @field_validator("hybrid_search_relevant_docs", mode="before")
-    @classmethod
-    def validate_hybrid_search_relevant_docs(cls, v):
-        return validate_int(v)
 
     class Config:
         env_file = ".env"
@@ -116,3 +107,36 @@ class LlmSettings(BaseSettings):
     @classmethod
     def validate_model_temperature(cls, v):
         return validate_float(v)
+
+    class Config:
+        env_file = ".env"
+        extra = "ignore"
+
+
+class HybridSearchSettings(BaseSettings):
+    alpha: Optional[float] = Field(
+        default=0.5,
+        alias="WEAVIATE_HYBRID_ALPHA",
+    )
+    relevant_docs: Optional[int] = Field(
+        default=2,
+        alias="RELEVANT_DOCS",
+    )
+    system_prompt: Optional[str] = Field(
+        default=SYSTEM_PROMPT_DEFAULT,
+        alias="SYSTEM_PROMPT",
+    )
+
+    @field_validator("alpha", mode="before")
+    @classmethod
+    def validate_alpha(cls, v):
+        return validate_float(v)
+
+    @field_validator("relevant_docs", mode="before")
+    @classmethod
+    def validate_relevant_docs(cls, v):
+        return validate_int(v)
+
+    class Config:
+        env_file = ".env"
+        extra = "ignore"

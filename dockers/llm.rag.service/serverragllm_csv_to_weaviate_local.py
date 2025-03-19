@@ -29,17 +29,7 @@ from langchain_weaviate.vectorstores import WeaviateVectorStore
 
 
 from common import get_answer_with_settings_with_weaviate_filter
-from config import LlmSettings, WeaviateSettings
-
-SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Format your responses following these rules:
-                1. Answer the provided question only using the provided context.
-                2. Do not add the provided context to the generated answer.
-                3. Include relevant technical details when present or provide a summary of the comments in the ticket.
-                4. Include the submitter, assignee and collaborator for a ticket when this info is available.
-                5. If the question cannot be answered with the given context, please say so and do not attempt to provide an answer.
-                6. Do not create new questions related to the given question, instead answer only the provided question.
-                7. Provide a clear, direct and factual answer.
-                """
+from config import HybridSearchSettings, LlmSettings, WeaviateSettings
 
 
 def setup(
@@ -50,6 +40,8 @@ def setup(
     app = FastAPI()
 
     weaviate_settings = WeaviateSettings()
+    hybrid_search_settings = HybridSearchSettings()
+    llm_settings = LlmSettings()
 
     embeddings = HuggingFaceEmbeddings(model_name=weaviate_settings.embedding_model_name)
 
@@ -69,8 +61,6 @@ def setup(
         embedding=embeddings,
     )
 
-    llm_settings = LlmSettings()
-
     logger.info(
         f"Creating an OpenAI client to the hosted model at URL: {llm_settings.llm_server_url}"
     )
@@ -84,10 +74,10 @@ def setup(
         get_answer_with_settings_with_weaviate_filter,
         vectorstore=vectorstore,
         client=client,
-        system_prompt=SYSTEM_PROMPT_DEFAULT,
-        relevant_docs=weaviate_settings.hybrid_search_relevant_docs,
+        system_prompt=hybrid_search_settings.system_prompt,
+        relevant_docs=hybrid_search_settings.relevant_docs,
         sql_search_db_and_model_path=sql_search_db_and_model_path,
-        alpha=weaviate_settings.weaviate_hybrid_search_alpha,
+        alpha=hybrid_search_settings.alpha,
         max_context_length=max_context_length,
         sql_ticket_source=sql_ticket_source,
         llm_settings=llm_settings,

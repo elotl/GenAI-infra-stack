@@ -478,16 +478,13 @@ def get_answer_with_settings_with_weaviate_filter(
     question,
     vectorstore,
     client,
-    model_id,
-    max_tokens,
-    model_temperature,
     system_prompt,
     relevant_docs,
-    llm_server_url,
     sql_search_db_and_model_path,
     alpha,
     max_context_length,
     sql_ticket_source,
+    llm_settings,
 ):
 
     search_type = question_router(question, sql_search_db_and_model_path)
@@ -499,10 +496,10 @@ def get_answer_with_settings_with_weaviate_filter(
 
             return get_sql_answer(
                 question,
-                model_id,
-                max_tokens,
-                model_temperature,
-                llm_server_url,
+                llm_settings.model_id,
+                llm_settings.max_tokens,
+                llm_settings.model_temperature,
+                llm_settings.llm_server_url,
                 sql_search_db_and_model_path,
                 max_context_length,
                 sql_ticket_source,
@@ -530,9 +527,9 @@ def get_answer_with_settings_with_weaviate_filter(
                 question,
                 retriever,
                 client,
-                model_id,
-                max_tokens,
-                model_temperature,
+                llm_settings.model_id,
+                llm_settings.max_tokens,
+                llm_settings.model_temperature,
                 system_prompt,
             )
 

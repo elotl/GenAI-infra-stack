@@ -2,10 +2,11 @@ import logging
 import os
 from logging.handlers import TimedRotatingFileHandler
 
-# When running locally: export RAGLLM_LOGS_PATH=logs/ragllm.log
-log_file_path = os.getenv("RAGLLM_LOGS_PATH") or "/app/logs/ragllm.log"
+from config import LoggingSettings
+
+settings = LoggingSettings()
 os.makedirs(
-    os.path.dirname(log_file_path), exist_ok=True
+    os.path.dirname(settings.log_file_path), exist_ok=True
 )  # Ensure log directory exists
 
 logging.basicConfig(
@@ -13,7 +14,7 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d -- %(message)s",
     handlers=[
         # Log to file, rotate every 1H and store files from last 24 hrs * 7 days files == 168H data
-        TimedRotatingFileHandler(log_file_path, when="h", interval=1, backupCount=168),
+        TimedRotatingFileHandler(settings.log_file_path, when="h", interval=1, backupCount=168),
         logging.StreamHandler(),  # Also log to console
     ],
 )

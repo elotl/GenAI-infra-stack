@@ -29,7 +29,7 @@ from langchain_weaviate.vectorstores import WeaviateVectorStore
 
 
 from common import get_answer_with_settings_with_weaviate_filter
-from config import WeaviateSettings
+from config import LlmSettings, WeaviateSettings
 
 SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Format your responses following these rules:
                 1. Answer the provided question only using the provided context.
@@ -44,10 +44,6 @@ SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Forma
 
 def setup(
     relevant_docs: int,
-    llm_server_url: str,
-    model_id: str,
-    max_tokens: int,
-    model_temperature: float,
     sql_search_db_and_model_path: str,
     max_context_length: int,
     sql_ticket_source: str,
@@ -74,13 +70,13 @@ def setup(
         embedding=embeddings,
     )
 
-    if not llm_server_url.endswith("/v1"):
-        llm_server_url = llm_server_url + "/v1"
+    llm_settings = LlmSettings()
+
     logger.info(
-        f"Creating an OpenAI client to the hosted model at URL: {llm_server_url}"
+        f"Creating an OpenAI client to the hosted model at URL: {llm_settings.llm_server_url}"
     )
     try:
-        client = OpenAI(base_url=llm_server_url, api_key="na")
+        client = OpenAI(base_url=llm_settings.llm_server_url, api_key="na")
     except Exception as e:
         logger.error(f"Error creating client: {e}")
         sys.exit(1)
@@ -89,12 +85,12 @@ def setup(
         get_answer_with_settings_with_weaviate_filter,
         vectorstore=vectorstore,
         client=client,
-        model_id=model_id,
-        max_tokens=max_tokens,
-        model_temperature=model_temperature,
+        model_id=llm_settings.model_id,
+        max_tokens=llm_settings.max_tokens,
+        model_temperature=llm_settings.model_temperature,
         system_prompt=SYSTEM_PROMPT_DEFAULT,
         relevant_docs=relevant_docs,
-        llm_server_url=llm_server_url,
+        llm_server_url=llm_settings.llm_server_url,
         sql_search_db_and_model_path=sql_search_db_and_model_path,
         alpha=weaviate_settings.weaviate_hybrid_search_alpha,
         max_context_length=max_context_length,
@@ -113,23 +109,10 @@ def setup(
 MICROSOFT_MODEL_ID = "microsoft/Phi-3-mini-4k-instruct"
 MOSAICML_MODEL_ID = "mosaicml/mpt-7b-chat"
 RELEVANT_DOCS_DEFAULT = 2
-MAX_TOKENS_DEFAULT = 256
-MODEL_TEMPERATURE_DEFAULT = 0.01
 SQL_SEARCH_DB_AND_MODEL_PATH_DEFAULT = "/app/db/"
-WEAVIATE_HYBRID_ALPHA_DEFAULT = 0.5
 MODEL_MAX_CONTEXT_LEN = 8192
 
 relevant_docs = int(os.getenv("RELEVANT_DOCS", RELEVANT_DOCS_DEFAULT))
-
-# llm_server_url = os.getenv("MODEL_LLM_SERVER_URL", "http://localhost:11434/v1")
-# model_id = os.getenv("MODEL_ID", "llama2")
-
-llm_server_url = os.getenv("MODEL_LLM_SERVER_URL", "http://localhost:9000/v1")
-# model_id = os.getenv("MODEL_ID", "microsoft/Phi-3-mini-4k-instruct")
-model_id = os.getenv("MODEL_ID", "rubra-ai/Phi-3-mini-128k-instruct")
-
-max_tokens = int(os.getenv("MAX_TOKENS", MAX_TOKENS_DEFAULT))
-model_temperature = float(os.getenv("MODEL_TEMPERATURE", MODEL_TEMPERATURE_DEFAULT))
 
 sql_search_db_and_model_path = os.getenv(
     "SQL_SEARCH_DB_AND_MODEL_PATH", SQL_SEARCH_DB_AND_MODEL_PATH_DEFAULT
@@ -143,10 +126,6 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 app = setup(
     relevant_docs,
-    llm_server_url,
-    model_id,
-    max_tokens,
-    model_temperature,
     sql_search_db_and_model_path,
     max_context_length,
     sql_ticket_source,

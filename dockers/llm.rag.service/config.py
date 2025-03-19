@@ -89,6 +89,13 @@ class LlmSettings(BaseSettings):
         alias="MODEL_TEMPERATURE",
     )
 
+    @field_validator("llm_server_url")
+    @classmethod
+    def ensure_v1_endpoint(cls, v: str) -> str:
+        if not v.endswith("/v1"):
+            v = v + "/v1"
+        return v
+
     @field_validator("max_tokens", mode="before")
     @classmethod
     def validate_max_tokens(cls, v):

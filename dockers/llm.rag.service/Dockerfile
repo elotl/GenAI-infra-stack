@@ -21,25 +21,8 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /serveragllm
 
-# Install dependencies in separate layers
-RUN pip3 install --no-cache-dir \
-    "openai" \
-    "langchain" \
-    "langchain_community" \
-    "langchain_huggingface" \
-    "unstructured" \
-    "sentence-transformers" \
-    "faiss-cpu" \
-    "fastapi" \
-    "boto3" \
-    "uvicorn[standard]" \
-    "weaviate-client" \
-    "langchain_weaviate" \
-    "langchain-community" \
-    "pandas" \
-    "sqlalchemy"  \
-    "langchain-openai"  \
-    "pandas"
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY __init__.py .
 COPY proxy_app.py .

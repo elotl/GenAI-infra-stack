@@ -640,10 +640,3 @@ def containsSymbolsOrNumbers(question: str) -> bool:
         ):  # Check if word contains anything other than letters
             return True
     return False
-
-
-
-#        answer = completions.choices[0].message.content
-#        print("Received answer: ", answer)
-#        return answer
-

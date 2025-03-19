@@ -210,15 +210,7 @@ def get_answer(question: Union[str, None]):
 
         answer = completions.choices[0].message.content
         logger.info(f"Received answer (from non JSON processing): {answer}")
-        return get_answer_with_settings(
-            question,
-            retriever,
-            client,
-            model_id,
-            max_tokens,
-            model_temperature,
-            True, # or false?
-        )
+        return answer
 
 # Get connection to LLM server
 model_llm_server_url = os.environ.get("MODEL_LLM_SERVER_URL")

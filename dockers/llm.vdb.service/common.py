@@ -58,7 +58,10 @@ def get_documents(data):
     return texts, metadatas
 
 
-def chunk_documents_with_metadata(data, chunk_size=1000, chunk_overlap=100):
+def chunk_documents_with_metadata(data, 
+                                  chunk_size: int = EMBEDDING_CHUNK_SIZE_DEFAULT, 
+                                  chunk_overlap: int = EMBEDDING_CHUNK_OVERLAP_DEFAULT):
+
     """
     Chunks documents while maintaining alignment between text chunks and metadata
     """
@@ -216,62 +219,4 @@ def create_vectordb_local_weaviate(
             index_name=weaviate_index_name,
             text_key="text",
         )
-
-
-def create_vectordb(
-    is_json: bool,
-    local_tmp_dir: str,
-    embedding_model_name: str,
-    chunk_size: int = EMBEDDING_CHUNK_SIZE_DEFAULT,
-    chunk_overlap: int = EMBEDDING_CHUNK_OVERLAP_DEFAULT,
-):
-
-    if is_json:
-        data = load_jsonl_files_from_directory(local_tmp_dir)
-
-        # no chunking
-        # texts, metadatas = get_documents_with_metadata(data)
-        # with chunking texts
-        texts, metadatas = chunk_documents_with_metadata(data, chunk_size, chunk_overlap)
-
-        embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
-
-        vectorstore = FAISS.from_texts(texts, embeddings, metadatas=metadatas)
-        return vectorstore
-
-    else: 
-
-        # read text files from local tmp directory 
-        loader = DirectoryLoader(local_tmp_dir, glob="**/*")
-        documents = loader.load()
-        print(f"Number of documents loaded via DirectoryLoader is {len(documents)}")
-
-        # TODO (improvement for later) Allow users to configure chunk size and overlap values
-        text_splitter = CharacterTextSplitter(
-            chunk_size=chunk_size, chunk_overlap=chunk_overlap
-        )
-        docs = text_splitter.split_documents(documents)
-
-        # default model name values has been deprecated since 0.2.16, so we choose a specific model
-        embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
-
-        vectorstore = FAISS.from_documents(docs, embeddings)
-
-        #local_tmp_dir = "/tmp/" + vectordb_file
-
-        # create this temp dir if it does not already exist
-        if not os.path.exists(local_tmp_dir):
-            os.makedirs(local_tmp_dir)
-
-        print(
-            f"Local tmp dir is {local_tmp_dir}"
-        )
-        #vectorstore = create_vectordb(
-        #    local_tmp_dir,
-        #    embedding_model_name,
-        #    chunk_size,
-        #    chunk_overlap,
-        #)
-
-        return vectorstore
 

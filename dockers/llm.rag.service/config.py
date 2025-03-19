@@ -13,6 +13,15 @@ def validate_float(value):
         raise ValueError("Value must be convertible to a float")
 
 
+def validate_int(value):
+    if type(value) == int:
+        return value
+    try:
+        return int(value.strip("'").strip("\""))
+    except (TypeError, ValueError):
+        raise ValueError("Value must be convertible to an integer")
+
+
 class WeaviateSettings(BaseSettings):
     weaviate_uri: Optional[str] = Field(
         default="localhost:8080",
@@ -60,3 +69,32 @@ class WeaviateSettings(BaseSettings):
 
     def get_weaviate_grpc_port(self):
         return int(self.weaviate_grpc_uri.split(":")[1])
+
+
+class LlmSettings(BaseSettings):
+    llm_server_url: Optional[str] = Field(
+        default="http://localhost:9000/v1",
+        alias="MODEL_LLM_SERVER_URL",
+    )
+    model_id: Optional[str] = Field(
+        default="rubra-ai/Phi-3-mini-128k-instruct",
+        alias="MODEL_ID",
+    )
+    max_tokens: Optional[int] = Field(
+        default=256,
+        alias="MAX_TOKENS",
+    )
+    model_temperature: Optional[float] = Field(
+        default=0.01,
+        alias="MODEL_TEMPERATURE",
+    )
+
+    @field_validator("max_tokens", mode="before")
+    @classmethod
+    def validate_max_tokens(cls, v):
+        return validate_int(v)
+
+    @field_validator("model_temperature", mode="before")
+    @classmethod
+    def validate_model_temperature(cls, v):
+        return validate_float(v)

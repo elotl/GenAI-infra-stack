@@ -48,7 +48,6 @@ def setup(
     model_id: str,
     max_tokens: int,
     model_temperature: float,
-    embedding_model_name: str,
     sql_search_db_and_model_path: str,
     max_context_length: int,
     sql_ticket_source: str,
@@ -57,7 +56,7 @@ def setup(
 
     weaviate_settings = WeaviateSettings()
 
-    embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
+    embeddings = HuggingFaceEmbeddings(model_name=weaviate_settings.embedding_model_name)
 
     weaviate_client = weaviate.connect_to_custom(
         http_host=weaviate_settings.get_weaviate_uri(),
@@ -132,11 +131,6 @@ model_id = os.getenv("MODEL_ID", "rubra-ai/Phi-3-mini-128k-instruct")
 max_tokens = int(os.getenv("MAX_TOKENS", MAX_TOKENS_DEFAULT))
 model_temperature = float(os.getenv("MODEL_TEMPERATURE", MODEL_TEMPERATURE_DEFAULT))
 
-embedding_model_name = os.getenv(
-    "EMBEDDING_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2"
-)
-# embedding_model_name = "sentence-transformers/multi-qa-mpnet-base-dot-v1"
-
 sql_search_db_and_model_path = os.getenv(
     "SQL_SEARCH_DB_AND_MODEL_PATH", SQL_SEARCH_DB_AND_MODEL_PATH_DEFAULT
 )
@@ -153,7 +147,6 @@ app = setup(
     model_id,
     max_tokens,
     model_temperature,
-    embedding_model_name,
     sql_search_db_and_model_path,
     max_context_length,
     sql_ticket_source,

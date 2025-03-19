@@ -30,6 +30,10 @@ class WeaviateSettings(BaseSettings):
         default=0.5,
         alias="WEAVIATE_HYBRID_ALPHA",
     )
+    embedding_model_name: Optional[str] = Field(
+        default="sentence-transformers/all-MiniLM-L6-v2",
+        alias="EMBEDDING_MODEL_NAME",
+    )
 
     @field_validator("weaviate_hybrid_search_alpha", mode="before")
     @classmethod

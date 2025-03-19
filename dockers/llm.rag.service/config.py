@@ -140,3 +140,28 @@ class HybridSearchSettings(BaseSettings):
     class Config:
         env_file = ".env"
         extra = "ignore"
+
+
+class SqlSearchSettings(BaseSettings):
+    db_and_model_path: Optional[str] = Field(
+        default="/app/db/",
+        alias="SQL_SEARCH_DB_AND_MODEL_PATH",
+    )
+    max_context_length: Optional[int] = Field(
+        default=8192,
+        alias="MODEL_MAX_CONTEXT_LEN",
+    )
+    # TODO: Read sources from DB instead of using this
+    ticket_source: Optional[str] = Field(
+        default="https://zendesk.com/api/v2/tickets/",
+        alias="SQL_TICKET_SOURCE",
+    )
+
+    @field_validator("max_context_length", mode="before")
+    @classmethod
+    def validate_max_context_length(cls, v):
+        return validate_int(v)
+
+    class Config:
+        env_file = ".env"
+        extra = "ignore"

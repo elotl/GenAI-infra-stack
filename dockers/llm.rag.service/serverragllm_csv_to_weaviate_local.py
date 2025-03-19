@@ -29,19 +29,16 @@ from langchain_weaviate.vectorstores import WeaviateVectorStore
 
 
 from common import get_answer_with_settings_with_weaviate_filter
-from config import HybridSearchSettings, LlmSettings, WeaviateSettings
+from config import HybridSearchSettings, LlmSettings, SqlSearchSettings, WeaviateSettings
 
 
-def setup(
-    sql_search_db_and_model_path: str,
-    max_context_length: int,
-    sql_ticket_source: str,
-):
+def setup():
     app = FastAPI()
 
     weaviate_settings = WeaviateSettings()
     hybrid_search_settings = HybridSearchSettings()
     llm_settings = LlmSettings()
+    sql_search_settings = SqlSearchSettings()
 
     embeddings = HuggingFaceEmbeddings(model_name=weaviate_settings.embedding_model_name)
 
@@ -76,10 +73,10 @@ def setup(
         client=client,
         system_prompt=hybrid_search_settings.system_prompt,
         relevant_docs=hybrid_search_settings.relevant_docs,
-        sql_search_db_and_model_path=sql_search_db_and_model_path,
+        sql_search_db_and_model_path=sql_search_settings.db_and_model_path,
         alpha=hybrid_search_settings.alpha,
-        max_context_length=max_context_length,
-        sql_ticket_source=sql_ticket_source,
+        max_context_length=sql_search_settings.max_context_length,
+        sql_ticket_source=sql_search_settings.ticket_source,
         llm_settings=llm_settings,
     )
 
@@ -92,24 +89,9 @@ def setup(
     return app
 
 
-SQL_SEARCH_DB_AND_MODEL_PATH_DEFAULT = "/app/db/"
-MODEL_MAX_CONTEXT_LEN = 8192
-
-sql_search_db_and_model_path = os.getenv(
-    "SQL_SEARCH_DB_AND_MODEL_PATH", SQL_SEARCH_DB_AND_MODEL_PATH_DEFAULT
-)
-
-max_context_length = int(os.getenv("MODEL_MAX_CONTEXT_LEN", MODEL_MAX_CONTEXT_LEN))
-
-sql_ticket_source = os.getenv("SQL_TICKET_SOURCE", "https://zendesk.com/api/v2/tickets/")
-
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-app = setup(
-    sql_search_db_and_model_path,
-    max_context_length,
-    sql_ticket_source,
-)
+app = setup()
 
 
 @click.command()

@@ -1,13 +1,28 @@
-click
-faiss-cpu
+# Core dependencies
+langchain
 langchain_community
 langchain_huggingface
 langchain_weaviate
+
+# Vector databases
+faiss-cpu
+weaviate-client
+
+# Document processing
+unstructured
+sentence-transformers
+lxml
+bs4
+python-magic
+
+# Config and cloud services
 pydantic_settings
 s3fs
-weaviate-client
 boto3
+
+# Web framework (for API)
 flask
 flask_cors
-moto
-pytest
+
+# CLI utilities
+click

@@ -252,8 +252,14 @@ In order to create the RAG dataset, we will run a Kubernetes job that will retri
 Use can use the instructions here to create an S3 bucket: [Creating a S3 bucket in AWS](https://docs.aws.amazon.com/AmazonS3/latest/userguide/GetStartedWithS3.html#creating-bucket) and the instructions here to create a folder within this bucket:
 [Folder creation](https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-folders.html#create-folder)
 
-1. Create a local file with these environment variables exported with suitable values:
-AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY: These AWS access credentials should have permissions to read from and write to the S3 bucket created in the previous step. 
+1. Create a local file with these environment variables exported with suitable values. You can use this sample file and edit the values for your use-case: 
+
+```sh
+source examples/exports-mini-rag.sh
+```
+
+
+1. AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY: These AWS access credentials should have permissions to read from and write to the S3 bucket created in the previous step. 
 If you would like to use your AWS CLI setup locally, you can use these commands to create these environment variables. Please note that these access credentials will not be limited to the minimal S3 bucket read and write permissions that are needed for setting up RAG. It is only provided here for ease of use (and is not meant for a production use).
 ```sh
 export AWS_ACCESS_KEY_ID=$(grep aws_access_key_id ~/.aws/credentials | awk '{print $3}')
@@ -269,9 +275,9 @@ export VECTOR_DB_INPUT_TYPE=text-docs
 If the VECTOR_DB_INPUT_TYPE value is “text-docs”, then this env variable will be set to the value of the folder or prefix name within an S3 bucket where the text documents will be uploaded by the customer. 
 If the VECTOR_DB_INPUT_TYPE value is “sitemap”, then this env variable will be set to the URL value of sitemap of a website whose pages will be used as the RAG dataset.
 
-1. VECTOR_DB_S3_BUCKET: Name of the S3 bucket that will contain the input dataset to be used for the RAG as well as RAG vector datastore. Please note that when VECTOR_DB_INPUT_TYPE value is “sitemap”, there is no input dataset that is needed to be uploaded to the S3 bucket. This is because the sitemap URL will be parsed by the Kto retrieve the dataset.
+1. VECTOR_DB_S3_BUCKET: Name of the S3 bucket that will contain the input dataset to be used for the RAG as well as RAG vector datastore. Please note that when VECTOR_DB_INPUT_TYPE value is “sitemap”, there is no input dataset that is needed to be uploaded to the S3 bucket. This is because the sitemap URL will be parsed by the k8s job to retrieve the dataset.
 
-1. VECTOR_DB_S3_FILE: Name of the vector DB file that will be created by Elotl and saved in the provided S3 bucket.
+1. VECTOR_DB_S3_FILE: Name of the vector store file that will be created by k8s and saved in the provided S3 bucket.
 
 1. MODEL_ID = [ microsoft/Phi-3-mini-4k-instruct | mosaicml/mpt-7b-chat ] Select the LLM model that is to be used. You can read about these two models here:
 [https://huggingface.co/microsoft/Phi-3-mini-4k-instruct](https://huggingface.co/microsoft/Phi-3-mini-4k-instruct)
@@ -322,6 +328,10 @@ The vector Store can be created in your S3 bucket by running this Kubernetes job
 [https://github.com/elotl/GenAI-infra-stack/blob/main/demo/llm.vdb.service/createvdb.yaml](https://github.com/elotl/GenAI-infra-stack/blob/main/demo/llm.vdb.service/createvdb.yaml)
 
 ```sh
+cd GenAI-infra-stack/demo/llm.vdb.service
+```
+
+```sh
 envsubst < createvdb.yaml | kubectl apply -f -
 ```
 
@@ -339,7 +349,7 @@ NAME                                                  	READY   STATUS	RESTARTS  
 createvectordb-kzrw6                                  	1/1 	Running   0      	118s
 ```
 
-This will take a few minutes to complete. The logs in the above pod will end with these messages.
+This will take a few minutes to complete. The logs in the above pod will contain these messages on successful completion.
 
 ```sh
 ...SNIP...
@@ -350,7 +360,7 @@ Number of documents loaded via DirectoryLoader is 165
 Uploaded vectordb to selvi-faiss-vectordbs selvi-s3-rag-wikipedia
 ```
 
-After the job completes, please ensure that the Vector Store file has been created in your S3 bucket. Here is a screenshot of the Vector Store file for the mini RAG dataset:
+After the job completes, please ensure that the Vector Store file has been created in your S3 bucket.
 
 You can use this AWS cli command to verify that it was created correctly:
 ```sh
@@ -365,10 +375,13 @@ You can use this AWS cli command to verify that it was created correctly:
 We will now create a Kubernetes Deployment and a Service that will take in the user’s question, interact with the Vector Store to find relevant documents and then query our hosted LLM service to provide an answer. You can download the manifest rag-chat-serveragllm.yaml from here: [rag-chat-serveragllmpluslb.yaml](https://github.com/elotl/GenAI-infra-stack/blob/main/demo/llm.rag.service/rag-chat-serveragllmpluslb.yaml)
 
 ```sh
-envsubst < rag-chat-serveragllmpluslb.yaml | kubectl apply -f -
+cd GenAI-infra-stack/demo/llm.rag.service 
+```
+```sh
+envsubst < chat-serveragllmpluslb.yaml | kubectl apply -f -
 ```
 
-Please wait for the deployment and Kubernetes LoadBalancer service to become ready and to also obtain an external IP. This can take a few minutes. The command outputs below specifically show the deployment, pod and services associated with the RAQ LLM service.
+Please wait for the deployment and Kubernetes LoadBalancer service to become ready and to also obtain an external IP. This can take a few minutes. The command outputs below specifically show the deployment, pod and services associated with the RAG LLM service.
 
 ```sh
 # View deployments

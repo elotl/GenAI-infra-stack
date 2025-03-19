@@ -1,6 +1,7 @@
 import ast
 import re
 from enum import Enum
+import os
 from typing import Any, Dict, List
 from logging_config import logger
 
@@ -19,6 +20,12 @@ class State(TypedDict):
     query: str
     result: str
 
+template = """Answer the question based only on the following context:
+{context}
+
+Question: {question}
+"""
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 class SearchType(Enum):
     SQL = 1
@@ -56,7 +63,6 @@ def trim_answer(generated_answer: str, label_separator: str) -> str:
         )
 
     return answer.strip()
-
 
 # Answer user's question via vector search or RAG technique
 def get_answer_with_settings(

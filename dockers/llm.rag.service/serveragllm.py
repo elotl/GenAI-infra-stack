@@ -10,8 +10,13 @@ import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 from fastapi import FastAPI
 from openai import OpenAI
-
 from common import get_answer_with_settings, get_sql_answer
+from common import setup_rag_llm_config
+
+import phoenix as px
+from phoenix.otel import register
+from phoenix.session.evaluation import get_qa_with_reference, get_retrieved_documents
+from openinference.instrumentation.langchain import LangChainInstrumentor
 
 ########
 # Setup model name and query template parameters
@@ -76,6 +81,9 @@ def str_to_float(value, name):
 def get_answer(question: Union[str, None]):
 
     logger.info(f"In get_answer, received question: {question}")
+
+    # setup RAG LLM parameters
+    # common.setup_rag_llm_config()
 
     model_id = os.environ.get("MODEL_ID")
     if model_id == "" or model_id is None:
@@ -204,7 +212,6 @@ def get_answer(question: Union[str, None]):
         logger.info(f"Received answer (from non JSON processing): {answer}")
         return answer
 
-
 # Get connection to LLM server
 model_llm_server_url = os.environ.get("MODEL_LLM_SERVER_URL")
 if model_llm_server_url is None:
@@ -266,6 +273,20 @@ vectorstore = pickle.loads(body)
 # https://python.langchain.com/api_reference/community/vectorstores/langchain_community.vectorstores.faiss.FAISS.html#langchain_community.vectorstores.faiss.FAISS.as_retriever
 retriever = vectorstore.as_retriever(search_kwargs={"k": relevant_docs})
 logger.info("Created Vector DB retriever successfully.")
+
+# Setup Phoenix
+phoenix_svc_url = "http://phoenix.phoenix.svc.cluster.local:6006"
+
+print("Setting up Phoenix (LLM ops tool) tracer \n")
+tracer_provider = register(
+    project_name="default",
+    endpoint=phoenix_svc_url,
+)
+LangChainInstrumentor(tracer_provider=tracer_provider).instrument(skip_dep_check=True)
+
+print("Setting up Phoenix's configuration: \n")
+queries_df = get_qa_with_reference(px.Client(endpoint=phoenix_svc_url))
+retrieved_documents_df = get_retrieved_documents(px.Client(endpoint=phoenix_svc_url)) 
 
 # Uncomment to run a local test
 # logger.info("Testing with a sample question:")

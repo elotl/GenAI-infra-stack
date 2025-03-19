@@ -6,6 +6,8 @@ FROM python:3.11-slim AS base-container
 ARG TARGETPLATFORM
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
   build-essential \

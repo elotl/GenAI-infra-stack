@@ -43,7 +43,6 @@ SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Forma
 
 
 def setup(
-    relevant_docs: int,
     sql_search_db_and_model_path: str,
     max_context_length: int,
     sql_ticket_source: str,
@@ -86,7 +85,7 @@ def setup(
         vectorstore=vectorstore,
         client=client,
         system_prompt=SYSTEM_PROMPT_DEFAULT,
-        relevant_docs=relevant_docs,
+        relevant_docs=weaviate_settings.hybrid_search_relevant_docs,
         sql_search_db_and_model_path=sql_search_db_and_model_path,
         alpha=weaviate_settings.weaviate_hybrid_search_alpha,
         max_context_length=max_context_length,
@@ -105,11 +104,8 @@ def setup(
 
 MICROSOFT_MODEL_ID = "microsoft/Phi-3-mini-4k-instruct"
 MOSAICML_MODEL_ID = "mosaicml/mpt-7b-chat"
-RELEVANT_DOCS_DEFAULT = 2
 SQL_SEARCH_DB_AND_MODEL_PATH_DEFAULT = "/app/db/"
 MODEL_MAX_CONTEXT_LEN = 8192
-
-relevant_docs = int(os.getenv("RELEVANT_DOCS", RELEVANT_DOCS_DEFAULT))
 
 sql_search_db_and_model_path = os.getenv(
     "SQL_SEARCH_DB_AND_MODEL_PATH", SQL_SEARCH_DB_AND_MODEL_PATH_DEFAULT
@@ -122,7 +118,6 @@ sql_ticket_source = os.getenv("SQL_TICKET_SOURCE", "https://zendesk.com/api/v2/t
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 app = setup(
-    relevant_docs,
     sql_search_db_and_model_path,
     max_context_length,
     sql_ticket_source,

@@ -35,6 +35,7 @@ class WeaviateSettings(BaseSettings):
         default="my_custom_index",
         alias="WEAVIATE_INDEX_NAME",
     )
+    # TODO: consider moving to hybrid search config
     weaviate_hybrid_search_alpha: float = Field(
         default=0.5,
         alias="WEAVIATE_HYBRID_ALPHA",
@@ -43,11 +44,21 @@ class WeaviateSettings(BaseSettings):
         default="sentence-transformers/all-MiniLM-L6-v2",
         alias="EMBEDDING_MODEL_NAME",
     )
+    # TODO: consider moving to hybrid search config
+    hybrid_search_relevant_docs: Optional[int] = Field(
+        default=2,
+        alias="RELEVANT_DOCS",
+    )
 
     @field_validator("weaviate_hybrid_search_alpha", mode="before")
     @classmethod
     def validate_weaviate_hybrid_search_alpha(cls, v):
         return validate_float(v)
+
+    @field_validator("hybrid_search_relevant_docs", mode="before")
+    @classmethod
+    def validate_hybrid_search_relevant_docs(cls, v):
+        return validate_int(v)
 
     class Config:
         env_file = ".env"

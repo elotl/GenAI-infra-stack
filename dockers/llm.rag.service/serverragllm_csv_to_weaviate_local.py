@@ -132,13 +132,6 @@ model_id = os.getenv("MODEL_ID", "rubra-ai/Phi-3-mini-128k-instruct")
 max_tokens = int(os.getenv("MAX_TOKENS", MAX_TOKENS_DEFAULT))
 model_temperature = float(os.getenv("MODEL_TEMPERATURE", MODEL_TEMPERATURE_DEFAULT))
 
-weaviate_url = os.getenv("WEAVIATE_URI_WITH_PORT", "localhost:8080")
-weaviate_grpc_url = os.getenv("WEAVIATE_GRPC_URI_WITH_PORT", "localhost:50051")
-weaviate_index = os.getenv("WEAVIATE_INDEX_NAME", "my_custom_index")
-alpha = float(
-    os.getenv("WEAVIATE_HYBRID_ALPHA", WEAVIATE_HYBRID_ALPHA_DEFAULT)
-)
-
 embedding_model_name = os.getenv(
     "EMBEDDING_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2"
 )

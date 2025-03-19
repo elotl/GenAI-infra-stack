@@ -3,8 +3,6 @@ from typing import Optional
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
-WEAVIATE_HYBRID_ALPHA_DEFAULT = 0.5
-
 
 def validate_float(value):
     if type(value) == float:
@@ -17,19 +15,19 @@ def validate_float(value):
 
 class WeaviateSettings(BaseSettings):
     weaviate_uri: Optional[str] = Field(
-        None,
+        default="localhost:8080",
         alias="WEAVIATE_URI_WITH_PORT",
     )
     weaviate_grpc_uri: Optional[str] = Field(
-        None,
+        default="localhost:50051",
         alias="WEAVIATE_GRPC_URI_WITH_PORT",
     )
     weaviate_index_name: Optional[str] = Field(
-        None,
+        default="my_custom_index",
         alias="WEAVIATE_INDEX_NAME",
     )
     weaviate_hybrid_search_alpha: float = Field(
-        default=WEAVIATE_HYBRID_ALPHA_DEFAULT,
+        default=0.5,
         alias="WEAVIATE_HYBRID_ALPHA",
     )
 

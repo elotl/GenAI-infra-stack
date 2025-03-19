@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import Field, field_validator
+from pydantic import ConfigDict, Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -34,6 +34,8 @@ def validate_int(value):
 
 
 class WeaviateSettings(BaseSettings):
+    model_config = ConfigDict(env_file=".env", extra="ignore")
+
     weaviate_uri: Optional[str] = Field(
         None,
         alias="WEAVIATE_URI_WITH_PORT",
@@ -50,10 +52,6 @@ class WeaviateSettings(BaseSettings):
         default="sentence-transformers/all-MiniLM-L6-v2",
         alias="EMBEDDING_MODEL_NAME",
     )
-
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
 
     def is_set(self) -> bool:
         return all(
@@ -74,6 +72,8 @@ class WeaviateSettings(BaseSettings):
 
 
 class LlmSettings(BaseSettings):
+    model_config = ConfigDict(env_file=".env", extra="ignore")
+
     llm_server_url: Optional[str] = Field(
         None,
         alias="MODEL_LLM_SERVER_URL",
@@ -108,12 +108,10 @@ class LlmSettings(BaseSettings):
     def validate_model_temperature(cls, v):
         return validate_float(v)
 
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
-
 
 class HybridSearchSettings(BaseSettings):
+    model_config = ConfigDict(env_file=".env", extra="ignore")
+
     alpha: Optional[float] = Field(
         default=0.5,
         alias="WEAVIATE_HYBRID_ALPHA",
@@ -137,12 +135,10 @@ class HybridSearchSettings(BaseSettings):
     def validate_relevant_docs(cls, v):
         return validate_int(v)
 
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
-
 
 class SqlSearchSettings(BaseSettings):
+    model_config = ConfigDict(env_file=".env", extra="ignore")
+
     db_and_model_path: Optional[str] = Field(
         default="/app/db/",
         alias="SQL_SEARCH_DB_AND_MODEL_PATH",
@@ -161,7 +157,3 @@ class SqlSearchSettings(BaseSettings):
     @classmethod
     def validate_max_context_length(cls, v):
         return validate_int(v)
-
-    class Config:
-        env_file = ".env"
-        extra = "ignore"

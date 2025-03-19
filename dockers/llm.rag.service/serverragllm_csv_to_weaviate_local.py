@@ -92,8 +92,6 @@ def setup(
     return app
 
 
-MICROSOFT_MODEL_ID = "microsoft/Phi-3-mini-4k-instruct"
-MOSAICML_MODEL_ID = "mosaicml/mpt-7b-chat"
 SQL_SEARCH_DB_AND_MODEL_PATH_DEFAULT = "/app/db/"
 MODEL_MAX_CONTEXT_LEN = 8192
 

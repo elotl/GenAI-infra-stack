@@ -24,15 +24,15 @@ def validate_int(value):
 
 class WeaviateSettings(BaseSettings):
     weaviate_uri: Optional[str] = Field(
-        default="localhost:8080",
+        None,
         alias="WEAVIATE_URI_WITH_PORT",
     )
     weaviate_grpc_uri: Optional[str] = Field(
-        default="localhost:50051",
+        None,
         alias="WEAVIATE_GRPC_URI_WITH_PORT",
     )
     weaviate_index_name: Optional[str] = Field(
-        default="my_custom_index",
+        None,
         alias="WEAVIATE_INDEX_NAME",
     )
     # TODO: consider moving to hybrid search config
@@ -84,7 +84,7 @@ class WeaviateSettings(BaseSettings):
 
 class LlmSettings(BaseSettings):
     llm_server_url: Optional[str] = Field(
-        default="http://localhost:9000/v1",
+        None,
         alias="MODEL_LLM_SERVER_URL",
     )
     model_id: Optional[str] = Field(

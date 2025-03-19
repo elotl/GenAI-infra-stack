@@ -29,6 +29,7 @@ from langchain_weaviate.vectorstores import WeaviateVectorStore
 
 
 from common import get_answer_with_settings_with_weaviate_filter
+from config import WeaviateSettings
 
 SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Format your responses following these rules:
                 1. Answer the provided question only using the provided context.
@@ -47,31 +48,29 @@ def setup(
     model_id: str,
     max_tokens: int,
     model_temperature: float,
-    weaviate_url: str,
-    weaviate_grpc_url: str,
-    weaviate_index: str,
     embedding_model_name: str,
     sql_search_db_and_model_path: str,
-    alpha: float,
     max_context_length: int,
     sql_ticket_source: str,
 ):
     app = FastAPI()
 
+    weaviate_settings = WeaviateSettings()
+
     embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
 
     weaviate_client = weaviate.connect_to_custom(
-        http_host=weaviate_url.split(":")[0],
-        http_port=int(weaviate_url.split(":")[1]),
+        http_host=weaviate_settings.get_weaviate_uri(),
+        http_port=weaviate_settings.get_weaviate_port(),
         http_secure=False,
-        grpc_host=weaviate_grpc_url.split(":")[0],
-        grpc_port=int(weaviate_grpc_url.split(":")[1]),
+        grpc_host=weaviate_settings.get_weaviate_grpc_uri(),
+        grpc_port=weaviate_settings.get_weaviate_grpc_port(),
         grpc_secure=False,
     )
 
     vectorstore = WeaviateVectorStore(
         client=weaviate_client,
-        index_name=weaviate_index,
+        index_name=weaviate_settings.weaviate_index_name,
         text_key="text",
         embedding=embeddings,
     )
@@ -98,7 +97,7 @@ def setup(
         relevant_docs=relevant_docs,
         llm_server_url=llm_server_url,
         sql_search_db_and_model_path=sql_search_db_and_model_path,
-        alpha=alpha,
+        alpha=weaviate_settings.weaviate_hybrid_search_alpha,
         max_context_length=max_context_length,
         sql_ticket_source=sql_ticket_source,
     )
@@ -161,12 +160,8 @@ app = setup(
     model_id,
     max_tokens,
     model_temperature,
-    weaviate_url,
-    weaviate_grpc_url,
-    weaviate_index,
     embedding_model_name,
     sql_search_db_and_model_path,
-    alpha,
     max_context_length,
     sql_ticket_source,
 )

@@ -157,3 +157,12 @@ class SqlSearchSettings(BaseSettings):
     @classmethod
     def validate_max_context_length(cls, v):
         return validate_int(v)
+
+
+class LoggingSettings(BaseSettings):
+    model_config = ConfigDict(env_file=".env", extra="ignore")
+
+    log_file_path: Optional[str] = Field(
+        default="/app/logs/ragllm.log",
+        alias="RAGLLM_LOGS_PATH",
+    )

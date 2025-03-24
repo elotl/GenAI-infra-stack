@@ -27,7 +27,7 @@ import weaviate
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_weaviate.vectorstores import WeaviateVectorStore
 
-
+from common import setup_phoenix
 from common import get_answer_with_settings_with_weaviate_filter
 
 SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Format your responses following these rules:
@@ -171,6 +171,8 @@ app = setup(
     sql_ticket_source,
 )
 
+# setup observability stack
+setup_phoenix()
 
 @click.command()
 @click.option(

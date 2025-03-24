@@ -12,11 +12,7 @@ from fastapi import FastAPI
 from openai import OpenAI
 from common import get_answer_with_settings, get_sql_answer
 from common import setup_rag_llm_config
-
-import phoenix as px
-from phoenix.otel import register
-from phoenix.session.evaluation import get_qa_with_reference, get_retrieved_documents
-from openinference.instrumentation.langchain import LangChainInstrumentor
+from common import setup_phoenix
 
 ########
 # Setup model name and query template parameters
@@ -76,7 +72,9 @@ def str_to_float(value, name):
     return float_value
 
 
-########
+
+
+
 # Fetch RAG context for question, form prompt from context and question, and call model
 def get_answer(question: Union[str, None]):
 
@@ -275,18 +273,7 @@ retriever = vectorstore.as_retriever(search_kwargs={"k": relevant_docs})
 logger.info("Created Vector DB retriever successfully.")
 
 # Setup Phoenix
-phoenix_svc_url = "http://phoenix.phoenix.svc.cluster.local:6006"
-
-print("Setting up Phoenix (LLM ops tool) tracer \n")
-tracer_provider = register(
-    project_name="default",
-    endpoint=phoenix_svc_url,
-)
-LangChainInstrumentor(tracer_provider=tracer_provider).instrument(skip_dep_check=True)
-
-print("Setting up Phoenix's configuration: \n")
-queries_df = get_qa_with_reference(px.Client(endpoint=phoenix_svc_url))
-retrieved_documents_df = get_retrieved_documents(px.Client(endpoint=phoenix_svc_url)) 
+setup_phoenix()
 
 # Uncomment to run a local test
 # logger.info("Testing with a sample question:")

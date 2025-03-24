@@ -30,6 +30,7 @@ COPY serveragllm.py .
 COPY logging_config.py .
 COPY serverragllm_csv_to_weaviate_local.py .
 COPY common.py .
+COPY config.py .
 COPY pyproject.toml .
 
 EXPOSE 8000

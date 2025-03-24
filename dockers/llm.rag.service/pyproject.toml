@@ -2,7 +2,7 @@
 name = "ragllm"  # Required
 version = "1.0.0"  # Required
 description = "Web service question/answer RAG-enhanced LLM model"
-requires-python = ">=3.8"
+requires-python = ">=3.8.1"
 dependencies = [
     "openai",
     "langchain",

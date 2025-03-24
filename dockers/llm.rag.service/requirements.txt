@@ -6,14 +6,15 @@ opentelemetry-api
 opentelemetry-instrumentation
 opentelemetry-semantic-conventions
 opentelemetry-exporter-otlp-proto-http
-arize-phoenix
+arize-phoenix==8.10.0
 arize-phoenix[evals]
+arize-phoenix-otel==0.8.0
 tiktoken
 openinference-instrumentation-langchain
 nest-asyncio 
 langchain
-langchain_community
-langchain-community
+#langchain_community
+langchain-community==0.3.20
 opentelemetry-sdk
 opentelemetry-exporter-otlp
 openai>=1
@@ -22,3 +23,5 @@ httpx<0.28
 pandas
 sqlalchemy
 weaviate
+openinference.instrumentation
+openinference-instrumentation-openai

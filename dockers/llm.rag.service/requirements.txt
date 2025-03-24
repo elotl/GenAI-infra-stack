@@ -1,20 +1,12 @@
-# Core dependencies
+uvicorn
+faiss-cpu
 fastapi
-uvicorn[standard]
-
-# LangChain packages
-langchain
 langchain-community
 langchain-huggingface
-langchain-openai
-
-# Vector database
-faiss-cpu
-weaviate-client
-
-# LLM/API packages
 openai
-
-# Data processing
+uvicorn
 pandas
 sqlalchemy
+langchain-openai
+langchain_community
+weaviate

@@ -6,10 +6,11 @@ FROM python:3.11-slim AS base-container
 ARG TARGETPLATFORM
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
 
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+# Upgrade pip
+RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel
+
+RUN apt-get update && apt-get install -y \
   build-essential \
   ca-certificates \
   ccache \
@@ -20,9 +21,25 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
 
 WORKDIR /serveragllm
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements.txt
+# Install dependencies in separate layers
+RUN pip3 install --no-cache-dir \
+    "openai" \
+    "langchain" \
+    "langchain_community" \
+    "langchain_huggingface" \
+    "unstructured" \
+    "sentence-transformers" \
+    "faiss-cpu" \
+    "fastapi" \
+    "boto3" \
+    "uvicorn[standard]" \
+    "weaviate-client" \
+    "langchain_weaviate" \
+    "langchain-community" \
+    "pandas" \
+    "sqlalchemy"  \
+    "langchain-openai"  \
+    "pandas"
 
 COPY __init__.py .
 COPY proxy_app.py .

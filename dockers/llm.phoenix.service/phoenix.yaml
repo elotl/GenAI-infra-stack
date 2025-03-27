@@ -1,0 +1,76 @@
+# phoenix.yaml
+# Source: https://docs.arize.com/phoenix/deployment/kubernetes
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    name: phoenix
+  name: phoenix
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: phoenix
+  name: phoenix
+  namespace: phoenix
+spec:
+  ports:
+  - port: 6006
+    protocol: TCP
+    targetPort: 6006
+  selector:
+    app: phoenix
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: phoenix
+  namespace: phoenix
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: phoenix
+  template:
+    metadata:
+      # Assume k8s pod service discovery for prometheus
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "9090"
+        prometheus.io/scrape: "true"
+      labels:
+        app: phoenix
+    spec:
+      containers:
+      - name: phoenix 
+        args:
+        - -m
+        - phoenix.server.main
+        - serve
+        command:
+        - python
+        env:
+        - name: PHOENIX_WORKING_DIR
+          value: /mnt/data
+        - name: PHOENIX_PORT
+          value: "6006"
+        # The version of phoenix you want should be used here  
+        image: docker.io/arizephoenix/phoenix:latest
+        ports:
+        - containerPort: 6006
+        - containerPort: 4317
+        - containerPort: 9090
+        volumeMounts:
+        - mountPath: /mnt/data
+          name: phoenix
+  volumeClaimTemplates:
+  - metadata:
+      name: phoenix
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 8Gi

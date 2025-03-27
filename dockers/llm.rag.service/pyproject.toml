@@ -2,7 +2,26 @@
 name = "ragllm"  # Required
 version = "1.0.0"  # Required
 description = "Web service question/answer RAG-enhanced LLM model"
-requires-python = ">=3.8"
-
+requires-python = ">=3.8.1"
+dependencies = [
+    "openai",
+    "langchain",
+    "langchain_community",
+    "langchain_huggingface",
+    "unstructured",
+    "sentence-transformers",
+    "faiss-cpu",
+    "uvicorn[standard]",
+    "fastapi",
+    "boto3",
+    "arize-phoenix",
+    "openinference-instrumentation-langchain",
+]
 [tool.setuptools]
-py-modules = ["common", "createvectordb", "createvectordb_jira_csv_local"]
+py-modules = [
+    "common",
+    "createvectordb",
+    "serveragllm",
+    "createvectordb_jira_csv_local",
+    "serverragllm_jira_cvs_local"
+]

@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: serveragllm
-          image: elotl/serveragllm:testweaviatesql6
+          image: elotl/serveragllm:testphoenix3
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
@@ -68,6 +68,8 @@ spec:
             value: ${SQL_TICKET_SOURCE}
           - name: EMBEDDING_MODEL_NAME
             value: ${EMBEDDING_MODEL_NAME}
+          - name: PHOENIX_SVC_URL
+            value: ${PHOENIX_SVC_URL}
           volumeMounts:
           - name: log-storage
             mountPath: /app/logs

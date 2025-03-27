@@ -1,6 +1,7 @@
 import ast
 import re
 from enum import Enum
+import os
 from typing import Any, Dict, List
 from logging_config import logger
 
@@ -19,6 +20,12 @@ class State(TypedDict):
     query: str
     result: str
 
+template = """Answer the question based only on the following context:
+{context}
+
+Question: {question}
+"""
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 class SearchType(Enum):
     SQL = 1
@@ -56,7 +63,6 @@ def trim_answer(generated_answer: str, label_separator: str) -> str:
         )
 
     return answer.strip()
-
 
 # Answer user's question via vector search or RAG technique
 def get_answer_with_settings(
@@ -589,12 +595,13 @@ def predict_question_type(question, model, tfidf, id_to_category):
 
 
 def load_models(question_classification_model_path: str):
+    logger.info("Loading question classification models...")
     # Load the saved model
-    rf_model_path = question_classification_model_path + "random_forest_model.pkl"
+    rf_model_path = question_classification_model_path + "/random_forest_model.pkl"
     rf_model_loaded = joblib.load(rf_model_path)
 
     # Load the saved TF-IDF vectorizer
-    tfidf_path = question_classification_model_path + "tfidf_vectorizer.pkl"
+    tfidf_path = question_classification_model_path + "/tfidf_vectorizer.pkl"
     tfidf_loaded = joblib.load(tfidf_path)
 
     logger.info("Model and vectorizer loaded successfully.")
@@ -634,3 +641,4 @@ def containsSymbolsOrNumbers(question: str) -> bool:
         ):  # Check if word contains anything other than letters
             return True
     return False
+

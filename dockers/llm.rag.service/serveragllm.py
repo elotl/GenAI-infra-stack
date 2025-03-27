@@ -10,8 +10,9 @@ import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 from fastapi import FastAPI
 from openai import OpenAI
-
 from common import get_answer_with_settings, get_sql_answer
+from common import setup_rag_llm_config
+from common import setup_phoenix
 
 ########
 # Setup model name and query template parameters
@@ -71,11 +72,16 @@ def str_to_float(value, name):
     return float_value
 
 
-########
+
+
+
 # Fetch RAG context for question, form prompt from context and question, and call model
 def get_answer(question: Union[str, None]):
 
     logger.info(f"In get_answer, received question: {question}")
+
+    # setup RAG LLM parameters
+    # common.setup_rag_llm_config()
 
     model_id = os.environ.get("MODEL_ID")
     if model_id == "" or model_id is None:
@@ -204,7 +210,6 @@ def get_answer(question: Union[str, None]):
         logger.info(f"Received answer (from non JSON processing): {answer}")
         return answer
 
-
 # Get connection to LLM server
 model_llm_server_url = os.environ.get("MODEL_LLM_SERVER_URL")
 if model_llm_server_url is None:
@@ -246,6 +251,12 @@ else:
     relevant_docs = str_to_int(relevant_docs, "RELEVANT_DOCS")
 logger.info(f"Using top-k search from Vector DB, {relevant_docs}")
 
+PHOENIX_SVC_URL_DEFAULT="http://phoenix.phoenix.svc.cluster.local:6006/v1/traces"
+# When running this app locally (outside of k8s)
+# setup PHOENIX_SVC_URL = http://localhost:6006/v1/traces 
+phoenix_svc_url = os.getenv("PHOENIX_SVC_URL", PHOENIX_SVC_URL_DEFAULT)
+logger.info(f"Using Phoenix service URL, {phoenix_svc_url}")
+
 # Use s3 client to read in vector store
 s3_client = boto3.client("s3")
 response = None
@@ -266,6 +277,9 @@ vectorstore = pickle.loads(body)
 # https://python.langchain.com/api_reference/community/vectorstores/langchain_community.vectorstores.faiss.FAISS.html#langchain_community.vectorstores.faiss.FAISS.as_retriever
 retriever = vectorstore.as_retriever(search_kwargs={"k": relevant_docs})
 logger.info("Created Vector DB retriever successfully.")
+
+# setup observability stack
+setup_phoenix(phoenix_svc_url)
 
 # Uncomment to run a local test
 # logger.info("Testing with a sample question:")

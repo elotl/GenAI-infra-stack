@@ -15,11 +15,6 @@ from sqlalchemy import create_engine
 from transformers import AutoTokenizer
 from typing_extensions import Annotated, TypedDict
 
-#import phoenix as px
-from phoenix.otel import register
-from phoenix.session.evaluation import get_qa_with_reference, get_retrieved_documents
-from openinference.instrumentation.langchain import LangChainInstrumentor
-
 class State(TypedDict):
     question: str
     query: str
@@ -600,12 +595,13 @@ def predict_question_type(question, model, tfidf, id_to_category):
 
 
 def load_models(question_classification_model_path: str):
+    logger.info("Loading question classification models...")
     # Load the saved model
-    rf_model_path = question_classification_model_path + "random_forest_model.pkl"
+    rf_model_path = question_classification_model_path + "/random_forest_model.pkl"
     rf_model_loaded = joblib.load(rf_model_path)
 
     # Load the saved TF-IDF vectorizer
-    tfidf_path = question_classification_model_path + "tfidf_vectorizer.pkl"
+    tfidf_path = question_classification_model_path + "/tfidf_vectorizer.pkl"
     tfidf_loaded = joblib.load(tfidf_path)
 
     logger.info("Model and vectorizer loaded successfully.")
@@ -646,18 +642,3 @@ def containsSymbolsOrNumbers(question: str) -> bool:
             return True
     return False
 
-def setup_phoenix():
-    # Setup Phoenix
-    phoenix_svc_url = "http://phoenix.phoenix.svc.cluster.local:6006"
-
-    logger.info("Setting up Phoenix (LLM ops tool) tracer \n")
-    tracer_provider = register(
-        # create a specific project
-        project_name="default",
-        endpoint=phoenix_svc_url,
-    )
-    LangChainInstrumentor(tracer_provider=tracer_provider).instrument(skip_dep_check=True)
-
-    logger.info("Setting up Phoenix's configuration: \n")
-    queries_df = get_qa_with_reference(px.Client(endpoint=phoenix_svc_url))
-    retrieved_documents_df = get_retrieved_documents(px.Client(endpoint=phoenix_svc_url)) 

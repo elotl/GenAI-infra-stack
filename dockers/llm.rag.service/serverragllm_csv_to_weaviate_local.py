@@ -1,17 +1,3 @@
-# /// script
-# requires-python = ">=3.12"
-# dependencies = [
-#     "faiss-cpu",
-#     "fastapi",
-#     "langchain-community",
-#     "langchain-huggingface",
-#     "openai",
-#     "uvicorn",
-#     "weaviate-client",
-#     "langchain_weaviate",
-# ]
-# ///
-
 import os
 import sys
 from functools import partial
@@ -21,13 +7,16 @@ from logging_config import logger
 import click
 import uvicorn
 from fastapi import FastAPI
+
+import phoenix as px
+from phoenix.otel import register
 from openai import OpenAI
+from openinference.instrumentation.openai import OpenAIInstrumentor
 
 import weaviate
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_weaviate.vectorstores import WeaviateVectorStore
 
-from common import setup_phoenix
 from common import get_answer_with_settings_with_weaviate_filter
 
 SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Format your responses following these rules:
@@ -40,6 +29,17 @@ SYSTEM_PROMPT_DEFAULT = """You are a specialized support ticket assistant. Forma
                 7. Provide a clear, direct and factual answer.
                 """
 
+def setup_phoenix(phoenix_svc_url: str):
+
+    logger.info("Setting up Phoenix (LLM ops tool) tracer \n")
+    tracer_provider = register(
+        project_name="qa-in-a-box",
+        endpoint=phoenix_svc_url,
+        #auto_instrument=True,
+    )
+
+    logger.info("Starting instrumentation of all OpenAI API calls\n")
+    OpenAIInstrumentor().instrument(tracer_provider=tracer_provider)
 
 def setup(
     relevant_docs: int,
@@ -140,6 +140,11 @@ alpha = float(
     os.getenv("WEAVIATE_HYBRID_ALPHA", WEAVIATE_HYBRID_ALPHA_DEFAULT)
 )
 
+PHOENIX_SVC_URL_DEFAULT="http://phoenix.phoenix.svc.cluster.local:6006/v1/traces"
+# When running this app locally (outside of k8s)
+# setup PHOENIX_SVC_URL = http://localhost:6006/v1/traces 
+phoenix_svc_url = os.getenv("PHOENIX_SVC_URL", PHOENIX_SVC_URL_DEFAULT)
+
 embedding_model_name = os.getenv(
     "EMBEDDING_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2"
 )
@@ -151,7 +156,7 @@ sql_search_db_and_model_path = os.getenv(
 
 max_context_length = int(os.getenv("MODEL_MAX_CONTEXT_LEN", MODEL_MAX_CONTEXT_LEN))
 
-sql_ticket_source = os.getenv("SQL_TICKET_SOURCE", "https://zendesk.com/api/v2/tickets/")
+sql_ticket_source = os.getenv("SQL_TICKET_SOURCE", "https://support.com/tickets/")
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 

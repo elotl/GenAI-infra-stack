@@ -251,6 +251,12 @@ else:
     relevant_docs = str_to_int(relevant_docs, "RELEVANT_DOCS")
 logger.info(f"Using top-k search from Vector DB, {relevant_docs}")
 
+PHOENIX_SVC_URL_DEFAULT="http://phoenix.phoenix.svc.cluster.local:6006/v1/traces"
+# When running this app locally (outside of k8s)
+# setup PHOENIX_SVC_URL = http://localhost:6006/v1/traces 
+phoenix_svc_url = os.getenv("PHOENIX_SVC_URL", PHOENIX_SVC_URL_DEFAULT)
+logger.info(f"Using Phoenix service URL, {phoenix_svc_url}")
+
 # Use s3 client to read in vector store
 s3_client = boto3.client("s3")
 response = None
@@ -272,8 +278,8 @@ vectorstore = pickle.loads(body)
 retriever = vectorstore.as_retriever(search_kwargs={"k": relevant_docs})
 logger.info("Created Vector DB retriever successfully.")
 
-# Setup Phoenix
-setup_phoenix()
+# setup observability stack
+setup_phoenix(phoenix_svc_url)
 
 # Uncomment to run a local test
 # logger.info("Testing with a sample question:")

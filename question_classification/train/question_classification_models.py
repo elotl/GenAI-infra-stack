@@ -75,7 +75,7 @@ sample_question1 = "What was the last upgrade issue?"
 predicted_category = predict_question_type(sample_question1, rf_model, tfidf, id_to_category)
 print("Testing with a sample question: ", sample_question1, "\nPredicted Question Type:", predicted_category)
 
-sample_question2 = "How can I upgrade PhP on our server?"
+sample_question2 = "How can I upgrade Golang on our server?"
 predicted_category = predict_question_type(sample_question2, rf_model, tfidf, id_to_category)
 print("Testing with a sample question: ", sample_question2, "\nPredicted Question Type:", predicted_category)
 

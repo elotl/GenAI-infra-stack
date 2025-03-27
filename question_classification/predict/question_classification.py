@@ -24,8 +24,7 @@ def load_models():
     print("Model and vectorizer loaded successfully!")
     return rf_model_loaded, tfidf_loaded
 
-sample_question = "How many tickets are there?"
-#sample_question = "What was the last upgrade issue?"
+sample_question = "Who submitted the last ticket?"
 rf_model_loaded, tfidf_loaded = load_models()
 id_to_category = {0: 'aggregation', 1: 'pointed'}
 predicted_category = predict_question_type(sample_question, rf_model_loaded, tfidf_loaded, id_to_category)

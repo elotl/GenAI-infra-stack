@@ -36,14 +36,24 @@ RUN pip3 install --no-cache-dir \
     "faiss-cpu" \
     "fastapi" \
     "boto3" \
-    "uvicorn[standard]" \
     "weaviate-client" \
     "langchain_weaviate" \
     "langchain-community" \
     "pandas" \
-    "sqlalchemy"  \
+    "sqlalchemy"
+
+RUN pip3 install --no-cache-dir \
     "langchain-openai"  \
-    "pandas"
+    "opentelemetry-exporter-otlp" \
+    "arize-phoenix==8.19.0" \
+    "openinference-instrumentation-openai" \
+    "uvicorn" \
+    "tiktoken" \
+    "nest-asyncio" \
+    "joblib==1.4.2" \
+    "pandas==2.2.3" \
+    "scikit-learn==1.3.2" \
+    "numpy==1.26.2"
 
 COPY __init__.py .
 COPY proxy_app.py .
@@ -55,28 +65,10 @@ COPY common.py .
 COPY pyproject.toml .
 
 RUN pip3 install --no-cache-dir \
-    "arize-phoenix" \
-    "openinference-instrumentation-langchain"
-
-RUN pip3 install --no-cache-dir \
-    "arize-phoenix[evals]" \
-    "tiktoken" \
-    "nest-asyncio"
-
-RUN pip3 install --no-cache-dir \
     "httpx<0.28"
 
 RUN pip3 install --no-cache-dir \
-    "langchain-openai"
-
-RUN pip3 install --no-cache-dir \
     "langchain-huggingface" \
-    "opentelemetry-api" \
-    "opentelemetry-instrumentation" \
-    "opentelemetry-semantic-conventions" \
-    "opentelemetry-exporter-otlp-proto-http" \
-    "opentelemetry-sdk" \
-    "opentelemetry-exporter-otlp" \
     "openai>=1"
 
 # Install the local package

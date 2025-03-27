@@ -177,7 +177,7 @@ app = setup(
 )
 
 # setup observability stack
-setup_phoenix()
+setup_phoenix(phoenix_svc_url)
 
 @click.command()
 @click.option(

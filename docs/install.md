@@ -378,7 +378,7 @@ We will now create a Kubernetes Deployment and a Service that will take in the u
 cd GenAI-infra-stack/demo/llm.rag.service 
 ```
 ```sh
-envsubst < serveragllmpluslb.yaml | kubectl apply -f -
+envsubst < rag-serveragllmpluslb.yaml | kubectl apply -f -
 ```
 
 Please wait for the deployment and Kubernetes LoadBalancer service to become ready and to also obtain an external IP. This can take a few minutes. The command outputs below specifically show the deployment, pod and services associated with the RAG LLM service.

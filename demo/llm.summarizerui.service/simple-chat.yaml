@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simple-chat
+  labels:
+    app: simple-chat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: simple-chat
+  template:
+    metadata:
+      labels:
+        app: simple-chat
+        elotl-luna: "true"
+      annotations:
+        node.elotl.co/instance-type-regexp: "^(t3.xlarge|n2-standard-4)$"
+    spec:
+      containers:
+      - name: chat
+        image: elotl/summarizerui:0.1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 7860
+        env:
+        - name: INFERENCE_QUERY_URL
+          value: "http://localhost:8000"
+        - name: USE_CHATBOT_HISTORY
+          value: "True"
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        volumeMounts:
+        - name: log-storage
+          mountPath: /app/logs
+      volumes:
+      - name: log-storage
+        persistentVolumeClaim:
+          claimName: simple-chat-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: simple-chat-service
+spec:
+  selector:
+    app: simple-chat
+  ports:
+    - protocol: TCP
+      port: 7860
+      targetPort: 7860
+  type: ClusterIP

@@ -37,30 +37,6 @@ USE_CHATBOT_HISTORY = os.getenv("USE_CHATBOT_HISTORY", "True") == "True"
 
 logging.info(f"Use history {USE_CHATBOT_HISTORY}")
 
-
-def clean_answer(text: str, chatml_end_token: str) -> str:
-    """
-    Remove all content after and including the specified token from the text.
-    Args:
-        text (str): The input text to clean
-        chatml_end_token (str): The token after which all content should be removed
-    Returns:
-        str: Cleaned text with all content after and including the token removed
-    """
-    if not text:  # Handle empty text
-        return ""
-
-    if not chatml_end_token:  # Handle empty end tokens
-        return text
-
-    # Split text at the token and take only the content before it
-    if chatml_end_token in text:
-        text = text.split(chatml_end_token, 1)[0]
-        logging.info(f"Cleaned text before chatml_end_token: {text}")
-
-    return text.strip()
-
-
 # Function to generate clickable links for JIRA tickets
 def generate_source_links(sources):
     links = []
@@ -80,31 +56,13 @@ def get_api_response(user_message):
         if response.status_code == 200:
             logging.info(f"resonse is: {response}\n")
             result = response.json()
-
-	    #json_key_in_response="answer"
-            #if json_key_in_response not in result.keys():
-            #    return "Could not fetch response."
-
-            #result = result[json_key_in_response]
-
- 	    # we can skip cleanup of answer for text summarizer.
-            #answer = clean_answer(
-            #    result.get(json_key_in_response, "Could not fetch response."), "<|im_end|>"
-            #)
-
-            # sources = result.get("sources", [])
-            # links = generate_source_links(sources)
-            # clickable_links = "<br>".join(links)
-            #context = result.get("context", "")
             logging.info(f"Input Text: {text}\nSummary: {result}\n")
 
-            #return f"{answer}<br><br>Relevant Tickets:<br>{clickable_links}"
             return f"{result}"
         else:
             return "API Error: Unable to fetch response."
     except requests.RequestException:
         return "API Error: Failed to connect to the backend service."
-
 
 # Chatbot response functions
 def chatbot_response_no_hist(_chatbot, user_message):
@@ -139,9 +97,24 @@ def submit_rating(rating, user_message, bot_response):
     # Hide the rating slider and submit button after submission
     return gr.update(visible=False), gr.update(visible=False)
 
+# Apply large font styling
+css = """
+    * {
+        font-size: 20px !important;
+    }
+    textarea, input {
+        font-size: 20px !important;
+    }
+    .prose, .gr-chatbot, .gr-button, .gr-textbox, .gr-slider {
+        font-size: 20px !important;
+    }
+    label {
+        font-size: 20px !important;
+    }
+"""
 
 # In the Gradio UI setup section, change:
-with gr.Blocks() as app:
+with gr.Blocks(css=css) as app:
     with gr.Row():
         with gr.Column(scale=4):
             # Change from chatbot = gr.Chatbot() to:
@@ -217,20 +190,5 @@ with gr.Blocks() as app:
         outputs=[rating_slider, submit_rating_btn],
     )
  
-    # Apply large font styling
-    app.css("""
-        * {
-            font-size: 20px !important;
-        }
-        textarea, input {
-            font-size: 20px !important;
-        }
-        .prose, .gr-chatbot, .gr-button, .gr-textbox, .gr-slider {
-            font-size: 20px !important;
-        }
-        label {
-            font-size: 20px !important;
-        }
-    """)
 
 app.launch(server_name="0.0.0.0")

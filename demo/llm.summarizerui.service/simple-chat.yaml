@@ -19,13 +19,13 @@ spec:
     spec:
       containers:
       - name: chat
-        image: elotl/summarizerui:0.1
+        image: elotl/summarizerui:0.2
         imagePullPolicy: Always
         ports:
         - containerPort: 7860
         env:
         - name: INFERENCE_QUERY_URL
-          value: "http://localhost:8000"
+          value: "http://text-summarizer-serve-svc.default.svc.cluster.local:8000"
         - name: USE_CHATBOT_HISTORY
           value: "True"
         resources:

@@ -31,7 +31,7 @@ if INFERENCE_QUERY_URL is None:
     )
     sys.exit(1)
 
-logging.info(f"RAG query endpoint, INFERENCE_QUERY_URL: {INFERENCE_QUERY_URL}")
+logging.info(f"Inference query endpoint, INFERENCE_QUERY_URL: {INFERENCE_QUERY_URL}")
 
 USE_CHATBOT_HISTORY = os.getenv("USE_CHATBOT_HISTORY", "True") == "True"
 
@@ -73,8 +73,12 @@ def generate_source_links(sources):
 def get_api_response(user_message):
     try:
         text = urllib.parse.quote(f"{user_message}")
+
+        logging.info(f"Received text for summarization: {text}")
+        
         response = requests.get(f"{INFERENCE_QUERY_URL}/summarize/text={text}")
         if response.status_code == 200:
+            logging.info(f"resonse is: {response}\n")
             result = response.json()
 
 	    #json_key_in_response="answer"
@@ -149,7 +153,7 @@ with gr.Blocks() as app:
             )
             submit_rating_btn = gr.Button("Submit Rating", visible=False)
 
-            msg = gr.Textbox(placeholder="Enter text to be summarized here...", label="InputText")
+            msg = gr.Textbox(placeholder="Enter text to be summarized here...", label="Input Text")
             send_button = gr.Button("Send")
     # Hidden variables to hold user_message and bot_response for rating submission
     user_message = gr.State()

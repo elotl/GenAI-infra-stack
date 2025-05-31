@@ -38,7 +38,7 @@ kuberay-operator-66d848f5cd-6tc9z   1/1     Running   0          42s
 ## Install text summarizer Ray Service
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/ray-project/kuberay/master/ray-operator/config/samples/ray-service.text-summarizer.yaml
+envsubst < supernova-rayservice.yaml | kubectl apply  -f -
 ```
 
 
@@ -57,5 +57,9 @@ text-summarizer-raycluster-8xmdp-gpu-group-worker-qmf99   0/1     Pending       
 text-summarizer-raycluster-8xmdp-head-t2vfd               0/1     ContainerCreating   0          86s
 ```
 
+
+Edit deployment's LLM URL to:
+
+http://text-summarizer-serve-svc.default.svc.cluster.local:8000
 
 

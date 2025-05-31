@@ -216,5 +216,21 @@ with gr.Blocks() as app:
         inputs=[rating_slider, user_message, bot_response],
         outputs=[rating_slider, submit_rating_btn],
     )
+ 
+    # Apply large font styling
+    app.css("""
+        * {
+            font-size: 20px !important;
+        }
+        textarea, input {
+            font-size: 20px !important;
+        }
+        .prose, .gr-chatbot, .gr-button, .gr-textbox, .gr-slider {
+            font-size: 20px !important;
+        }
+        label {
+            font-size: 20px !important;
+        }
+    """)
 
 app.launch(server_name="0.0.0.0")

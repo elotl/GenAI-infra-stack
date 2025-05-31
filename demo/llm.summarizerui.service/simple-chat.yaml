@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: chat
-        image: elotl/summarizerui:0.3
+        image: elotl/summarizerui:0.4
         imagePullPolicy: Always
         ports:
         - containerPort: 7860

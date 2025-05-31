@@ -76,7 +76,7 @@ def get_api_response(user_message):
 
         logging.info(f"Received text for summarization: {text}")
         
-        response = requests.get(f"{INFERENCE_QUERY_URL}/summarize/text={text}")
+        response = requests.get(f"{INFERENCE_QUERY_URL}/summarize?text={text}")
         if response.status_code == 200:
             logging.info(f"resonse is: {response}\n")
             result = response.json()
